@@ -1,0 +1,25 @@
+
+node_mod# Uploads directory - ignore all uploaded files but keep structure
+.env
+node_modules
+backend/uploads/*
+!backend/uploads/.gitkeep
+!backend/uploads/README.md
+!backend/uploads/images/
+!backend/uploads/documents/
+backend/uploads/images/*
+!backend/uploads/images/.gitkeep
+backend/uploads/documents/*
+!backend/uploads/documents/.gitkeep.env
+.DS_Store
+backend/package-lock.json
+
+# Uploaded files (contains sensitive user data)
+backend/uploads/documents/*.pdf
+backend/uploads/documents/*.pptx
+backend/uploads/documents/*.doc*
+backend/uploads/images/*.jpg
+backend/uploads/images/*.jpeg
+backend/uploads/images/*.png
+backend/uploads/images/*.gif
+backend/uploads/images/*.webp

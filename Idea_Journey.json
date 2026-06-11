@@ -1,0 +1,143 @@
+[
+  {
+    "stage": "Idea & Concept",
+    "trl": "TRL 1-2",
+    "questions": [
+      { "text": "What problem are you solving?", "mandatory": true },
+      { "text": "Who experiences this problem most acutely (customer persona)?", "mandatory": true },
+      { "text": "What is your one-line value proposition?", "mandatory": true },
+      { "text": "How big is the potential market (rough estimate)?", "mandatory": false },
+      { "text": "Why are you personally motivated to solve this problem?", "mandatory": false }
+    ],
+    "acceptance_criteria": [
+      "Clearly articulated problem statement",
+      "Defined customer persona",
+      "Initial value proposition documented"
+    ]
+  },
+  {
+    "stage": "Research & Feasibility",
+    "trl": "TRL 2-3",
+    "questions": [
+      { "text": "What existing solutions or competitors are in the market?", "mandatory": true },
+      { "text": "What gaps or differentiators exist for your idea?", "mandatory": true },
+      { "text": "What technologies/tools are needed to build your solution?", "mandatory": true },
+      { "text": "What are the top 3 risks you foresee (technical/market/financial)?", "mandatory": true },
+      { "text": "Have you estimated a rough TAM, SAM, SOM?", "mandatory": false }
+    ],
+    "acceptance_criteria": [
+      "Competitive landscape analysis completed",
+      "Feasibility study (tech + market) documented",
+      "At least one unique differentiator identified"
+    ]
+  },
+  {
+    "stage": "Validation",
+    "trl": "TRL 3-4",
+    "questions": [
+      { "text": "Have you spoken to potential customers? (How many?)", "mandatory": true },
+      { "text": "What percentage confirm they face this problem?", "mandatory": true },
+      { "text": "Would they pay for a solution like yours?", "mandatory": true },
+      { "text": "What assumptions are you still unsure about?", "mandatory": true },
+      { "text": "Do you have any letters of intent (LOIs) or pilot interest?", "mandatory": false }
+    ],
+    "acceptance_criteria": [
+      "Minimum 20–30 customer interviews completed",
+      "Documented validation that majority confirm problem relevance",
+      "Evidence of early willingness to pay or adopt"
+    ]
+  },
+  {
+    "stage": "Prototype",
+    "trl": "TRL 4",
+    "questions": [
+      { "text": "Do you have a low-fidelity mockup/wireframe or clickable demo?", "mandatory": true },
+      { "text": "Have you tested usability with target users?", "mandatory": true },
+      { "text": "What feedback did you collect from prototype testing?", "mandatory": true },
+      { "text": "How many iterations have you made based on feedback?", "mandatory": false }
+    ],
+    "acceptance_criteria": [
+      "Prototype/demo created",
+      "At least 5–10 target users tested it",
+      "Documented feedback and improvements identified"
+    ]
+  },
+  {
+    "stage": "MVP",
+    "trl": "TRL 5-6",
+    "questions": [
+      { "text": "Does your MVP include the core feature set?", "mandatory": true },
+      { "text": "Is it functional and usable by real customers?", "mandatory": true },
+      { "text": "Do you have analytics/tracking in place?", "mandatory": true },
+      { "text": "Who are your first pilot customers?", "mandatory": true },
+      { "text": "What is the MVP cost structure and unit economics?", "mandatory": false }
+    ],
+    "acceptance_criteria": [
+      "MVP deployed to at least 5+ early adopters",
+      "Product solves at least one core pain point",
+      "Positive feedback indicating repeat usage intent"
+    ]
+  },
+  {
+    "stage": "Testing & Iteration",
+    "trl": "TRL 6",
+    "questions": [
+      { "text": "What is the current retention/engagement rate?", "mandatory": true },
+      { "text": "What bugs or UX issues have been fixed?", "mandatory": true },
+      { "text": "Have you run any A/B or usability tests?", "mandatory": true },
+      { "text": "What metrics improved after iteration?", "mandatory": true },
+      { "text": "Do you have a feedback loop process in place?", "mandatory": false }
+    ],
+    "acceptance_criteria": [
+      "At least one iteration cycle completed",
+      "Documented improvement in key user metrics",
+      "Major technical bugs addressed"
+    ]
+  },
+  {
+    "stage": "Launch & Early Growth",
+    "trl": "TRL 7",
+    "questions": [
+      { "text": "Have you launched publicly?", "mandatory": true },
+      { "text": "How many paying/free users are onboarded?", "mandatory": true },
+      { "text": "What is your customer acquisition strategy?", "mandatory": true },
+      { "text": "What are your CAC (Customer Acquisition Cost) and LTV (Lifetime Value) assumptions?", "mandatory": true },
+      { "text": "What is your current monthly active user (MAU) growth rate?", "mandatory": false }
+    ],
+    "acceptance_criteria": [
+      "Public launch executed",
+      "At least 100 free users or 10 paying customers",
+      "Initial growth KPIs tracked"
+    ]
+  },
+  {
+    "stage": "Scaling",
+    "trl": "TRL 8",
+    "questions": [
+      { "text": "Have you achieved repeatable sales or organic growth?", "mandatory": true },
+      { "text": "Is your tech infrastructure stable under higher load?", "mandatory": true },
+      { "text": "Have you raised external funding or built partnerships?", "mandatory": false },
+      { "text": "What expansion plans (new markets/features) are in place?", "mandatory": true }
+    ],
+    "acceptance_criteria": [
+      "Demonstrated product-market fit (PMF)",
+      "10x growth from early launch stage",
+      "Scalable infrastructure in place"
+    ]
+  },
+  {
+    "stage": "Maturity & Exit",
+    "trl": "TRL 9",
+    "questions": [
+      { "text": "Do you have sustainable revenue/profitability?", "mandatory": true },
+      { "text": "Are acquisition offers or IPO preparations underway?", "mandatory": false },
+      { "text": "What long-term strategic options are being pursued (exit, IPO, continued scaling)?", "mandatory": true },
+      { "text": "Do you have a strong leadership team and governance structure?", "mandatory": true }
+    ],
+    "acceptance_criteria": [
+      "Stable and growing revenue stream",
+      "Clear strategic roadmap (exit, IPO, or sustained scaling)",
+      "Strong leadership team in place"
+    ]
+  }
+]

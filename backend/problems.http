@@ -1,0 +1,121 @@
+## Creation of problem
+POST http://localhost:5001/problem-api/problem
+Content-Type: application/json
+
+{
+  "problemId": "3",
+  "title": "Library Access Constraints",
+  "briefparagraph": "Students face limited access to library resources, especially during peak exam times and evenings.",
+  "description": "Campus libraries often have restricted hours, limited seating, and insufficient study materials for large student populations. Students are unable to access reference books or quiet study spaces during late hours or exam periods, affecting their preparation and academic performance.\n\nWe propose a smart library management system with (1) extended hours monitoring using secure access, (2) real-time seat availability tracking, (3) automated book reservation and delivery, (4) AI-based recommendations for study resources, and (5) analytics for library administration to plan capacity and acquisitions.",
+  "marketSize": "",
+  "existingSolutions": "Traditional library management systems, online e-book platforms, local study groups",
+  "currentGaps": "Limited seating, restricted operating hours, no personalized book recommendations, difficulty tracking availability, low utilization of e-resources.",
+  "image": null,
+  "upvotes": 0,
+  "upvotedBy": [],
+  "comments": [],
+  "background": "Students often cannot find quiet spaces or reference materials when needed, leading to inefficient study sessions and increased stress. Physical constraints and manual processes hinder optimal usage of library facilities.",
+  "scalability": "This solution can be scaled across multiple campuses by integrating with existing library networks and providing cloud-based tracking and reservation systems.",
+  "addedByName": "RAHUL KUMAR",
+  "addedByEmail": "rahul.kumar123@vnrvjiet.in",
+  "tags": [
+    "Education",
+    "Library",
+    "Students",
+    "Study",
+    "AI",
+    "Resource Management",
+    "Campus"
+  ],
+  "createdAt": "2025-08-30T08:15:45.123Z"
+}
+
+
+
+###Get problems APi
+GET http://localhost:6220/problem-api/problem
+
+### DELETE problem
+# DELETE http://localhost:6220/problem-api/problems/2
+
+### Get Details of a problem
+GET http://localhost:6220/problem-api/problem/2 
+
+
+### UPVOTE the porblem
+POST http://localhost:5001/problem-api/problem/2/upvote
+
+
+
+### Comment on the problem
+POST http://localhost:5001/problem-api/problem/2/comment
+Content-Type: application/json
+
+{
+  "comment": "Good one",
+  "name": "Alice Smith",
+  "email": "alice@example.com"
+}
+
+### POST commentt
+POST http://localhost:6220/problem-api/problem/3/comment
+Content-Type: application/json
+
+{
+  "comment": "Bharath COmmented ",
+  "name": "Bharath",
+  "email": "bhara@vnrvjiet.in"
+}
+
+### GET comments
+GET http://localhost:6220/problem-api/problem/1/comments
+
+### REPLY 
+POST http://localhost:6220/problem-api/problem/1/comment/1756039919514/reply
+Content-Type: application/json
+
+{
+  "reply": "This is a test reply from REST client",
+  "name": "Bharath",
+  "email": "bhara@vnrvjiet.in"
+}
+
+####
+POST http://localhost:6220/problem-api/problem/4/comment/1756023887303/like
+Content-Type: application/json
+
+{
+  "email": "hannu@vnrvjiet.in"
+}
+
+###
+DELETE http://localhost:5001/problem-api/problems/2
+Content-Type: application/json
+
+{
+  "email": "22071a1296@vnrvjiet.in"
+}
+
+###
+PUT http://localhost:5001/problem-api/problems/2/22071a1296@vnrvjiet.in
+Content-Type: application/json
+
+{
+    "title": "Updated Title",
+    "briefparagraph": "Updated description of complaint.",
+    "upvotes": 40,
+    "comments": ["Improved version", "Now scalable"],
+    "background": "Updated background info.",
+    "scalability": "Now works across multiple universities.",
+    "marketsizeAndStats": {
+        "description": "Market growing at 20% annually.",
+        "chart": "https://example.com/new-chart.png"
+    },
+    "competitorAnalysis": {
+        "existingAlternatives": "Other wellness apps",
+        "whyCurrentSolutionFallsShort": "Still lack deep personalization"
+    },
+    "addedByName": "Pranathi",
+    "addedByEmail": "22071a1296@vnrvjiet.in",
+    "tags": ["wellbeing", "AI", "students"]
+}
