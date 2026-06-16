@@ -185,9 +185,32 @@ const StartupForm: React.FC = () => {
     const loadStartupForEdit = async () => {
       if (!isEditMode || !editId) return;
 
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "Please log in to edit a startup.",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
+
       try {
         const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/startup-api/${editId}`);
         const startup = response.data;
+
+        const ownerEmail = typeof startup.createdBy === 'string'
+          ? startup.createdBy
+          : startup.createdBy?.email;
+        if (ownerEmail !== user?.email) {
+          toast({
+            title: "Error",
+            description: "You are not authorized to edit this startup.",
+            variant: "destructive",
+          });
+          navigate('/startups');
+          return;
+        }
         
         const newFormData = {
           startupName: startup.startupName || '',
@@ -240,7 +263,7 @@ const StartupForm: React.FC = () => {
     };
 
     loadStartupForEdit();
-  }, [editId, isEditMode, navigate, toast]);
+  }, [editId, isEditMode, navigate, toast, user]);
 
   // Update page title based on mode
   useEffect(() => {
@@ -250,6 +273,17 @@ const StartupForm: React.FC = () => {
       document.title = "VJHub"; // Reset title when component unmounts
     };
   }, [isEditMode]);
+
+  useEffect(() => {
+    if (!isEditMode && !user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to add a startup.",
+        variant: "destructive",
+      });
+      navigate('/login');
+    }
+  }, [user, isEditMode, navigate, toast]);
 
   const populateFormFromResponses = (responses: any) => {
     setFormData(prev => ({
@@ -355,6 +389,17 @@ const StartupForm: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to add a startup.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      navigate('/login');
+      return;
+    }
+
     try {
       // Validate teamSize before submission
       if (formData.teamSize === '' || formData.teamSize === 0) {
@@ -419,6 +464,10 @@ const StartupForm: React.FC = () => {
           formDataToSend.append('createdBy', user.id);
         }
         if (ideaId) formDataToSend.append('ideaId', ideaId);
+      }
+
+      if (isEditMode && user?.email) {
+        formDataToSend.append('requestingUserEmail', user.email);
       }
 
       // Determine API endpoint and method

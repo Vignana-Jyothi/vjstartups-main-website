@@ -23,6 +23,8 @@ export async function upvoteStartup(id: string): Promise<number> {
   return response.data.upvotes;
 }
 
-export async function deleteStartup(id: string): Promise<void> {
-  await axios.delete(`${API_BASE}/startup-api/${id}`);
+export async function deleteStartup(id: string, email?: string): Promise<void> {
+  await axios.delete(`${API_BASE}/startup-api/${id}`, {
+    data: { requestingUserEmail: email },
+  });
 }

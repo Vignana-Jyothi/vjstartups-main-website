@@ -1,10 +1,7 @@
 const express = require('express');
 const { OAuth2Client } = require('google-auth-library');
 const router = express.Router();
-
 const User = require('../models/User');
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 router.post('/google', async (req, res) => {
   const { token } = req.body;
@@ -13,6 +10,9 @@ router.post('/google', async (req, res) => {
     return res.status(400).json({ success: false, message: 'Token is required' });
   }
 
+  // Create client inside the handler so it always reads the env var at runtime
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
   try {
     const ticket = await client.verifyIdToken({
       idToken: token,
@@ -20,33 +20,31 @@ router.post('/google', async (req, res) => {
     });
 
     const payload = ticket.getPayload();
+    const normalizedEmail = String(payload.email || '').toLowerCase();
+
+    // Save to DB and get back the full document including _id
+    const dbUser = await User.findOneAndUpdate(
+      { email: normalizedEmail },
+      {
+        email: normalizedEmail,
+        name: payload.name,
+        picture: payload.picture,
+        updatedAt: new Date(),
+      },
+      { upsert: true, new: true }
+    );
 
     const user = {
-      name: payload.name,
-      email: payload.email,
-      picture: payload.picture,
+      id: dbUser._id.toString(),
+      name: dbUser.name,
+      email: dbUser.email,
+      picture: dbUser.picture,
     };
 
-    try {
-      const normalizedEmail = String(payload.email || '').toLowerCase();
-
-      await User.findOneAndUpdate(
-        { email: normalizedEmail },
-        {
-          email: normalizedEmail,
-          name: payload.name,
-          picture: payload.picture,
-          updatedAt: new Date(),
-        },
-        { upsert: true, new: true }
-      );
-    } catch (dbErr) {
-      console.error('Error saving user to DB:', dbErr);
-    }
-
     return res.json({ success: true, user });
+
   } catch (err) {
-    console.error('Google login error:', err);
+    console.error('Google login error:', err.message);
     return res.status(401).json({ success: false, message: 'Invalid token' });
   }
 });

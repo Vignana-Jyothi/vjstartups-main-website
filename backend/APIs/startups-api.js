@@ -144,6 +144,10 @@ router.post('/', upload.fields([
             ideaId
         } = req.body;
 
+        if (!createdBy || createdBy === 'anonymous') {
+            return res.status(401).json({ message: 'You must be logged in to add a startup.' });
+        }
+
         // Parse array fields from JSON strings
         const parsedKeyFeatures = keyFeatures ? JSON.parse(keyFeatures) : [];
         const parsedTechnologyStack = technologyStack ? JSON.parse(technologyStack) : [];
@@ -231,6 +235,27 @@ router.put('/:id', upload.fields([
             return res.status(404).json({ message: 'Startup not found' });
         }
 
+        const requestingUserEmail = req.body.requestingUserEmail;
+        if (!requestingUserEmail) {
+            return res.status(401).json({ message: 'You must be logged in to edit a startup.' });
+        }
+
+        const ownerEmail = typeof startup.createdBy === 'object'
+            ? startup.createdBy?.email
+            : null;
+
+        // Fetch owner email from DB if not populated
+        let resolvedOwnerEmail = ownerEmail;
+        if (!resolvedOwnerEmail) {
+            const User = require('../models/User');
+            const ownerUser = await User.findById(startup.createdBy);
+            resolvedOwnerEmail = ownerUser?.email;
+        }
+
+        if (!resolvedOwnerEmail || resolvedOwnerEmail.toLowerCase() !== requestingUserEmail.toLowerCase()) {
+            return res.status(403).json({ message: 'You are not authorized to edit this startup.' });
+        }
+
         // Update fields from request body
         Object.keys(req.body).forEach(key => {
             if (key === 'keyFeatures' || key === 'technologyStack' || key === 'supportPrograms' || key === 'milestones') {
@@ -263,10 +288,33 @@ router.put('/:id', upload.fields([
 // DELETE startup
 router.delete('/:id', async (req, res) => {
     try {
-        const startup = await Startup.findByIdAndDelete(req.params.id);
+        const startup = await Startup.findById(req.params.id);
         if (!startup) {
             return res.status(404).json({ message: 'Startup not found' });
         }
+
+        const requestingUserEmail = req.body.requestingUserEmail;
+        if (!requestingUserEmail) {
+            return res.status(401).json({ message: 'You must be logged in to edit a startup.' });
+        }
+
+        const ownerEmail = typeof startup.createdBy === 'object'
+            ? startup.createdBy?.email
+            : null;
+
+        // Fetch owner email from DB if not populated
+        let resolvedOwnerEmail = ownerEmail;
+        if (!resolvedOwnerEmail) {
+            const User = require('../models/User');
+            const ownerUser = await User.findById(startup.createdBy);
+            resolvedOwnerEmail = ownerUser?.email;
+        }
+
+        if (!resolvedOwnerEmail || resolvedOwnerEmail.toLowerCase() !== requestingUserEmail.toLowerCase()) {
+            return res.status(403).json({ message: 'You are not authorized to edit this startup.' });
+        }
+
+        await startup.deleteOne();
         
         res.json({ message: 'Startup deleted successfully' });
     } catch (error) {

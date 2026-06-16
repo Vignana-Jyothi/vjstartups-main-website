@@ -8,20 +8,32 @@ const Login = () => {
   const { setUser } = useUser();
 
   const handleGoogleLogin = async (credentialResponse: any) => {
-    if (credentialResponse.credential) {
-      const token = credentialResponse.credential;
+    if (!credentialResponse.credential) return;
 
-      const res = await fetch(`${import.meta.env.VITE_AUTH_URL}/auth/google`, {
+    try {
+      const backendUrl = import.meta.env.VITE_AUTH_URL || import.meta.env.VITE_API_BASE_URL;
+
+      const res = await fetch(`${backendUrl}/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token: credentialResponse.credential }),
       });
 
       const data = await res.json();
-      console.log("Logged in user:", data.user);
 
+      if (!res.ok || !data.success || !data.user) {
+        console.error("Login failed:", data.message || "Unknown error");
+        alert("Login failed: " + (data.message || "Please try again."));
+        return;
+      }
+
+      console.log("Logged in user:", data.user);
       setUser(data.user);
       navigate("/");
+
+    } catch (err) {
+      console.error("Network error during login:", err);
+      alert("Could not reach the server. Make sure the backend is running on port 6220.");
     }
   };
 
@@ -39,7 +51,10 @@ const Login = () => {
             <div className="flex justify-center">
               <GoogleLogin
                 onSuccess={handleGoogleLogin}
-                onError={() => console.log("Login Failed")}
+                onError={() => {
+                  console.log("Google OAuth error — check client ID in .env");
+                  alert("Google login failed. Check that VITE_GOOGLE_CLIENT is set correctly in frontend/.env");
+                }}
               />
             </div>
 

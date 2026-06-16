@@ -13,8 +13,10 @@ import {
   FUNDING_FILTER_OPTIONS,
   STAGE_FILTER_OPTIONS,
 } from "@/utils/startupFormatters";
+import { useUser } from "@/pages/UserContext";
 
 const Startups = () => {
+  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [startups, setStartups] = useState<StartupListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,12 +121,21 @@ const Startups = () => {
           <p className="text-vj-muted mb-4">
             No startups have been submitted yet. Be the first to showcase your venture.
           </p>
-          <Link to="/startup-form">
-            <Button className="bg-startup-primary hover:bg-startup-primary/90 text-white gap-2">
-              <Plus className="h-4 w-4" />
-              Create First Startup
-            </Button>
-          </Link>
+          {user ? (
+            <Link to="/startup-form">
+              <Button className="bg-startup-primary hover:bg-startup-primary/90 text-white gap-2">
+                <Plus className="h-4 w-4" />
+                Create First Startup
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/login">
+              <Button className="bg-startup-primary hover:bg-startup-primary/90 text-white gap-2">
+                <Plus className="h-4 w-4" />
+                Create First Startup
+              </Button>
+            </Link>
+          )}
         </div>
       );
     }
@@ -198,12 +209,21 @@ const Startups = () => {
                   className="pl-10"
                 />
               </div>
-              <Link to="/startup-form" className="shrink-0">
-                <Button className="w-full lg:w-auto bg-startup-primary hover:bg-startup-primary/90 text-white gap-2">
-                  <Plus className="h-4 w-4" />
-                  Submit Startup
-                </Button>
-              </Link>
+              {user ? (
+                <Link to="/startup-form" className="shrink-0">
+                  <Button className="w-full lg:w-auto bg-startup-primary hover:bg-startup-primary/90 text-white gap-2">
+                    <Plus className="h-4 w-4" />
+                    Submit Startup
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/login" className="shrink-0">
+                  <Button className="w-full lg:w-auto bg-startup-primary hover:bg-startup-primary/90 text-white gap-2">
+                    <Plus className="h-4 w-4" />
+                    Submit Startup
+                  </Button>
+                </Link>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
