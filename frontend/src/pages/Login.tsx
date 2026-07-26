@@ -11,7 +11,7 @@ const Login = () => {
     if (!credentialResponse.credential) return;
 
     try {
-      const backendUrl = import.meta.env.VITE_AUTH_URL || import.meta.env.VITE_API_BASE_URL;
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_AUTH_URL || "http://localhost:6220";
 
       const res = await fetch(`${backendUrl}/auth/google`, {
         method: "POST",

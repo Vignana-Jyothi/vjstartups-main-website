@@ -9,6 +9,19 @@ const UserSchema = new mongoose.Schema({
   },
   name: String,
   picture: String, // Google OAuth picture URL
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
+  adminToken: {
+    type: String,
+    default: null // UUID session token, only set when admin logs in
+  },
+  adminTokenCreatedAt: {
+    type: Date,
+    default: null
+  },
   updatedAt: {
     type: Date,
     default: Date.now
