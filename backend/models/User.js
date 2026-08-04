@@ -11,8 +11,8 @@ const UserSchema = new mongoose.Schema({
   picture: String, // Google OAuth picture URL
   role: {
     type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
+    enum: ['user', 'student', 'wing_member', 'wing_master', 'admin'],
+    default: 'student'
   },
   adminToken: {
     type: String,

@@ -49,13 +49,13 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-2 sm:space-x-3 min-w-0">
             <img 
               src={vjLogo} 
               alt="VJ Startups" 
-              className="h-8 md:h-10 transition-transform hover:scale-105"
+              className="h-8 md:h-10 shrink-0 transition-transform hover:scale-105"
             />
-            <div className="font-playfair text-xl md:text-2xl font-bold text-vj-primary">
+            <div className="font-playfair text-lg sm:text-xl md:text-2xl font-bold text-vj-primary truncate">
               VJ Startups
             </div>
           </Link>
@@ -96,12 +96,30 @@ const Navbar = () => {
             </Link>
             <Link
               to="/club"
-              className={`text-sm font-medium transition-colors hover:text-vj-primary ${
+              className={`text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center ${
                 isActive("/club") ? "text-vj-primary" : "text-vj-muted"
               }`}
             >
               Club
             </Link>
+            {(user?.role === "wing_master" || user?.role === "admin") && (
+              <Link
+                to="/announcements/new"
+                className={`text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center ${
+                  isActive("/announcements/new") ? "text-vj-primary" : "text-vj-muted"
+                }`}
+              >
+                Post Announcement
+              </Link>
+            )}
+            {user?.role === "admin" && (
+              <a
+                href="/admin"
+                className="text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center text-vj-muted"
+              >
+                Admin Panel
+              </a>
+            )}
           </nav>
 
           {/* Actions */}
@@ -164,7 +182,7 @@ const Navbar = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="p-2"
+                    className="min-h-[44px] min-w-[44px] p-2"
                   >
                     <Menu className="h-5 w-5" />
                     <span className="sr-only">Toggle menu</span>
@@ -174,7 +192,7 @@ const Navbar = () => {
                 <nav className="flex flex-col space-y-4">
                   <Link
                     to="/"
-                    className={`text-sm font-medium transition-colors hover:text-vj-primary ${
+                    className={`text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center ${
                       isActive("/") ? "text-vj-primary" : "text-vj-muted"
                     }`}
                     onClick={handleNavClick}
@@ -183,7 +201,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/problems"
-                    className={`text-sm font-medium transition-colors hover:text-vj-primary ${
+                    className={`text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center ${
                       isActive("/problems") ? "text-vj-primary" : "text-vj-muted"
                     }`}
                     onClick={handleNavClick}
@@ -192,7 +210,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/ideas"
-                    className={`text-sm font-medium transition-colors hover:text-vj-primary ${
+                    className={`text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center ${
                       isActive("/ideas") ? "text-vj-primary" : "text-vj-muted"
                     }`}
                     onClick={handleNavClick}
@@ -201,7 +219,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/startups"
-                    className={`text-sm font-medium transition-colors hover:text-vj-primary ${
+                    className={`text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center ${
                       isActive("/startups") ? "text-vj-primary" : "text-vj-muted"
                     }`}
                     onClick={handleNavClick}
@@ -210,7 +228,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/programs"
-                    className={`text-sm font-medium transition-colors hover:text-vj-primary ${
+                    className={`text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center ${
                       isActive("/programs") ? "text-vj-primary" : "text-vj-muted"
                     }`}
                     onClick={handleNavClick}
@@ -219,13 +237,33 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/club"
-                    className={`text-sm font-medium transition-colors hover:text-vj-primary ${
+                    className={`text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center ${
                       isActive("/club") ? "text-vj-primary" : "text-vj-muted"
                     }`}
                     onClick={handleNavClick}
                   >
                     Club
                   </Link>
+                  {(user?.role === "wing_master" || user?.role === "admin") && (
+                    <Link
+                      to="/announcements/new"
+                      className={`text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center ${
+                        isActive("/announcements/new") ? "text-vj-primary" : "text-vj-muted"
+                      }`}
+                      onClick={handleNavClick}
+                    >
+                      Post Announcement
+                    </Link>
+                  )}
+                  {user?.role === "admin" && (
+                    <a
+                      href="/admin"
+                      className="text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center text-vj-muted"
+                      onClick={handleNavClick}
+                    >
+                      Admin Panel
+                    </a>
+                  )}
                   
                   {/* Mobile Actions */}
                   <div className="pt-4 border-t border-border">

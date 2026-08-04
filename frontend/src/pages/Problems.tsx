@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Filter, Search, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Filter, Search, ArrowUpDown, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import UpvoteButton from "@/components/UpvoteButton";
-import ProblemSubmissionForm from "@/components/ProblemSubmissionForm";
 import { PageHero } from "@/components/design-system/PageHero";
 import axios from "axios";
 import { useUser } from "../pages/UserContext"; 
@@ -259,7 +258,12 @@ const handleUpvote = async (problemId: string) => {
       <section className="page-section">
         <div className="section-container space-y-8">
           <div className="flex justify-end">
-            <ProblemSubmissionForm onProblemAdded={(newProblem) => setAllProblems(prev => [newProblem, ...prev])} />
+            <Link to="/submit-problem">
+              <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0">
+                <Plus className="w-4 h-4 mr-2" />
+                Submit Problem
+              </Button>
+            </Link>
           </div>
 
           {/* Filters & Search - Only show when user is logged in */}

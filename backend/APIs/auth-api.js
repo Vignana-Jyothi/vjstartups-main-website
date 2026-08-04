@@ -61,7 +61,7 @@ router.post('/google', async (req, res) => {
       name: dbUser.name,
       email: dbUser.email,
       picture: dbUser.picture,
-      role: dbUser.role,
+      role: dbUser.role || 'student',
       // Only include adminToken if this user is an admin
       ...(dbUser.role === 'admin' && { adminToken: dbUser.adminToken }),
     };

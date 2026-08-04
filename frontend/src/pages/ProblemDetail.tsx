@@ -1,37 +1,48 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, MessageCircle, TrendingUp, Users, Target, Lightbulb, BarChart3, Zap, AlertCircle, Calendar, User, Eye } from "lucide-react";
+import { ArrowLeft, MessageCircle, TrendingUp, Users, Target, Lightbulb, BarChart3, Zap, AlertCircle, Calendar, User, Eye, Edit, Trash2, Share2, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHero } from "@/components/design-system/PageHero";
 import UpvoteButton from "@/components/UpvoteButton";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useUser } from "../pages/UserContext";
 import CommentSection from "@/components/CommentSection";
-
-// Helper function to convert text with newlines to JSX with line breaks
-const TextWithLineBreaks = ({ text }: { text: string }) => {
-  if (!text) return null;
-  
-  return (
-    <>
-      {text.split('\n').map((line, index) => (
-        <span key={index}>
-          {line}
-          {index < text.split('\n').length - 1 && <br />}
-        </span>
-      ))}
-    </>
-  );
-};
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const ProblemDetail = () => {
   const { id } = useParams();
   const [problem, setProblem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const { user } = useUser();
+  const { toast } = useToast();
   const [comments, setComments] = useState<any[]>([]);
+
+  // Format date to readable format
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return dateString;
+    }
+  };
 
   const mapCommentsFromBackend = (backendComments: any[]) => {
     return (backendComments || []).map((c: any) => ({
@@ -57,9 +68,36 @@ const ProblemDetail = () => {
     }));
   };
 
+  const handleDeleteProblem = async () => {
+    if (!problem?.problemId || !user?.email) return;
+
+    try {
+      setDeleting(true);
+      await axios.delete(
+        `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${problem.problemId}`,
+        { data: { email: user?.email } }
+      );
+      
+      toast({
+        title: "Problem Deleted",
+        description: "The problem has been successfully deleted.",
+      });
+      
+      window.location.href = '/problems';
+    } catch (err: any) {
+      console.error("Error deleting problem:", err);
+      toast({
+        title: "Error",
+        description: err.response?.data?.message || "Failed to delete problem",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // Scroll to top when component mounts
   useEffect(() => {
-    // Scroll to top when viewing problem details
     window.scrollTo(0, 0);
   }, []);
   
@@ -86,37 +124,6 @@ const ProblemDetail = () => {
     
     fetchProblem();
   }, [id, user?.email]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen pt-24 px-4 flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 dark:border-green-400 mx-auto"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading problem details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!problem) {
-    return (
-      <div className="min-h-screen pt-24 px-4 flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-        <Card className="max-w-md mx-auto text-center bg-white dark:bg-gray-800/90 backdrop-blur-sm">
-          <CardContent className="pt-6">
-            <AlertCircle className="w-16 h-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Problem Not Found</h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">The problem you're looking for doesn't exist or has been removed.</p>
-            <Link to={`/problems#problem-${id}`}>
-              <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Problems
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const handleAddComment = async (content: string) => {
     try {
@@ -163,6 +170,39 @@ const ProblemDetail = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-24 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-problem-primary mx-auto mb-4"></div>
+          <p className="text-vj-muted">Loading problem...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!problem) {
+    return (
+      <div className="min-h-screen pt-24 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-vj-primary mb-4">Problem Not Found</h1>
+          <Link to="/problems">
+            <Button className="bg-problem-primary hover:bg-problem-primary/90 text-white">
+              Back to Problems
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const canEditDelete = Boolean(
+    user?.email && (
+      user.email === problem.addedByEmail || 
+      problem.collaborators?.includes(user.email)
+    )
+  );
+
   return (
     <div className="page-shell bg-vj-neutral/30">
       <PageHero
@@ -173,242 +213,321 @@ const ProblemDetail = () => {
         stats={[
           { value: String(problem.upvotes || 0), label: "Upvotes" },
           { value: String(comments.length), label: "Comments" },
-          { value: new Date(problem.createdAt).toLocaleDateString(), label: "Published" },
+          { value: formatDate(problem.createdAt), label: "Published" },
         ]}
-        backgroundClassName="bg-[hsl(var(--background-secondary))] relative min-h-[300px] md:min-h-[420px]"
+        backgroundClassName="bg-[hsl(var(--background-secondary))] relative min-h-[320px] md:min-h-[460px]"
       />
 
-      <section className="page-section">
-        <div className="section-container">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap gap-1.5">
-              {problem.tags?.map((tag: string) => (
-                <Badge key={tag} variant="secondary" className="bg-vj-accent-light text-vj-accent">
+      <div className="page-section">
+        <div className="section-container max-w-6xl">
+        {/* Back Navigation */}
+        <div className="mb-8">
+          <Link to={`/problems#problem-${problem.problemId}`} className="inline-flex items-center text-vj-muted hover:text-problem-primary transition-colors">
+            <ArrowLeft size={20} className="mr-2" />
+            Back to Problems
+          </Link>
+        </div>
+
+        {/* Problem Header */}
+        <div className="vj-card-problem mb-8">
+          {/* Problem Image */}
+          {problem.image && (
+            <div className="aspect-video relative overflow-hidden rounded-vj-large mb-6 bg-problem-light/50">
+              <img 
+                src={problem.image}
+                alt={problem.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+              <div className="absolute top-6 left-6">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-black/70 backdrop-blur-sm rounded-full">
+                  <span className="w-3 h-3 bg-red-400 rounded-full animate-pulse"></span>
+                  <span className="text-white text-sm font-medium">🎯 Problem Statement</span>
+                </div>
+              </div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <div className="flex items-end justify-between">
+                  <div>
+                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 font-playfair">
+                      {problem.title}
+                    </h1>
+                    {problem.briefparagraph && (
+                      <p className="text-white/90 text-lg">
+                        {problem.briefparagraph}
+                      </p>
+                    )}
+                  </div>
+                  <UpvoteButton 
+                    upvotes={problem.upvotes || 0}
+                    hasUpvoted={problem.upvotedBy?.includes(user?.email || "")}
+                    onClick={async () => {
+                      try {
+                        const res = await axios.post(
+                          `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem/${problem.problemId}/upvote`,
+                          { email: user?.email }
+                        );
+                        setProblem(res.data);
+                      } catch (err) {
+                        console.error("Error upvoting problem:", err);
+                      }
+                    }}
+                    className="bg-white/90 backdrop-blur-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!problem.image && (
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-problem-light rounded-full">
+                  <span className="w-3 h-3 bg-problem-primary rounded-full animate-pulse"></span>
+                  <span className="text-problem-primary text-sm font-medium">🎯 Problem Statement</span>
+                </div>
+              </div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold text-vj-primary mb-2 font-playfair">
+                    {problem.title}
+                  </h1>
+                  {problem.briefparagraph && (
+                    <p className="text-vj-muted text-lg">
+                      {problem.briefparagraph}
+                    </p>
+                  )}
+                </div>
+                <UpvoteButton 
+                  upvotes={problem.upvotes || 0}
+                  hasUpvoted={problem.upvotedBy?.includes(user?.email || "")}
+                  onClick={async () => {
+                    try {
+                      const res = await axios.post(
+                        `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem/${problem.problemId}/upvote`,
+                        { email: user?.email }
+                      );
+                      setProblem(res.data);
+                    } catch (err) {
+                      console.error("Error upvoting problem:", err);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Meta Information */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4 text-sm text-vj-muted">
+              <div className="flex items-center gap-1">
+                <Eye size={16} />
+                <span>{problem.views || 0} views</span>
+              </div>
+              <span>•</span>
+              <div className="flex items-center gap-1">
+                <MessageCircle size={16} />
+                <span>{comments.length} comments</span>
+              </div>
+              <span>•</span>
+              <div className="flex items-center gap-1">
+                <Calendar size={16} />
+                <span>{formatDate(problem.createdAt)}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {canEditDelete && (
+                <>
+                  <Link to={`/update-problem/${problem.problemId}`} state={{ problem }}>
+                    <Button variant="ghost" size="sm" className="text-problem-primary hover:bg-red-50 hover:text-red-700 transition-colors">
+                      <Edit size={16} className="mr-2" />
+                      Edit
+                    </Button>
+                  </Link>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-50">
+                        <Trash2 size={16} className="mr-2" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the problem
+                          "{problem.title}" and remove all associated data.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteProblem}
+                          disabled={deleting}
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          {deleting ? "Deleting..." : "Delete Problem"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
+              
+              <Button variant="ghost" size="sm">
+                <Share2 size={16} className="mr-2" />
+                Share
+              </Button>
+              <Button variant="ghost" size="sm">
+                <Bookmark size={16} className="mr-2" />
+                Save
+              </Button>
+            </div>
+          </div>
+
+          {/* Tags */}
+          {problem.tags && problem.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {problem.tags.map((tag: string) => (
+                <Badge key={tag} variant="secondary" className="bg-problem-light text-problem-primary border-problem-primary/20">
                   {tag}
                 </Badge>
               ))}
             </div>
-
-            <div className="flex items-center gap-2">
-              {(user?.email === problem.addedByEmail || (problem.collaborators && problem.collaborators.includes(user?.email))) && (
-                <>
-                  <Link to={`/update-problem/${problem.problemId}`} state={{ problem }}>
-                    <Button size="sm" variant="outline">
-                      Update
-                    </Button>
-                  </Link>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={async () => {
-                      if (confirm("Are you sure you want to delete this problem?")) {
-                        try {
-                          await axios.delete(
-                            `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${problem.problemId}`,
-                            {
-                              data: { email: user?.email }
-                            }
-                          );
-                          alert("Problem deleted successfully!");
-                          window.location.href = '/problems';
-                        } catch (err: any) {
-                          console.error("Error deleting problem:", err);
-                          alert(err.response?.data?.message || "Failed to delete problem");
-                        }
-                      }
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </>
-              )}
-
-              <UpvoteButton
-                upvotes={problem.upvotes || 0}
-                hasUpvoted={problem.upvotedBy?.includes(user?.email || "")}
-                onClick={async () => {
-                  try {
-                    const res = await axios.post(
-                      `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem/${problem.problemId}/upvote`,
-                      { email: user?.email }
-                    );
-                    setProblem(res.data);
-                  } catch (err) {
-                    console.error("Error upvoting problem:", err);
-                  }
-                }}
-              />
-            </div>
-          </div>
-      </div>
-      
-      {/* Main Content */}
-      <div className="page-section pt-0 relative">
-        <div className="section-container relative">
-
-          {/* Problem Image */}
-          {problem.image && (
-            <Card className="mb-6 overflow-hidden transform hover:scale-[1.01] transition-all duration-500 bg-transparent">
-              <div className="aspect-video w-full rounded-lg overflow-hidden">
-                <img 
-                  src={problem.image} 
-                  alt={problem.title} 
-                  className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500 ease-out" 
-                />
-              </div>
-            </Card>
           )}
-          
-          {/* Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 xl:gap-6">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-4">
-              {problem.targetCustomers && (
-                <Card className="shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/90 backdrop-blur-sm animate-fade-in-up">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center text-xl font-bold text-gray-900 dark:text-white">
-                      <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-lg mr-3 animate-slide-in-left">
-                        <Users className="w-5 h-5 text-white" />
-                      </div>
-                      Target Customer(s)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="prose prose-gray dark:prose-invert max-w-none text-gray-700 dark:text-gray-200 leading-relaxed">
-                      <TextWithLineBreaks text={problem.targetCustomers || "Not specified."} />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
-              {problem.description && (
-                <Card className="shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/90 backdrop-blur-sm animate-fade-in-up delay-100">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center text-xl font-bold text-gray-900 dark:text-white">
-                      <div className="p-2 bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 rounded-lg mr-3 animate-slide-in-left delay-100">
-                        <Target className="w-5 h-5 text-white" />
-                      </div>
-                      Problem Description
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="prose prose-gray dark:prose-invert max-w-none text-gray-700 dark:text-gray-200 leading-relaxed">
-                      <TextWithLineBreaks text={problem.description || ""} />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {problem.background && (
-                <Card className="shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/90 backdrop-blur-sm animate-fade-in-up delay-200">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center text-xl font-bold text-gray-900 dark:text-white">
-                      <div className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 rounded-lg mr-3 animate-slide-in-left delay-200">
-                        <Lightbulb className="w-5 h-5 text-white" />
-                      </div>
-                      Background
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="prose prose-gray dark:prose-invert max-w-none text-gray-700 dark:text-gray-200 leading-relaxed">
-                      <TextWithLineBreaks text={problem.background || ""} />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {problem.currentGaps && (
-                <Card className="shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/90 backdrop-blur-sm animate-fade-in-up delay-300">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center text-xl font-bold text-gray-900 dark:text-white">
-                      <div className="p-2 bg-gradient-to-r from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-700 rounded-lg mr-3 animate-slide-in-left delay-300">
-                        <AlertCircle className="w-5 h-5 text-white" />
-                      </div>
-                      Current Gaps
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="prose prose-gray dark:prose-invert max-w-none text-gray-700 dark:text-gray-200 leading-relaxed">
-                      <TextWithLineBreaks text={problem.currentGaps || "No gaps specified."} />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-            
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {problem.scalability && (
-                <Card className="shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/90 backdrop-blur-sm animate-slide-in-right">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center text-lg font-bold text-gray-900 dark:text-white">
-                      <div className="p-2 bg-gradient-to-r from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 rounded-lg mr-3 animate-fade-in">
-                        <Zap className="w-4 h-4 text-white animate-pulse" />
-                      </div>
-                      Scalability
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-gray-700 dark:text-gray-200 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-                      <TextWithLineBreaks text={problem.scalability || ""} />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {problem.marketSize && (
-                <Card className="shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/90 backdrop-blur-sm animate-slide-in-right delay-100">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center text-lg font-bold text-gray-900 dark:text-white">
-                      <div className="p-2 bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-600 dark:to-indigo-700 rounded-lg mr-3 animate-fade-in delay-100">
-                        <BarChart3 className="w-4 h-4 text-white animate-pulse" />
-                      </div>
-                      Market Size & Stats
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-gray-700 dark:text-gray-200 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-                      <TextWithLineBreaks text={problem.marketSize || "Not available."} />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {problem.existingSolutions && (
-                <Card className="shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/90 backdrop-blur-sm animate-slide-in-right delay-200">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center text-lg font-bold text-gray-900 dark:text-white">
-                      <div className="p-2 bg-gradient-to-r from-teal-500 to-teal-600 dark:from-teal-600 dark:to-teal-700 rounded-lg mr-3 animate-fade-in delay-200">
-                        <TrendingUp className="w-4 h-4 text-white animate-pulse" />
-                      </div>
-                      Existing Solutions
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-gray-700 dark:text-gray-200 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-                      <TextWithLineBreaks text={problem.existingSolutions || "No competitors listed."} />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+          {/* Problem Description */}
+          <div className="prose prose-lg max-w-none">
+            <h2 className="text-xl font-semibold text-vj-primary mb-4">Problem Overview</h2>
+            <p className="text-vj-muted leading-relaxed mb-6 whitespace-pre-line">
+              {problem.description}
+            </p>
           </div>
+        </div>
 
-          {/* Comment Section */}
-          <div className="mt-8 relative animate-fade-in-up delay-400">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/10 dark:to-gray-900/10 pointer-events-none backdrop-blur-sm rounded-lg"></div>
-            <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg p-4 shadow-xl">
-              <CommentSection
-                comments={comments}
-                onAddComment={handleAddComment}
-                onLikeComment={handleLikeComment}
-                onReply={handleReply}
-              />
+        {/* Detailed Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Target Customers */}
+            {problem.targetCustomers && (
+              <div className="vj-card-problem">
+                <h3 className="text-lg font-semibold text-vj-primary mb-4 flex items-center gap-2">
+                  <Users className="text-problem-primary" />
+                  Target Customer(s)
+                </h3>
+                <div className="prose prose-gray max-w-none text-vj-muted leading-relaxed">
+                  <p className="whitespace-pre-line">{problem.targetCustomers}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Background */}
+            {problem.background && (
+              <div className="vj-card-problem">
+                <h3 className="text-lg font-semibold text-vj-primary mb-4 flex items-center gap-2">
+                  <Lightbulb className="text-problem-primary" />
+                  Background
+                </h3>
+                <div className="prose prose-gray max-w-none text-vj-muted leading-relaxed">
+                  <p className="whitespace-pre-line">{problem.background}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Current Gaps */}
+            {problem.currentGaps && (
+              <div className="vj-card-problem">
+                <h3 className="text-lg font-semibold text-vj-primary mb-4 flex items-center gap-2">
+                  <AlertCircle className="text-problem-primary" />
+                  Current Gaps
+                </h3>
+                <div className="prose prose-gray max-w-none text-vj-muted leading-relaxed">
+                  <p className="whitespace-pre-line">{problem.currentGaps}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Existing Solutions */}
+            {problem.existingSolutions && (
+              <div className="vj-card-problem">
+                <h3 className="text-lg font-semibold text-vj-primary mb-4 flex items-center gap-2">
+                  <TrendingUp className="text-problem-primary" />
+                  Existing Solutions
+                </h3>
+                <div className="prose prose-gray max-w-none text-vj-muted leading-relaxed">
+                  <p className="whitespace-pre-line">{problem.existingSolutions}</p>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Scalability */}
+            {problem.scalability && (
+              <div className="vj-card-problem">
+                <h3 className="text-lg font-semibold text-vj-primary mb-4 flex items-center gap-2">
+                  <Zap className="text-problem-primary" />
+                  Scalability
+                </h3>
+                <div className="text-vj-muted leading-relaxed whitespace-pre-line">
+                  {problem.scalability}
+                </div>
+              </div>
+            )}
+
+            {/* Market Size */}
+            {problem.marketSize && (
+              <div className="vj-card-problem">
+                <h3 className="text-lg font-semibold text-vj-primary mb-4 flex items-center gap-2">
+                  <BarChart3 className="text-problem-primary" />
+                  Market Size & Stats
+                </h3>
+                <div className="text-vj-muted leading-relaxed whitespace-pre-line">
+                  {problem.marketSize}
+                </div>
+              </div>
+            )}
+
+            {/* Problem Metadata */}
+            <div className="vj-card-problem">
+              <h3 className="text-lg font-semibold text-vj-primary mb-4">Problem Details</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-vj-muted">Posted by</span>
+                  <span className="font-medium text-problem-primary">
+                    {problem.addedBy || 'Anonymous'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-vj-muted">Category</span>
+                  <span className="font-medium text-problem-primary">
+                    {problem.category || 'General'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-vj-muted">Community Interest</span>
+                  <span className="font-medium text-problem-primary">{problem.upvotes || 0} upvotes</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-vj-muted">Discussions</span>
+                  <span className="font-medium text-problem-primary">{comments.length} comments</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Comments Section */}
+        <CommentSection
+          comments={comments}
+          onAddComment={handleAddComment}
+          onLikeComment={handleLikeComment}
+          onReply={handleReply}
+        />
+        </div>
       </div>
-    </section>
     </div>
   );
 };

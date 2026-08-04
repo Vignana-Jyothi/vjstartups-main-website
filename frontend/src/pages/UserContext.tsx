@@ -5,7 +5,7 @@ interface User {
   name: string;
   email: string;
   picture: string;
-  // add any other fields your API returns
+  role?: string;
 }
 
 interface UserContextType {

@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { ArrowRight, Lightbulb, Users, TrendingUp, Award, Rocket, Globe, Zap, Sparkles, Brain, Target } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight, Lightbulb, Users, TrendingUp, Award, Rocket, Globe, Zap, Sparkles, Brain, Target, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import QuestionnaireHistory from "@/components/QuestionnaireHistory";
@@ -10,11 +10,22 @@ import GalaxyBackground from "@/components/GalaxyBackground";
 import { PageHero } from "@/components/design-system/PageHero";
 import { useUser } from "./UserContext";
 import VirtualStartupJourney from "@/components/InteractiveLearningHub";
-
-const user = JSON.parse(localStorage.getItem("user") || "null");
+import AnnouncementBanner from "@/components/AnnouncementBanner";
+import ExploreProblemsModal, { ExploreProblemsDialog } from "@/components/ExploreProblemsModal";
+import { useState } from "react";
 
 const Home = () => {
   const { user: currentUser } = useUser();
+  const navigate = useNavigate();
+  const [exploreModalOpen, setExploreModalOpen] = useState(false);
+
+  const handleExploreProblems = () => {
+    if (currentUser) {
+      navigate("/problems");
+    } else {
+      setExploreModalOpen(true);
+    }
+  };
   const achievements = [
     {
       icon: Award,
@@ -63,11 +74,12 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
+      <AnnouncementBanner />
       <PageHero
         eyebrow="Innovation Starts Here"
         title={"Build for the future, start here."}
         description={"Empowering college entrepreneurs to turn real-world challenges into bold innovations. Connect, create, and shape the future of startups."}
-        primaryAction={{ label: "Explore Problems", to: "/problems", variant: "default", icon: ArrowRight }}
+        primaryAction={{ label: "Explore Problems", onClick: handleExploreProblems, variant: "default", icon: ArrowRight }}
         secondaryAction={{ label: "View Solutions", to: "/ideas", variant: "secondary", icon: Brain }}
         backgroundClassName="relative min-h-screen"
       >
@@ -83,11 +95,42 @@ const Home = () => {
             <img
               src={vjLogo}
               alt="VJ Startups"
-              className="h-32 md:h-40 mx-auto drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:scale-105 transition-transform duration-300"
+              className="h-24 sm:h-32 md:h-40 mx-auto drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:scale-105 transition-transform duration-300"
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-8 md:gap-16 mb-16">
+          <div className="flex justify-center gap-4 mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <a
+              href="#"
+              aria-label="Instagram"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-gray-300 transition-colors hover:border-purple-500 hover:text-purple-400"
+            >
+              <Instagram className="h-5 w-5" />
+            </a>
+            <a
+              href="#"
+              aria-label="LinkedIn"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-gray-300 transition-colors hover:border-purple-500 hover:text-purple-400"
+            >
+              <Linkedin className="h-5 w-5" />
+            </a>
+            <a
+              href="#"
+              aria-label="Twitter"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-gray-300 transition-colors hover:border-purple-500 hover:text-purple-400"
+            >
+              <Twitter className="h-5 w-5" />
+            </a>
+            <a
+              href="#"
+              aria-label="YouTube"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-gray-300 transition-colors hover:border-purple-500 hover:text-purple-400"
+            >
+              <Youtube className="h-5 w-5" />
+            </a>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 sm:gap-8 md:gap-16 mb-16">
             <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
               <AnimatedCounter end={counters.startups} duration={2} label="Startups" />
             </div>
@@ -99,15 +142,15 @@ const Home = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: '1s' }}>
-            <Link to="/problems">
-              <Button size="lg" className="btn-primary group">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in px-2" style={{ animationDelay: '1s' }}>
+            <ExploreProblemsModal>
+              <Button size="lg" className="btn-primary group min-h-[44px] w-full sm:w-auto">
                 Explore Problems
                 <ArrowRight size={20} className="ml-2 transition-transform group-hover:translate-x-1" />
               </Button>
-            </Link>
+            </ExploreProblemsModal>
             <Link to="/ideas">
-              <Button size="lg" className="btn-secondary group">
+              <Button size="lg" className="btn-secondary group min-h-[44px] w-full sm:w-auto">
                 View Solutions
                 <Brain size={20} className="ml-2 transition-transform group-hover:translate-x-1" />
               </Button>
@@ -115,6 +158,7 @@ const Home = () => {
           </div>
         </div>
       </PageHero>
+      <ExploreProblemsDialog open={exploreModalOpen} onOpenChange={setExploreModalOpen} />
 
       {/* Virtual Startup Journey - NEW SECTION */}
       {/* Featured Section */}

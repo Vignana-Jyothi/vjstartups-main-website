@@ -55,6 +55,8 @@ app.use('/admin-api', require('./APIs/admin-api'));
 // New: Tasks/Projects routes (public reads, write requires userId in body)
 app.use('/tasks-api', require('./APIs/tasks-api'));
 
+app.use('/announcements-api', require('./APIs/announcements-api'));
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 5001;

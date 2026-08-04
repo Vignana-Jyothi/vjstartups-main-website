@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Github, Twitter, Linkedin, Mail, Instagram } from "lucide-react";
+import { Github, Twitter, Linkedin, Mail, Instagram, Calendar } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -69,6 +69,13 @@ const Footer = () => {
               <p>VJ Startups</p>
               <p>Hyderabad. IN 500090</p>
             </div>
+            <a
+              href="mailto:kp@vjstartup.com?subject=Meeting Request"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-vj-border px-4 py-2 text-sm font-medium text-vj-primary transition-colors hover:border-vj-accent hover:text-vj-accent"
+            >
+              <Calendar size={16} />
+              Schedule a Meeting
+            </a>
           </div>
         </div>
         

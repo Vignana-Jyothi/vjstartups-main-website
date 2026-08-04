@@ -473,6 +473,25 @@
   }
 }
 
+/* Mobile responsiveness — touch targets and layout fixes */
+@media (max-width: 767px) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    min-height: 44px;
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 8vw, 3rem);
+    line-height: 1.15;
+  }
+
+  .section-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
 /* FAB Animation */
 @keyframes bounceIn {
   0% {

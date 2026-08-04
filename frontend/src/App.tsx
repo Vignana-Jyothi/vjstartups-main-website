@@ -8,9 +8,11 @@ import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Problems from "./pages/Problems";
 import ProblemDetail from "./pages/ProblemDetail";
+import SubmitProblem from "./pages/SubmitProblem";
 import UpdateProblemForm from "./pages/UpdateProblemForm";
 import Ideas from "./pages/Ideas";
 import IdeaDetail from "./pages/IdeaDetail";
+import SubmitIdea from "./pages/SubmitIdea";
 import IdeaValidation from "./pages/IdeaValidation";
 import Programs from "./pages/Programs";
 import ProgramDetail from "./pages/ProgramDetail";
@@ -25,6 +27,7 @@ import Leaderboard from "./pages/Leaderboard";
 import AllChanges from "./pages/AllChanges";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import PostAnnouncement from "./pages/PostAnnouncement";
 import NotFound from "./pages/NotFound";
 import { UserProvider } from "../src/pages/UserContext";
 
@@ -49,9 +52,11 @@ const App = () => (
                 <Route path="/" element={<Home />} />
                 <Route path="/problems" element={<Problems />} />
                 <Route path="/problems/:id" element={<ProblemDetail />} />
+                <Route path="/submit-problem" element={<SubmitProblem />} />
                 <Route path="/update-problem/:id" element={<UpdateProblemForm />} />
                 <Route path="/ideas" element={<Ideas />} />
                 <Route path="/ideas/:slug" element={<IdeaDetail />} />
+                <Route path="/submit-idea" element={<SubmitIdea />} />
                 <Route path="/idea-validation" element={<IdeaValidation />} />
                 <Route path="/programs" element={<Programs />} />
                 <Route path="/programs/:id" element={<ProgramDetail />} />
@@ -66,6 +71,7 @@ const App = () => (
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/announcements/new" element={<PostAnnouncement />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

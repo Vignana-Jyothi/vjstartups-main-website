@@ -414,6 +414,10 @@ const IdeaSubmissionForm = () => {
           Form to submit a new startup idea with details, team members, links, and file attachments.
         </p>
 
+        <div className="bg-amber-900/30 border border-amber-600 text-amber-200 rounded-lg p-3 text-sm mb-4">
+          Note: Off-topic or irrelevant submissions will be rejected by the admin team.
+        </div>
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
             <Label htmlFor="title">Idea Title *</Label>

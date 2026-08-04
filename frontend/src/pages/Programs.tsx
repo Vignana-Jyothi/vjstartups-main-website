@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Calendar, Users, Trophy, Clock, ArrowRight, CheckCircle, Circle, PlayCircle } from "lucide-react";
 import { startupPrograms, StartupProgram } from "@/data/startupPrograms";
+import ExploreProblemsModal from "@/components/ExploreProblemsModal";
 import { PageHero } from "@/components/design-system/PageHero";
 
 const Programs = () => {
@@ -156,12 +157,12 @@ const Programs = () => {
             Join our thriving startup community and transform your ideas into reality
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg">Contact Innovation Cell</Button>
-            <Link to="/problems">
-              <Button size="lg" variant="outline">
+            <Button size="lg" className="min-h-[44px]">Contact Innovation Cell</Button>
+            <ExploreProblemsModal>
+              <Button size="lg" variant="outline" className="min-h-[44px] w-full sm:w-auto">
                 Explore Problems
               </Button>
-            </Link>
+            </ExploreProblemsModal>
           </div>
         </div>
         </div>

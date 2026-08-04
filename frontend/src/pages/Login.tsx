@@ -1,7 +1,8 @@
 import { GoogleLogin } from "@react-oauth/google";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "./UserContext";
-import { PageHero } from "@/components/design-system/PageHero";
+import GalaxyBackground from "@/components/GalaxyBackground";
+import vjLogo from "@/assets/vj-logo.png";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -38,39 +39,44 @@ const Login = () => {
   };
 
   return (
-    <div className="page-shell bg-vj-neutral/30">
-      <PageHero
-        eyebrow="Access"
-        title="Welcome Back"
-        description="Sign in to continue to your account."
-      />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-4">
+      <GalaxyBackground />
+      <div className="absolute inset-0 bg-gradient-to-br from-vj-surface/95 via-black/90 to-purple-950/40" />
 
-      <section className="page-section">
-        <div className="section-container flex justify-center">
-          <div className="section-panel w-full max-w-md p-8 text-center">
-            <div className="flex justify-center">
-              <GoogleLogin
-                onSuccess={handleGoogleLogin}
-                onError={() => {
-                  console.log("Google OAuth error — check client ID in .env");
-                  alert("Google login failed. Check that VITE_GOOGLE_CLIENT is set correctly in frontend/.env");
-                }}
-              />
-            </div>
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-zinc-700 bg-zinc-900/80 p-8 text-center shadow-2xl backdrop-blur-md">
+        <img
+          src={vjLogo}
+          alt="VJ Startups"
+          className="mx-auto mb-4 h-20 w-auto"
+        />
+        <h1 className="font-playfair text-2xl font-bold text-white md:text-3xl">
+          VJ Startups
+        </h1>
+        <p className="mb-8 mt-2 text-sm text-zinc-400">
+          Join the innovation ecosystem
+        </p>
 
-            <p className="mt-8 text-sm text-vj-muted">
-              By continuing, you agree to our{" "}
-              <Link to="/terms" className="text-vj-accent hover:underline">
-                Terms
-              </Link>{" "}
-              &{" "}
-              <Link to="/privacy" className="text-vj-accent hover:underline">
-                Privacy Policy
-              </Link>
-            </p>
-          </div>
+        <div className="flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleLogin}
+            onError={() => {
+              console.log("Google OAuth error — check client ID in .env");
+              alert("Google login failed. Check that VITE_GOOGLE_CLIENT is set correctly in frontend/.env");
+            }}
+          />
         </div>
-      </section>
+
+        <p className="mt-8 text-sm text-zinc-500">
+          By continuing, you agree to our{" "}
+          <Link to="/terms" className="text-vj-accent hover:underline">
+            Terms
+          </Link>{" "}
+          &{" "}
+          <Link to="/privacy" className="text-vj-accent hover:underline">
+            Privacy Policy
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };

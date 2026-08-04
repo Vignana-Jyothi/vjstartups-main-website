@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search, Filter, Users, MessageCircle } from "lucide-react";
+import { Search, Filter, Users, MessageCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import IdeaCard from "@/components/IdeaCardCompact";
-import IdeaSubmissionForm from "@/components/IdeaSubmissionForm";
 import { PageHero } from "@/components/design-system/PageHero";
 import axios from "axios";
 import { useUser } from "./UserContext";
@@ -250,7 +249,12 @@ const Ideas = () => {
         <div className="section-container space-y-8">
           {user && (
             <div className="flex justify-end">
-              <IdeaSubmissionForm />
+              <Link to="/submit-idea">
+                <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-0">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Submit Idea
+                </Button>
+              </Link>
             </div>
           )}
 
@@ -337,7 +341,11 @@ const Ideas = () => {
                 </Button>
               </Link>
             </div>
-          ) : filteredIdeas.length === 0 && !loading ? (
+          ) : loading ? (
+            <div className="flex justify-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-idea-primary"></div>
+            </div>
+          ) : filteredIdeas.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-vj-muted text-lg">
                 {problemFilter ? "No ideas found for this problem yet." : "No ideas match your current filters."}
@@ -356,7 +364,19 @@ const Ideas = () => {
                 </Button>
               </div>
             </div>
-          ) : null}
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredIdeas.map((idea) => (
+                <div key={idea.ideaId} id={`idea-${idea.ideaId}`}>
+                  <IdeaCard
+                    idea={idea}
+                    onUpvote={handleUpvote}
+                    onStageUpdate={handleStageUpdate}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>

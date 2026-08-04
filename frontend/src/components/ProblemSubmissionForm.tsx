@@ -327,6 +327,10 @@ const ProblemSubmissionForm = ({
           </DialogTitle>
         </DialogHeader>
 
+        <div className="bg-amber-900/30 border border-amber-600 text-amber-200 rounded-lg p-3 text-sm mb-4">
+          Note: Off-topic or irrelevant submissions will be rejected by the admin team.
+        </div>
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
             <div className="flex items-center gap-2 mb-2">

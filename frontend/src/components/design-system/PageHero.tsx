@@ -49,7 +49,7 @@ export function PageHero({
     if (!action) return null;
 
     const button = (
-      <Button size="lg" variant={action.variant || "default"} className={cn("group", className)} onClick={action.onClick}>
+      <Button size="lg" variant={action.variant || "default"} className={cn("group min-h-[44px]", className)} onClick={action.onClick}>
         {action.icon && <action.icon className="h-4 w-4" aria-hidden="true" />}
         <span>{action.label}</span>
       </Button>
@@ -95,9 +95,9 @@ export function PageHero({
           </div>
 
           {(primaryAction || secondaryAction) && (
-            <div className="flex flex-col gap-3 sm:flex-row">
-              {renderAction(primaryAction)}
-              {renderAction(secondaryAction, secondaryAction?.variant === "ghost" ? "px-2" : undefined)}
+            <div className="flex w-full flex-col gap-3 px-2 sm:w-auto sm:flex-row sm:px-0">
+              {renderAction(primaryAction, "w-full sm:w-auto")}
+              {renderAction(secondaryAction, secondaryAction?.variant === "ghost" ? "px-2 w-full sm:w-auto" : "w-full sm:w-auto")}
             </div>
           )}
 
