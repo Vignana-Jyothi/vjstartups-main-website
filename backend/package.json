@@ -1,26 +1,30 @@
 {
   "name": "backend",
-  "version": "1.0.0",
-  "description": "",
+  "version": "2.0.0",
+  "description": "VJ Startups Backend - PostgreSQL with Prisma",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "node prisma/seed.js",
+    "db:reset": "prisma migrate reset --force",
+    "db:push": "prisma db push"
   },
-  "author": "",
+  "author": "VJ Startups Team",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "expressjs": "^1.0.1",
     "google-auth-library": "^10.2.1",
-    "mongodb": "^7.3.0",
-    "mongoose": "^8.18.0",
     "multer": "^2.0.2",
-    "node-appwrite": "^26.2.0",
+    "prisma": "^6.19.3",
     "streamifier": "^0.1.1",
     "uuid": "^8.3.2"
   }

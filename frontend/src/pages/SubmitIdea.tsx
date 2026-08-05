@@ -462,7 +462,7 @@ const SubmitIdea: React.FC = () => {
                       ) : Array.isArray(filteredProblems) && filteredProblems.length > 0 ? (
                         filteredProblems.map((problem) => (
                           <div
-                            key={problem?._id || problem?.problemId}
+                            key={problem?.id || problem?.problemId}
                             className="p-4 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                             onClick={() => {
                               if (problem?.problemId && problem?.title) {

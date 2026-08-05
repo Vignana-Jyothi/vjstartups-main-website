@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Project = require('../models/Project');
-const Task = require('../models/Task');
+const prisma = require('../config/prisma');
 
 // ─── PROJECTS ────────────────────────────────────────────────────────────────
 
@@ -11,17 +10,26 @@ const Task = require('../models/Task');
  */
 router.get('/projects', async (req, res) => {
   try {
-    const projects = await Project.find({ status: { $ne: 'archived' } })
-      .sort({ createdAt: -1 });
+    const projects = await prisma.project.findMany({
+      where: {
+        status: { not: 'ARCHIVED' }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
     // Attach task counts per project
     const projectsWithCounts = await Promise.all(
       projects.map(async (project) => {
         const [total, done] = await Promise.all([
-          Task.countDocuments({ projectId: project._id }),
-          Task.countDocuments({ projectId: project._id, status: 'done' })
+          prisma.task.count({ where: { projectId: project.id } }),
+          prisma.task.count({ where: { projectId: project.id, status: 'DONE' } })
         ]);
-        return { ...project.toObject(), taskCount: total, completedCount: done };
+        return { 
+          ...project, 
+          status: project.status.toLowerCase(), // Convert enum to lowercase for frontend
+          taskCount: total, 
+          completedCount: done 
+        };
       })
     );
 
@@ -44,17 +52,49 @@ router.post('/projects', async (req, res) => {
       return res.status(400).json({ success: false, message: 'name and createdBy are required' });
     }
 
-    const project = new Project({
-      name,
-      description,
-      color: color || '#7c3aed',
-      emoji: emoji || '📋',
-      createdBy,
-      members: [{ userId: createdBy, name: creatorName, role: 'lead' }]
+    // Verify user exists
+    const user = await prisma.user.findUnique({
+      where: { email: createdBy }
     });
 
-    await project.save();
-    res.status(201).json({ success: true, project });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Create project with member in transaction
+    const project = await prisma.$transaction(async (tx) => {
+      const newProject = await tx.project.create({
+        data: {
+          name,
+          description,
+          color: color || '#7c3aed',
+          emoji: emoji || '📋',
+          createdBy
+        }
+      });
+
+      // Add creator as lead member
+      await tx.projectMember.create({
+        data: {
+          projectId: newProject.id,
+          userId: user.id,
+          name: creatorName || user.name || 'Unknown',
+          email: createdBy,
+          picture: user.picture,
+          role: 'LEAD'
+        }
+      });
+
+      return newProject;
+    });
+
+    // Convert enum to lowercase for frontend
+    const projectResponse = {
+      ...project,
+      status: project.status.toLowerCase()
+    };
+
+    res.status(201).json({ success: true, project: projectResponse });
   } catch (err) {
     console.error('Create project error:', err);
     res.status(500).json({ success: false, message: 'Failed to create project' });
@@ -67,11 +107,33 @@ router.post('/projects', async (req, res) => {
  */
 router.get('/projects/:id', async (req, res) => {
   try {
-    const project = await Project.findById(req.params.id);
-    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+    const project = await prisma.project.findUnique({
+      where: { id: req.params.id },
+      include: {
+        members: true
+      }
+    });
 
-    res.json({ success: true, project });
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    // Convert enum to lowercase for frontend
+    const projectResponse = {
+      ...project,
+      status: project.status.toLowerCase(),
+      members: project.members.map(m => ({
+        ...m,
+        role: m.role.toLowerCase()
+      }))
+    };
+
+    res.json({ success: true, project: projectResponse });
   } catch (err) {
+    console.error('Get project error:', err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
     res.status(500).json({ success: false, message: 'Failed to load project' });
   }
 });
@@ -83,33 +145,52 @@ router.get('/projects/:id', async (req, res) => {
 router.put('/projects/:id', async (req, res) => {
   try {
     const { name, description, color, emoji, status } = req.body;
-    const project = await Project.findByIdAndUpdate(
-      req.params.id,
-      { name, description, color, emoji, status },
-      { new: true, runValidators: true }
-    );
 
-    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (color !== undefined) updateData.color = color;
+    if (emoji !== undefined) updateData.emoji = emoji;
+    if (status !== undefined) updateData.status = status.toUpperCase(); // Convert to enum format
 
-    res.json({ success: true, project });
+    const project = await prisma.project.update({
+      where: { id: req.params.id },
+      data: updateData
+    });
+
+    // Convert enum to lowercase for frontend
+    const projectResponse = {
+      ...project,
+      status: project.status.toLowerCase()
+    };
+
+    res.json({ success: true, project: projectResponse });
   } catch (err) {
+    console.error('Update project error:', err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
     res.status(500).json({ success: false, message: 'Failed to update project' });
   }
 });
 
 /**
  * DELETE /tasks-api/projects/:id
- * Delete project and all its tasks
+ * Delete project and all its tasks (cascade delete handled by Prisma)
  */
 router.delete('/projects/:id', async (req, res) => {
   try {
-    await Promise.all([
-      Project.findByIdAndDelete(req.params.id),
-      Task.deleteMany({ projectId: req.params.id })
-    ]);
+    await prisma.project.delete({
+      where: { id: req.params.id }
+    });
+    // Tasks and ProjectMembers are cascade deleted automatically
 
     res.json({ success: true, message: 'Project and all tasks deleted' });
   } catch (err) {
+    console.error('Delete project error:', err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
     res.status(500).json({ success: false, message: 'Failed to delete project' });
   }
 });
@@ -128,12 +209,32 @@ router.get('/tasks', async (req, res) => {
       return res.status(400).json({ success: false, message: 'projectId is required' });
     }
 
-    const query = { projectId };
-    if (status) query.status = status;
+    const where = { projectId };
+    if (status) {
+      where.status = status.toUpperCase().replace('-', '_'); // Convert 'in-progress' to 'IN_PROGRESS'
+    }
 
-    const tasks = await Task.find(query).sort({ order: 1, createdAt: -1 });
+    const tasks = await prisma.task.findMany({
+      where,
+      orderBy: [
+        { order: 'asc' },
+        { createdAt: 'desc' }
+      ],
+      include: {
+        comments: {
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
 
-    res.json({ success: true, tasks });
+    // Convert enums to lowercase for frontend
+    const tasksResponse = tasks.map(task => ({
+      ...task,
+      status: task.status.toLowerCase().replace('_', '-'), // 'IN_PROGRESS' → 'in-progress'
+      priority: task.priority.toLowerCase()
+    }));
+
+    res.json({ success: true, tasks: tasksResponse });
   } catch (err) {
     console.error('Get tasks error:', err);
     res.status(500).json({ success: false, message: 'Failed to load tasks' });
@@ -153,27 +254,69 @@ router.post('/tasks', async (req, res) => {
     }
 
     // Verify project exists
-    const project = await Project.findById(projectId);
-    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+    const project = await prisma.project.findUnique({
+      where: { id: projectId }
+    });
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    // Verify creator exists
+    const creator = await prisma.user.findUnique({
+      where: { email: createdById }
+    });
+
+    if (!creator) {
+      return res.status(404).json({ success: false, message: 'Creator user not found' });
+    }
 
     // Get order (place at end of todo column)
-    const lastTask = await Task.findOne({ projectId, status: 'todo' }).sort({ order: -1 });
+    const lastTask = await prisma.task.findFirst({
+      where: { projectId, status: 'TODO' },
+      orderBy: { order: 'desc' }
+    });
     const order = lastTask ? lastTask.order + 1 : 0;
 
-    const task = new Task({
+    const taskData = {
       title,
       description,
       projectId,
-      priority: priority || 'none',
-      dueDate: dueDate || null,
+      priority: (priority || 'none').toUpperCase(), // Convert to enum format
+      dueDate: dueDate ? new Date(dueDate) : null,
       labels: labels || [],
       order,
-      assignee: assignee || { userId: null, name: null, picture: null },
-      createdBy: { userId: createdById, name: createdByName }
+      createdByUserId: creator.id,
+      createdByName
+    };
+
+    // Add assignee if provided
+    if (assignee && assignee.userId) {
+      const assigneeUser = await prisma.user.findUnique({
+        where: { email: assignee.userId }
+      });
+      if (assigneeUser) {
+        taskData.assigneeUserId = assigneeUser.id;
+        taskData.assigneeName = assignee.name || assigneeUser.name;
+        taskData.assigneePicture = assignee.picture || assigneeUser.picture;
+      }
+    }
+
+    const task = await prisma.task.create({
+      data: taskData,
+      include: {
+        comments: true
+      }
     });
 
-    await task.save();
-    res.status(201).json({ success: true, task });
+    // Convert enums to lowercase for frontend
+    const taskResponse = {
+      ...task,
+      status: task.status.toLowerCase().replace('_', '-'),
+      priority: task.priority.toLowerCase()
+    };
+
+    res.status(201).json({ success: true, task: taskResponse });
   } catch (err) {
     console.error('Create task error:', err);
     res.status(500).json({ success: false, message: 'Failed to create task' });
@@ -186,11 +329,36 @@ router.post('/tasks', async (req, res) => {
  */
 router.get('/tasks/:id', async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id).populate('projectId', 'name color emoji');
-    if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+    const task = await prisma.task.findUnique({
+      where: { id: req.params.id },
+      include: {
+        project: {
+          select: { name: true, color: true, emoji: true }
+        },
+        comments: {
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
 
-    res.json({ success: true, task });
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+
+    // Convert enums to lowercase for frontend
+    const taskResponse = {
+      ...task,
+      status: task.status.toLowerCase().replace('_', '-'),
+      priority: task.priority.toLowerCase(),
+      projectId: task.project // Rename for frontend compatibility
+    };
+
+    res.json({ success: true, task: taskResponse });
   } catch (err) {
+    console.error('Get task error:', err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
     res.status(500).json({ success: false, message: 'Failed to load task' });
   }
 });
@@ -203,16 +371,55 @@ router.put('/tasks/:id', async (req, res) => {
   try {
     const { title, description, status, priority, dueDate, labels, assignee, order } = req.body;
 
-    const task = await Task.findByIdAndUpdate(
-      req.params.id,
-      { title, description, status, priority, dueDate, labels, assignee, order },
-      { new: true, runValidators: true }
-    );
+    const updateData = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (status !== undefined) updateData.status = status.toUpperCase().replace('-', '_');
+    if (priority !== undefined) updateData.priority = priority.toUpperCase();
+    if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
+    if (labels !== undefined) updateData.labels = labels;
+    if (order !== undefined) updateData.order = order;
 
-    if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+    // Handle assignee update
+    if (assignee !== undefined) {
+      if (assignee && assignee.userId) {
+        const assigneeUser = await prisma.user.findUnique({
+          where: { email: assignee.userId }
+        });
+        if (assigneeUser) {
+          updateData.assigneeUserId = assigneeUser.id;
+          updateData.assigneeName = assignee.name || assigneeUser.name;
+          updateData.assigneePicture = assignee.picture || assigneeUser.picture;
+        }
+      } else {
+        // Clear assignee
+        updateData.assigneeUserId = null;
+        updateData.assigneeName = null;
+        updateData.assigneePicture = null;
+      }
+    }
 
-    res.json({ success: true, task });
+    const task = await prisma.task.update({
+      where: { id: req.params.id },
+      data: updateData,
+      include: {
+        comments: true
+      }
+    });
+
+    // Convert enums to lowercase for frontend
+    const taskResponse = {
+      ...task,
+      status: task.status.toLowerCase().replace('_', '-'),
+      priority: task.priority.toLowerCase()
+    };
+
+    res.json({ success: true, task: taskResponse });
   } catch (err) {
+    console.error('Update task error:', err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
     res.status(500).json({ success: false, message: 'Failed to update task' });
   }
 });
@@ -230,16 +437,31 @@ router.patch('/tasks/:id/status', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 
-    const task = await Task.findByIdAndUpdate(
-      req.params.id,
-      { status, ...(order !== undefined && { order }) },
-      { new: true }
-    );
+    const updateData = {
+      status: status.toUpperCase().replace('-', '_') // 'in-progress' → 'IN_PROGRESS'
+    };
+    if (order !== undefined) {
+      updateData.order = order;
+    }
 
-    if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+    const task = await prisma.task.update({
+      where: { id: req.params.id },
+      data: updateData
+    });
 
-    res.json({ success: true, task });
+    // Convert enums to lowercase for frontend
+    const taskResponse = {
+      ...task,
+      status: task.status.toLowerCase().replace('_', '-'),
+      priority: task.priority.toLowerCase()
+    };
+
+    res.json({ success: true, task: taskResponse });
   } catch (err) {
+    console.error('Update task status error:', err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
     res.status(500).json({ success: false, message: 'Failed to update status' });
   }
 });
@@ -256,16 +478,46 @@ router.post('/tasks/:id/comments', async (req, res) => {
       return res.status(400).json({ success: false, message: 'content, authorId, and authorName are required' });
     }
 
-    const task = await Task.findByIdAndUpdate(
-      req.params.id,
-      { $push: { comments: { content, authorId, authorName, authorPicture } } },
-      { new: true }
-    );
+    // Verify task exists
+    const task = await prisma.task.findUnique({
+      where: { id: req.params.id }
+    });
 
-    if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
 
-    res.json({ success: true, task });
+    // Create comment
+    await prisma.taskComment.create({
+      data: {
+        taskId: req.params.id,
+        content,
+        authorId,
+        authorName,
+        authorPicture
+      }
+    });
+
+    // Fetch updated task with comments
+    const updatedTask = await prisma.task.findUnique({
+      where: { id: req.params.id },
+      include: {
+        comments: {
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    // Convert enums to lowercase for frontend
+    const taskResponse = {
+      ...updatedTask,
+      status: updatedTask.status.toLowerCase().replace('_', '-'),
+      priority: updatedTask.priority.toLowerCase()
+    };
+
+    res.json({ success: true, task: taskResponse });
   } catch (err) {
+    console.error('Add comment error:', err);
     res.status(500).json({ success: false, message: 'Failed to add comment' });
   }
 });
@@ -276,11 +528,17 @@ router.post('/tasks/:id/comments', async (req, res) => {
  */
 router.delete('/tasks/:id', async (req, res) => {
   try {
-    const task = await Task.findByIdAndDelete(req.params.id);
-    if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+    await prisma.task.delete({
+      where: { id: req.params.id }
+    });
+    // Comments are cascade deleted automatically
 
     res.json({ success: true, message: 'Task deleted' });
   } catch (err) {
+    console.error('Delete task error:', err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
     res.status(500).json({ success: false, message: 'Failed to delete task' });
   }
 });

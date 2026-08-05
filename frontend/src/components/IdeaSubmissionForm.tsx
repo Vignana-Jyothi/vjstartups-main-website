@@ -468,7 +468,7 @@ const IdeaSubmissionForm = () => {
                     ) : Array.isArray(filteredProblems) && filteredProblems.length > 0 ? (
                       filteredProblems.map((problem) => (
                         <div
-                          key={problem?._id || problem?.problemId || Math.random()}
+                          key={problem?.id || problem?.problemId || Math.random()}
                           className="p-4 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 transition-colors duration-150"
                           onClick={(e) => {
                             e.preventDefault();

@@ -370,7 +370,7 @@ const handleUpvote = async (problemId: string) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {currentPageProblems.map(problem => (
             <div 
-              key={problem._id || problem.problemId} 
+              key={problem.id || problem.problemId} 
               id={`problem-${problem.problemId}`}
               className="vj-card-problem group rounded-xl shadow-lg overflow-hidden transition-all duration-300">
               {/* Problem Image */}

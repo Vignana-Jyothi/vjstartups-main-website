@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Problem = require("../models/Problems");
+const prisma = require("../config/prisma");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 
@@ -19,7 +19,7 @@ cloudinary.config({
 const streamUpload = (buffer) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: "problems" }, // Folder in Cloudinary
+      { folder: "problems" },
       (error, result) => {
         if (error) reject(error);
         else resolve(result);
@@ -30,6 +30,8 @@ const streamUpload = (buffer) => {
 };
 
 // -------------------- ROUTES --------------------
+
+// POST create problem with image upload
 router.post("/problem", upload.single("image"), async (req, res) => {
   try {
     const {
@@ -57,22 +59,11 @@ router.post("/problem", upload.single("image"), async (req, res) => {
     }
 
     // Generate unique problemId by finding the maximum existing ID
-    // Use aggregation to properly sort problemId as numbers
-    const maxProblemResult = await Problem.aggregate([
-      {
-        $addFields: {
-          problemIdNum: { $toInt: "$problemId" }
-        }
-      },
-      {
-        $sort: { problemIdNum: -1 }
-      },
-      {
-        $limit: 1
-      }
-    ]);
+    const maxProblem = await prisma.problem.findFirst({
+      orderBy: { problemId: 'desc' },
+      select: { problemId: true }
+    });
     
-    const maxProblem = maxProblemResult.length > 0 ? maxProblemResult[0] : null;
     const nextId = maxProblem ? (parseInt(maxProblem.problemId) + 1) : 1;
 
     // Ensure tags is always an array
@@ -82,37 +73,63 @@ router.post("/problem", upload.single("image"), async (req, res) => {
     let formattedCollaborators = [];
     if (collaborators) {
       const collabArray = Array.isArray(collaborators) ? collaborators : [collaborators];
-      // Filter out empty strings and validate @vnrvjiet.in suffix
       formattedCollaborators = collabArray
         .filter(email => email && email.trim())
         .map(email => email.trim())
         .filter(email => email.endsWith('@vnrvjiet.in'));
     }
 
-    // Create problemx
-    const problem = new Problem({
-      problemId: nextId.toString(),
-      title,
-      briefparagraph,
-      description,
-      marketSize,
-      existingSolutions,
-      currentGaps,
-      targetCustomers,
-      image: imageUrl,
-      upvotes: 0,
-      comments: [],
-      background,
-      scalability,
-      addedByName,
-      addedByEmail,
-      collaborators: formattedCollaborators,
-      tags: formattedTags,
-      createdAt: new Date(),
+    // Create problem with collaborators in transaction
+    const problem = await prisma.$transaction(async (tx) => {
+      const newProblem = await tx.problem.create({
+        data: {
+          problemId: nextId.toString(),
+          title,
+          briefparagraph,
+          description,
+          marketSize,
+          existingSolutions,
+          currentGaps,
+          targetCustomers,
+          image: imageUrl,
+          upvotes: 0,
+          background,
+          scalability,
+          addedByName,
+          addedByEmail,
+          tags: formattedTags
+        }
+      });
+
+      // Create collaborators if any
+      if (formattedCollaborators.length > 0) {
+        await tx.problemCollaborator.createMany({
+          data: formattedCollaborators.map(email => ({
+            problemId: newProblem.id,
+            email
+          }))
+        });
+      }
+
+      return newProblem;
     });
 
-    await problem.save();
-    res.status(201).json(problem);
+    // Fetch with relations for response
+    const problemWithRelations = await prisma.problem.findUnique({
+      where: { id: problem.id },
+      include: {
+        collaborators: true,
+        upvotedBy: true,
+        comments: {
+          include: {
+            replies: true,
+            likedBy: true
+          }
+        }
+      }
+    });
+
+    res.status(201).json(problemWithRelations);
 
   } catch (error) {
     console.error("Error creating problem:", error);
@@ -120,7 +137,7 @@ router.post("/problem", upload.single("image"), async (req, res) => {
   }
 });
 
-// ✅ Get all problems with pagination
+// GET all problems with pagination
 router.get("/problems", async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -128,10 +145,23 @@ router.get("/problems", async (req, res) => {
     const skip = (page - 1) * limit;
     
     // Get problems with pagination
-    const problems = await Problem.find()
-      .sort({ createdAt: -1 }) // latest first
-      .skip(skip)
-      .limit(limit);
+    const [problems, total] = await Promise.all([
+      prisma.problem.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          collaborators: true,
+          upvotedBy: true,
+          comments: {
+            include: {
+              replies: true
+            }
+          }
+        }
+      }),
+      prisma.problem.count()
+    ]);
     
     // If no problems in database, return mock data
     if (problems.length === 0) {
@@ -148,9 +178,6 @@ router.get("/problems", async (req, res) => {
         }
       });
     }
-    
-    // Get total count for pagination info
-    const total = await Problem.countDocuments();
     
     // Calculate pagination metadata
     const totalPages = Math.ceil(total / limit);
@@ -172,10 +199,27 @@ router.get("/problems", async (req, res) => {
   }
 });
 
-// ✅ Get a single problem by problemId
+// GET a single problem by problemId
 router.get("/problems/:id", async (req, res) => {
   try {
-    const problem = await Problem.findOne({ problemId: req.params.id });
+    const problem = await prisma.problem.findUnique({
+      where: { problemId: req.params.id },
+      include: {
+        collaborators: true,
+        upvotedBy: true,
+        comments: {
+          include: {
+            replies: {
+              include: {
+                likedBy: true
+              }
+            },
+            likedBy: true
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
 
     if (!problem) {
       // Check mock data if not found in database
@@ -196,63 +240,87 @@ router.get("/problems/:id", async (req, res) => {
   }
 });
 
-// ✅ Delete a single problem by problemId
-// router.delete("/problems/:id", async (req, res) => {
-//   try {
-//     const deletedProblem = await Problem.findOneAndDelete({ problemId: req.params.id });
-
-//     if (!deletedProblem) {
-//       return res.status(404).json({ message: "Problem not found" });
-//     }
-
-//     res.status(200).json({ message: "Problem deleted successfully", problem: deletedProblem });
-//   } catch (error) {
-//     console.error("Error deleting problem:", error);
-//     res.status(500).json({ message: "Failed to delete problem" });
-//   }
-// });
-
-
-// ✅ Toggle Upvote a problem
+// POST toggle upvote a problem
 router.post("/problem/:id/upvote", async (req, res) => {
   try {
     const { id } = req.params;
-    const { email } = req.body; // user email coming from frontend
+    const { email } = req.body;
 
     if (!email) {
       return res.status(400).json({ message: "User email is required" });
     }
 
-    const problem = await Problem.findOne({ problemId: id });
+    const problem = await prisma.problem.findUnique({
+      where: { problemId: id },
+      include: {
+        upvotedBy: true
+      }
+    });
 
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
     }
 
     // Check if user already upvoted
-    const alreadyUpvoted = problem.upvotedBy.includes(email);
+    const existingUpvote = await prisma.problemUpvote.findUnique({
+      where: {
+        problemId_userEmail: {
+          problemId: problem.id,
+          userEmail: email
+        }
+      }
+    });
 
-    if (alreadyUpvoted) {
+    if (existingUpvote) {
       // Remove upvote
-      problem.upvotedBy = problem.upvotedBy.filter((user) => user !== email);
-      problem.upvotes -= 1;
+      await prisma.$transaction([
+        prisma.problemUpvote.delete({
+          where: { id: existingUpvote.id }
+        }),
+        prisma.problem.update({
+          where: { id: problem.id },
+          data: { upvotes: { decrement: 1 } }
+        })
+      ]);
     } else {
       // Add upvote
-      problem.upvotedBy.push(email);
-      problem.upvotes += 1;
+      await prisma.$transaction([
+        prisma.problemUpvote.create({
+          data: {
+            problemId: problem.id,
+            userEmail: email
+          }
+        }),
+        prisma.problem.update({
+          where: { id: problem.id },
+          data: { upvotes: { increment: 1 } }
+        })
+      ]);
     }
 
-    await problem.save();
+    // Fetch updated problem
+    const updatedProblem = await prisma.problem.findUnique({
+      where: { id: problem.id },
+      include: {
+        upvotedBy: true,
+        collaborators: true,
+        comments: {
+          include: {
+            replies: true,
+            likedBy: true
+          }
+        }
+      }
+    });
 
-    res.status(200).json(problem);
+    res.status(200).json(updatedProblem);
   } catch (error) {
     console.error("Error toggling upvote:", error);
     res.status(500).json({ message: "Failed to toggle upvote" });
   }
 });
 
-
-// ✅ Add a comment to a problem
+// POST add a comment to a problem
 router.post("/problem/:id/comment", async (req, res) => {
   try {
     const { id } = req.params;
@@ -262,41 +330,79 @@ router.post("/problem/:id/comment", async (req, res) => {
       return res.status(400).json({ message: "Comment, name, and email are required" });
     }
 
-    const newComment = {
-      commentId: Date.now().toString(), // generate unique ID using current timestamp
-      text: comment,
-      name,
-      email,
-      createdAt: new Date(),
-      likes: 0,
-      likedBy: [],
-      replies: []
-    };
-
-    const problem = await Problem.findOneAndUpdate(
-      { problemId: id },
-      { $push: { comments: newComment } },
-      { new: true }
-    );
+    const problem = await prisma.problem.findUnique({
+      where: { problemId: id }
+    });
 
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
     }
 
-    res.status(200).json(problem);
+    // Create comment
+    await prisma.problemComment.create({
+      data: {
+        commentId: Date.now().toString(),
+        problemId: problem.id,
+        text: comment,
+        name,
+        email,
+        likes: 0
+      }
+    });
+
+    // Fetch updated problem with comments
+    const updatedProblem = await prisma.problem.findUnique({
+      where: { id: problem.id },
+      include: {
+        upvotedBy: true,
+        collaborators: true,
+        comments: {
+          include: {
+            replies: {
+              include: {
+                likedBy: true
+              }
+            },
+            likedBy: true
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    res.status(200).json(updatedProblem);
   } catch (error) {
     console.error("Error commenting on problem:", error);
     res.status(500).json({ message: "Failed to add comment" });
   }
 });
 
-
-// GET /problem-api/problem/:id/comments
+// GET comments for a problem
 router.get("/problem/:id/comments", async (req, res) => {
   try {
     const { id } = req.params;
-    const problem = await Problem.findOne({ problemId: id });
-    if (!problem) return res.status(404).json({ message: "Problem not found" });
+    
+    const problem = await prisma.problem.findUnique({
+      where: { problemId: id },
+      include: {
+        comments: {
+          include: {
+            replies: {
+              include: {
+                likedBy: true
+              },
+              orderBy: { createdAt: 'asc' }
+            },
+            likedBy: true
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    if (!problem) {
+      return res.status(404).json({ message: "Problem not found" });
+    }
 
     res.status(200).json({ comments: problem.comments || [] });
   } catch (err) {
@@ -305,7 +411,7 @@ router.get("/problem/:id/comments", async (req, res) => {
   }
 });
 
-// POST /problem-api/problem/:id/comment/:commentId/reply
+// POST add a reply to a comment
 router.post("/problem/:id/comment/:commentId/reply", async (req, res) => {
   try {
     const { id, commentId } = req.params;
@@ -315,27 +421,51 @@ router.post("/problem/:id/comment/:commentId/reply", async (req, res) => {
       return res.status(400).json({ message: "Reply, name, and email are required" });
     }
 
-    const newReply = {
-      replyId: Date.now().toString(),
-      text: reply,
-      name,
-      email,
-      createdAt: new Date(),
-      likes: 0,
-      likedBy: [],
-    };
+    // Find the comment
+    const comment = await prisma.problemComment.findUnique({
+      where: { commentId }
+    });
 
-    const problem = await Problem.findOneAndUpdate(
-      { problemId: id, "comments.commentId": commentId },
-      { $push: { "comments.$.replies": newReply } },
-      { new: true }
-    );
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
 
-    if (!problem) return res.status(404).json({ message: "Problem or comment not found" });
+    // Create reply
+    await prisma.problemCommentReply.create({
+      data: {
+        replyId: Date.now().toString(),
+        commentId: comment.id,
+        text: reply,
+        name,
+        email,
+        likes: 0
+      }
+    });
 
-// Return all comments of the problem
-res.status(200).json({ comments: problem.comments });
+    // Fetch updated problem with all comments
+    const problem = await prisma.problem.findUnique({
+      where: { problemId: id },
+      include: {
+        comments: {
+          include: {
+            replies: {
+              include: {
+                likedBy: true
+              },
+              orderBy: { createdAt: 'asc' }
+            },
+            likedBy: true
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
 
+    if (!problem) {
+      return res.status(404).json({ message: "Problem not found" });
+    }
+
+    res.status(200).json({ comments: problem.comments });
 
   } catch (err) {
     console.error("Error adding reply:", err);
@@ -343,85 +473,160 @@ res.status(200).json({ comments: problem.comments });
   }
 });
 
-
-
-// POST /problem-api/problem/:id/comment/:commentId/like
+// POST toggle like on comment or reply
 router.post("/problem/:id/comment/:commentId/like", async (req, res) => {
   try {
     const { id, commentId } = req.params;
-    const { email, replyId } = req.body; // if replyId exists, like a reply
+    const { email, replyId } = req.body;
 
-    const problem = await Problem.findOne({ problemId: id });
-    if (!problem) return res.status(404).json({ message: "Problem not found" });
+    const problem = await prisma.problem.findUnique({
+      where: { problemId: id }
+    });
+
+    if (!problem) {
+      return res.status(404).json({ message: "Problem not found" });
+    }
 
     // Check if replyId is a valid non-null value
     if (replyId && replyId !== 'null' && replyId !== null) {
       // Like/unlike a reply
-      const comment = problem.comments.find(c => c.commentId === commentId);
-      if (!comment) return res.status(404).json({ message: "Comment not found" });
+      const reply = await prisma.problemCommentReply.findUnique({
+        where: { replyId },
+        include: { likedBy: true }
+      });
 
-      const reply = comment.replies.find(r => r.replyId === replyId);
-      if (!reply) return res.status(404).json({ message: "Reply not found" });
-
-      reply.likedBy = reply.likedBy || [];
-
-      if (reply.likedBy.includes(email)) {
-        // Unlike
-        reply.likedBy = reply.likedBy.filter(e => e !== email);
-      } else {
-        // Like
-        reply.likedBy.push(email);
+      if (!reply) {
+        return res.status(404).json({ message: "Reply not found" });
       }
 
-      // Update likes count based on length of likedBy array
-      reply.likes = reply.likedBy.length;
-      
-      // Mark the comments array as modified so MongoDB knows to save it
-      problem.markModified('comments');
+      const existingLike = await prisma.problemReplyLike.findUnique({
+        where: {
+          replyId_userEmail: {
+            replyId: reply.id,
+            userEmail: email
+          }
+        }
+      });
+
+      if (existingLike) {
+        // Unlike
+        await prisma.$transaction([
+          prisma.problemReplyLike.delete({
+            where: { id: existingLike.id }
+          }),
+          prisma.problemCommentReply.update({
+            where: { id: reply.id },
+            data: { likes: { decrement: 1 } }
+          })
+        ]);
+      } else {
+        // Like
+        await prisma.$transaction([
+          prisma.problemReplyLike.create({
+            data: {
+              replyId: reply.id,
+              userEmail: email
+            }
+          }),
+          prisma.problemCommentReply.update({
+            where: { id: reply.id },
+            data: { likes: { increment: 1 } }
+          })
+        ]);
+      }
 
     } else {
       // Like/unlike a comment
-      const comment = problem.comments.find(c => c.commentId === commentId);
-      if (!comment) return res.status(404).json({ message: "Comment not found" });
+      const comment = await prisma.problemComment.findUnique({
+        where: { commentId },
+        include: { likedBy: true }
+      });
 
-      comment.likedBy = comment.likedBy || [];
-
-      if (comment.likedBy.includes(email)) {
-        // Unlike
-        comment.likedBy = comment.likedBy.filter(e => e !== email);
-      } else {
-        // Like
-        comment.likedBy.push(email);
+      if (!comment) {
+        return res.status(404).json({ message: "Comment not found" });
       }
 
-      // Update likes count based on length of likedBy array
-      comment.likes = comment.likedBy.length;
-      
-      // Mark the comments array as modified so MongoDB knows to save it
-      problem.markModified('comments');
+      const existingLike = await prisma.problemCommentLike.findUnique({
+        where: {
+          commentId_userEmail: {
+            commentId: comment.id,
+            userEmail: email
+          }
+        }
+      });
+
+      if (existingLike) {
+        // Unlike
+        await prisma.$transaction([
+          prisma.problemCommentLike.delete({
+            where: { id: existingLike.id }
+          }),
+          prisma.problemComment.update({
+            where: { id: comment.id },
+            data: { likes: { decrement: 1 } }
+          })
+        ]);
+      } else {
+        // Like
+        await prisma.$transaction([
+          prisma.problemCommentLike.create({
+            data: {
+              commentId: comment.id,
+              userEmail: email
+            }
+          }),
+          prisma.problemComment.update({
+            where: { id: comment.id },
+            data: { likes: { increment: 1 } }
+          })
+        ]);
+      }
     }
 
-    await problem.save();
-    res.status(200).json(problem);
+    // Fetch updated problem
+    const updatedProblem = await prisma.problem.findUnique({
+      where: { id: problem.id },
+      include: {
+        upvotedBy: true,
+        collaborators: true,
+        comments: {
+          include: {
+            replies: {
+              include: {
+                likedBy: true
+              },
+              orderBy: { createdAt: 'asc' }
+            },
+            likedBy: true
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    res.status(200).json(updatedProblem);
   } catch (err) {
     console.error("Error liking comment/reply:", err);
     res.status(500).json({ message: "Failed to like comment/reply" });
   }
 });
 
-// ✅ Delete a single problem by problemId (only owner can delete)
-// ✅ Delete a single problem by problemId (only owner can delete)
+// DELETE a problem (only owner or collaborator can delete)
 router.delete("/problems/:problemId", async (req, res) => {
   try {
     const { problemId } = req.params;
-    const { email } = req.body; // email from request body
+    const { email } = req.body;
 
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
 
-    // Find the problem (problemId is stored as string in DB)
-    const problem = await Problem.findOne({ problemId: problemId });
+    const problem = await prisma.problem.findUnique({
+      where: { problemId: problemId },
+      include: {
+        collaborators: true
+      }
+    });
 
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
@@ -429,31 +634,42 @@ router.delete("/problems/:problemId", async (req, res) => {
 
     // Check if user is owner or collaborator
     const isOwner = problem.addedByEmail === email;
-    const isCollaborator = problem.collaborators && problem.collaborators.includes(email);
+    const isCollaborator = problem.collaborators.some(c => c.email === email);
     
     if (!isOwner && !isCollaborator) {
       return res.status(403).json({ message: "You are not allowed to delete this problem" });
     }
 
-    // Delete problem
-    await Problem.deleteOne({ problemId: problemId });
+    // Delete problem (cascade will handle related records)
+    await prisma.problem.delete({
+      where: { id: problem.id }
+    });
 
     res.status(200).json({ message: "Problem deleted successfully" });
   } catch (error) {
     console.error("Error deleting problem:", error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ message: "Problem not found" });
+    }
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
-// ✅ Update a problem by problemId (only owner can update)
+
+// PUT update a problem (only owner or collaborator can update)
 router.put("/problems/:id/:email", upload.single("image"), async (req, res) => {
   try {
-    const { id, email } = req.params; // email comes from route now
+    const { id, email } = req.params;
 
     if (!email) {
       return res.status(400).json({ message: "User email is required" });
     }
 
-    const problem = await Problem.findOne({ problemId: id });
+    const problem = await prisma.problem.findUnique({
+      where: { problemId: id },
+      include: {
+        collaborators: true
+      }
+    });
 
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
@@ -461,7 +677,7 @@ router.put("/problems/:id/:email", upload.single("image"), async (req, res) => {
 
     // Check if user is owner or collaborator
     const isOwner = problem.addedByEmail === email;
-    const isCollaborator = problem.collaborators && problem.collaborators.includes(email);
+    const isCollaborator = problem.collaborators.some(c => c.email === email);
     
     if (!isOwner && !isCollaborator) {
       return res.status(403).json({ message: "You are not allowed to edit this problem" });
@@ -475,7 +691,7 @@ router.put("/problems/:id/:email", upload.single("image"), async (req, res) => {
     }
 
     // Process and validate collaborators if provided
-    let formattedCollaborators = problem.collaborators;
+    let formattedCollaborators = null;
     if (req.body.collaborators !== undefined) {
       const collabArray = Array.isArray(req.body.collaborators) ? req.body.collaborators : [req.body.collaborators];
       formattedCollaborators = collabArray
@@ -484,27 +700,65 @@ router.put("/problems/:id/:email", upload.single("image"), async (req, res) => {
         .filter(email => email.endsWith('@vnrvjiet.in'));
     }
 
-    // Update fields
-    const updatedData = {
-      title: req.body.title || problem.title,
-      briefparagraph: req.body.briefparagraph || problem.briefparagraph,
-      description: req.body.description || problem.description,
-      marketSize: req.body.marketSize || problem.marketSize,
-      existingSolutions: req.body.existingSolutions || problem.existingSolutions,
-      currentGaps: req.body.currentGaps || problem.currentGaps,
-      targetCustomers: req.body.targetCustomers || problem.targetCustomers,
-      background: req.body.background || problem.background,
-      scalability: req.body.scalability || problem.scalability,
-      collaborators: formattedCollaborators,
-      tags: req.body.tags ? (Array.isArray(req.body.tags) ? req.body.tags : [req.body.tags]) : problem.tags,
-      image: imageUrl
-    };
+    // Update in transaction
+    await prisma.$transaction(async (tx) => {
+      // Update problem fields
+      const updateData = {
+        title: req.body.title || problem.title,
+        briefparagraph: req.body.briefparagraph || problem.briefparagraph,
+        description: req.body.description || problem.description,
+        marketSize: req.body.marketSize || problem.marketSize,
+        existingSolutions: req.body.existingSolutions || problem.existingSolutions,
+        currentGaps: req.body.currentGaps || problem.currentGaps,
+        targetCustomers: req.body.targetCustomers || problem.targetCustomers,
+        background: req.body.background || problem.background,
+        scalability: req.body.scalability || problem.scalability,
+        tags: req.body.tags ? (Array.isArray(req.body.tags) ? req.body.tags : [req.body.tags]) : problem.tags,
+        image: imageUrl
+      };
 
-    const updatedProblem = await Problem.findOneAndUpdate(
-      { problemId: id },
-      { $set: updatedData },
-      { new: true }
-    );
+      await tx.problem.update({
+        where: { id: problem.id },
+        data: updateData
+      });
+
+      // Update collaborators if provided
+      if (formattedCollaborators !== null) {
+        // Delete existing collaborators
+        await tx.problemCollaborator.deleteMany({
+          where: { problemId: problem.id }
+        });
+
+        // Create new collaborators
+        if (formattedCollaborators.length > 0) {
+          await tx.problemCollaborator.createMany({
+            data: formattedCollaborators.map(email => ({
+              problemId: problem.id,
+              email
+            }))
+          });
+        }
+      }
+    });
+
+    // Fetch updated problem with relations
+    const updatedProblem = await prisma.problem.findUnique({
+      where: { id: problem.id },
+      include: {
+        collaborators: true,
+        upvotedBy: true,
+        comments: {
+          include: {
+            replies: {
+              include: {
+                likedBy: true
+              }
+            },
+            likedBy: true
+          }
+        }
+      }
+    });
 
     res.status(200).json(updatedProblem);
   } catch (error) {
@@ -517,7 +771,6 @@ router.put("/problems/:id/:email", upload.single("image"), async (req, res) => {
 
 // Advanced text similarity using multiple algorithms
 function calculateAdvancedSimilarity(text1, text2) {
-  // Normalize texts
   const normalize = (text) => text.toLowerCase()
     .replace(/[^\w\s]/g, ' ')
     .replace(/\s+/g, ' ')
@@ -526,40 +779,27 @@ function calculateAdvancedSimilarity(text1, text2) {
   const norm1 = normalize(text1);
   const norm2 = normalize(text2);
   
-  // Algorithm 1: Jaccard Similarity (word overlap)
   const jaccardScore = calculateJaccardSimilarity(norm1, norm2);
-  
-  // Algorithm 2: Cosine Similarity (TF-IDF like)
   const cosineScore = calculateCosineSimilarity(norm1, norm2);
-  
-  // Algorithm 3: Levenshtein Distance (character level)
   const levenshteinScore = calculateLevenshteinSimilarity(norm1, norm2);
   
-  // Use MAX instead of weighted average for better duplicate detection
   const finalScore = Math.max(jaccardScore, cosineScore, levenshteinScore);
   
   return Math.round(finalScore * 100) / 100;
 }
 
-// Calculate separate scores for title and description, then take MAX
 function calculateTitleDescriptionSimilarity(title1, brief1, title2, brief2) {
-  // Calculate title similarity
   const titleSimilarity = calculateAdvancedSimilarity(title1, title2);
-  
-  // Calculate description similarity
   const descSimilarity = calculateAdvancedSimilarity(brief1, brief2);
-  
-  // Return the MAXIMUM of the two scores
   return Math.max(titleSimilarity, descSimilarity);
 }
 
-// Jaccard Similarity: Good for keyword overlap
 function calculateJaccardSimilarity(text1, text2) {
   const getWords = (text) => {
     return new Set(
       text.split(/\s+/)
-        .filter(word => word.length > 3) // Filter short words
-        .filter(word => !['that', 'this', 'with', 'from', 'they', 'have', 'been', 'were'].includes(word)) // Common stopwords
+        .filter(word => word.length > 3)
+        .filter(word => !['that', 'this', 'with', 'from', 'they', 'have', 'been', 'were'].includes(word))
     );
   };
   
@@ -572,7 +812,6 @@ function calculateJaccardSimilarity(text1, text2) {
   return union.size === 0 ? 0 : intersection.size / union.size;
 }
 
-// Cosine Similarity: Good for semantic similarity
 function calculateCosineSimilarity(text1, text2) {
   const getWordFreq = (text) => {
     const words = text.split(/\s+/).filter(word => word.length > 2);
@@ -606,16 +845,13 @@ function calculateCosineSimilarity(text1, text2) {
   return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
 }
 
-// Levenshtein Distance: Good for typos and variations
 function calculateLevenshteinSimilarity(text1, text2) {
   const matrix = [];
   const len1 = text1.length;
   const len2 = text2.length;
   
-  // If one string is empty, return 0
   if (len1 === 0 || len2 === 0) return 0;
   
-  // Create matrix
   for (let i = 0; i <= len2; i++) {
     matrix[i] = [i];
   }
@@ -623,16 +859,15 @@ function calculateLevenshteinSimilarity(text1, text2) {
     matrix[0][j] = j;
   }
   
-  // Fill matrix
   for (let i = 1; i <= len2; i++) {
     for (let j = 1; j <= len1; j++) {
       if (text2.charAt(i - 1) === text1.charAt(j - 1)) {
         matrix[i][j] = matrix[i - 1][j - 1];
       } else {
         matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          matrix[i][j - 1] + 1,     // insertion
-          matrix[i - 1][j] + 1      // deletion
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
         );
       }
     }
@@ -646,7 +881,7 @@ function calculateLevenshteinSimilarity(text1, text2) {
 
 // -------------------- DUPLICATE DETECTION API --------------------
 
-// ✅ Check for duplicate problems
+// POST check for duplicate problems
 router.post("/check-duplicates", async (req, res) => {
   try {
     const { title, briefparagraph } = req.body;
@@ -659,18 +894,20 @@ router.post("/check-duplicates", async (req, res) => {
     const startTime = Date.now();
     
     // Get all problems (only fields needed for comparison)
-    const allProblems = await Problem.find({}, {
-      problemId: 1,
-      title: 1,
-      briefparagraph: 1,
-      addedByName: 1,
-      createdAt: 1,
-      upvotes: 1
+    const allProblems = await prisma.problem.findMany({
+      select: {
+        problemId: true,
+        title: true,
+        briefparagraph: true,
+        addedByName: true,
+        createdAt: true,
+        upvotes: true
+      }
     });
     
     console.log(`📊 Comparing against ${allProblems.length} existing problems...`);
     
-    // Calculate similarities using separate title and description comparison
+    // Calculate similarities
     const similarities = allProblems.map(problem => {
       const similarity = calculateTitleDescriptionSimilarity(
         title, briefparagraph,
@@ -682,22 +919,21 @@ router.post("/check-duplicates", async (req, res) => {
         title: problem.title,
         briefparagraph: problem.briefparagraph.length > 150 
           ? problem.briefparagraph.substring(0, 150) + '...' 
-          : problem.briefparagraph, // Don't add ... if it's already short
+          : problem.briefparagraph,
         addedByName: problem.addedByName,
         createdAt: problem.createdAt,
         upvotes: problem.upvotes,
-        similarity: Math.round(similarity * 100) // Convert to percentage
+        similarity: Math.round(similarity * 100)
       };
     })
-    .filter(item => item.similarity >= 60) // Only show 60%+ matches
-    .sort((a, b) => b.similarity - a.similarity) // Sort by highest similarity
-    .slice(0, 3); // Top 3 matches
+    .filter(item => item.similarity >= 60)
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, 3);
     
     const endTime = Date.now();
     console.log(`⚡ Duplicate check completed in ${endTime - startTime}ms`);
     console.log(`🎯 Found ${similarities.length} potential duplicates (60%+ similarity)`);
     
-    // Debug: Log the similarity scores
     if (similarities.length > 0) {
       console.log(`📋 Duplicate details:`);
       similarities.forEach((item, index) => {
@@ -719,6 +955,5 @@ router.post("/check-duplicates", async (req, res) => {
     res.status(500).json({ message: "Failed to check duplicates" });
   }
 });
-
 
 module.exports = router;

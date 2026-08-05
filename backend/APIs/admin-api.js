@@ -1,10 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminAuth = require('../middlewares/adminAuth');
-const User = require('../models/User');
-const Startup = require('../models/Startup');
-const Ideas = require('../models/Ideas');
-const Problems = require('../models/Problems');
+const prisma = require('../config/prisma');
 
 // Apply admin auth to all routes in this router
 router.use(adminAuth);
@@ -19,13 +16,32 @@ router.get('/stats', async (req, res) => {
   try {
     const [totalUsers, totalStartups, totalIdeas, totalProblems,
            adminCount, recentUsers, recentStartups] = await Promise.all([
-      User.countDocuments(),
-      Startup.countDocuments(),
-      Ideas.countDocuments(),
-      Problems.countDocuments(),
-      User.countDocuments({ role: 'admin' }),
-      User.find().sort({ updatedAt: -1 }).limit(5).select('name email picture role updatedAt'),
-      Startup.find().sort({ createdAt: -1 }).limit(5).select('startupName tagline stage createdAt'),
+      prisma.user.count(),
+      prisma.startup.count(),
+      prisma.idea.count(),
+      prisma.problem.count(),
+      prisma.user.count({ where: { role: 'ADMIN' } }),
+      prisma.user.findMany({
+        select: {
+          name: true,
+          email: true,
+          picture: true,
+          role: true,
+          updatedAt: true
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: 5
+      }),
+      prisma.startup.findMany({
+        select: {
+          startupName: true,
+          tagline: true,
+          stage: true,
+          createdAt: true
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5
+      })
     ]);
 
     // Monthly growth — last 6 months
@@ -34,18 +50,45 @@ router.get('/stats', async (req, res) => {
     sixMonthsAgo.setDate(1);
     sixMonthsAgo.setHours(0, 0, 0, 0);
 
-    const [userGrowth, startupGrowth] = await Promise.all([
-      User.aggregate([
-        { $match: { updatedAt: { $gte: sixMonthsAgo } } },
-        { $group: { _id: { year: { $year: '$updatedAt' }, month: { $month: '$updatedAt' } }, count: { $sum: 1 } } },
-        { $sort: { '_id.year': 1, '_id.month': 1 } }
-      ]),
-      Startup.aggregate([
-        { $match: { createdAt: { $gte: sixMonthsAgo } } },
-        { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
-        { $sort: { '_id.year': 1, '_id.month': 1 } }
-      ])
-    ]);
+    // Use raw queries for date grouping (PostgreSQL-specific)
+    const userGrowth = await prisma.$queryRaw`
+      SELECT 
+        EXTRACT(YEAR FROM updated_at) as year,
+        EXTRACT(MONTH FROM updated_at) as month,
+        COUNT(*) as count
+      FROM users
+      WHERE updated_at >= ${sixMonthsAgo}
+      GROUP BY year, month
+      ORDER BY year, month
+    `;
+
+    const startupGrowth = await prisma.$queryRaw`
+      SELECT 
+        EXTRACT(YEAR FROM created_at) as year,
+        EXTRACT(MONTH FROM created_at) as month,
+        COUNT(*) as count
+      FROM startups
+      WHERE created_at >= ${sixMonthsAgo}
+      GROUP BY year, month
+      ORDER BY year, month
+    `;
+
+    // Format growth data to match original structure
+    const formattedUserGrowth = userGrowth.map(row => ({
+      _id: { year: Number(row.year), month: Number(row.month) },
+      count: Number(row.count)
+    }));
+
+    const formattedStartupGrowth = startupGrowth.map(row => ({
+      _id: { year: Number(row.year), month: Number(row.month) },
+      count: Number(row.count)
+    }));
+
+    // Convert role enum to lowercase for frontend compatibility
+    const formattedRecentUsers = recentUsers.map(user => ({
+      ...user,
+      role: user.role.toLowerCase()
+    }));
 
     res.json({
       success: true,
@@ -56,8 +99,14 @@ router.get('/stats', async (req, res) => {
         totalProblems,
         adminCount,
       },
-      charts: { userGrowth, startupGrowth },
-      recent: { users: recentUsers, startups: recentStartups }
+      charts: { 
+        userGrowth: formattedUserGrowth, 
+        startupGrowth: formattedStartupGrowth 
+      },
+      recent: { 
+        users: formattedRecentUsers, 
+        startups: recentStartups 
+      }
     });
   } catch (err) {
     console.error('Admin stats error:', err);
@@ -77,20 +126,46 @@ router.get('/users', async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const search = req.query.search || '';
 
-    const query = search
-      ? { $or: [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }] }
+    const where = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } }
+          ]
+        }
       : {};
 
     const [users, total] = await Promise.all([
-      User.find(query)
-        .select('name email picture role updatedAt')
-        .sort({ updatedAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit),
-      User.countDocuments(query)
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          picture: true,
+          role: true,
+          updatedAt: true
+        },
+        orderBy: { updatedAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      prisma.user.count({ where })
     ]);
 
-    res.json({ success: true, users, total, page, totalPages: Math.ceil(total / limit) });
+    // Convert role enum to lowercase for frontend
+    const formattedUsers = users.map(user => ({
+      ...user,
+      role: user.role.toLowerCase()
+    }));
+
+    res.json({ 
+      success: true, 
+      users: formattedUsers, 
+      total, 
+      page, 
+      totalPages: Math.ceil(total / limit) 
+    });
   } catch (err) {
     console.error('Admin users error:', err);
     res.status(500).json({ success: false, message: 'Failed to load users' });
@@ -104,25 +179,52 @@ router.get('/users', async (req, res) => {
 router.patch('/users/:id/role', async (req, res) => {
   try {
     const { role } = req.body;
-    if (!['user', 'admin'].includes(role)) {
+    const validRoles = ['user', 'admin', 'student', 'wing_member', 'wing_master'];
+    
+    if (!validRoles.includes(role)) {
       return res.status(400).json({ success: false, message: 'Invalid role' });
     }
 
+    // Convert to enum format
+    const enumRole = role.toUpperCase();
+
     // Prevent self-demotion
-    if (req.adminUser._id.toString() === req.params.id && role === 'user') {
+    if (req.adminUser.id === req.params.id && enumRole !== 'ADMIN') {
       return res.status(400).json({ success: false, message: 'You cannot demote yourself' });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { role, ...(role === 'user' ? { adminToken: null, adminTokenCreatedAt: null } : {}) },
-      { new: true }
-    ).select('name email role');
+    const updateData = {
+      role: enumRole
+    };
 
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    // Clear admin token if demoting from admin
+    if (enumRole !== 'ADMIN') {
+      updateData.adminToken = null;
+      updateData.adminTokenCreatedAt = null;
+    }
 
-    res.json({ success: true, user });
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true
+      }
+    });
+
+    // Convert role to lowercase for response
+    const formattedUser = {
+      ...user,
+      role: user.role.toLowerCase()
+    };
+
+    res.json({ success: true, user: formattedUser });
   } catch (err) {
+    if (err.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
     console.error('Admin role update error:', err);
     res.status(500).json({ success: false, message: 'Failed to update role' });
   }
@@ -134,15 +236,19 @@ router.patch('/users/:id/role', async (req, res) => {
  */
 router.delete('/users/:id', async (req, res) => {
   try {
-    if (req.adminUser._id.toString() === req.params.id) {
+    if (req.adminUser.id === req.params.id) {
       return res.status(400).json({ success: false, message: 'You cannot delete yourself' });
     }
 
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    await prisma.user.delete({
+      where: { id: req.params.id }
+    });
 
     res.json({ success: true, message: 'User deleted' });
   } catch (err) {
+    if (err.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
     console.error('Admin delete user error:', err);
     res.status(500).json({ success: false, message: 'Failed to delete user' });
   }
@@ -161,20 +267,40 @@ router.get('/startups', async (req, res) => {
     const search = req.query.search || '';
     const stageFilter = req.query.stage;
 
-    const query = {};
-    if (search) query.startupName = { $regex: search, $options: 'i' };
-    if (stageFilter) query.stage = parseInt(stageFilter);
+    const where = {};
+    if (search) {
+      where.startupName = { contains: search, mode: 'insensitive' };
+    }
+    if (stageFilter) {
+      where.stage = parseInt(stageFilter);
+    }
 
     const [startups, total] = await Promise.all([
-      Startup.find(query)
-        .populate('createdBy', 'name email picture')
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit),
-      Startup.countDocuments(query)
+      prisma.startup.findMany({
+        where,
+        include: {
+          creator: {
+            select: {
+              name: true,
+              email: true,
+              picture: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      prisma.startup.count({ where })
     ]);
 
-    res.json({ success: true, startups, total, page, totalPages: Math.ceil(total / limit) });
+    res.json({ 
+      success: true, 
+      startups, 
+      total, 
+      page, 
+      totalPages: Math.ceil(total / limit) 
+    });
   } catch (err) {
     console.error('Admin startups error:', err);
     res.status(500).json({ success: false, message: 'Failed to load startups' });
@@ -192,16 +318,21 @@ router.patch('/startups/:id/stage', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Stage must be 1–9' });
     }
 
-    const startup = await Startup.findByIdAndUpdate(
-      req.params.id,
-      { stage },
-      { new: true }
-    ).select('startupName stage');
-
-    if (!startup) return res.status(404).json({ success: false, message: 'Startup not found' });
+    const startup = await prisma.startup.update({
+      where: { id: req.params.id },
+      data: { stage },
+      select: {
+        id: true,
+        startupName: true,
+        stage: true
+      }
+    });
 
     res.json({ success: true, startup });
   } catch (err) {
+    if (err.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Startup not found' });
+    }
     console.error('Admin stage update error:', err);
     res.status(500).json({ success: false, message: 'Failed to update stage' });
   }
@@ -219,17 +350,27 @@ router.get('/ideas', async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const search = req.query.search || '';
 
-    const query = search ? { title: { $regex: search, $options: 'i' } } : {};
+    const where = search 
+      ? { title: { contains: search, mode: 'insensitive' } } 
+      : {};
 
     const [ideas, total] = await Promise.all([
-      Ideas.find(query)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit),
-      Ideas.countDocuments(query)
+      prisma.idea.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      prisma.idea.count({ where })
     ]);
 
-    res.json({ success: true, ideas, total, page, totalPages: Math.ceil(total / limit) });
+    res.json({ 
+      success: true, 
+      ideas, 
+      total, 
+      page, 
+      totalPages: Math.ceil(total / limit) 
+    });
   } catch (err) {
     console.error('Admin ideas error:', err);
     res.status(500).json({ success: false, message: 'Failed to load ideas' });
@@ -248,17 +389,27 @@ router.get('/problems', async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const search = req.query.search || '';
 
-    const query = search ? { title: { $regex: search, $options: 'i' } } : {};
+    const where = search 
+      ? { title: { contains: search, mode: 'insensitive' } } 
+      : {};
 
     const [problems, total] = await Promise.all([
-      Problems.find(query)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit),
-      Problems.countDocuments(query)
+      prisma.problem.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      prisma.problem.count({ where })
     ]);
 
-    res.json({ success: true, problems, total, page, totalPages: Math.ceil(total / limit) });
+    res.json({ 
+      success: true, 
+      problems, 
+      total, 
+      page, 
+      totalPages: Math.ceil(total / limit) 
+    });
   } catch (err) {
     console.error('Admin problems error:', err);
     res.status(500).json({ success: false, message: 'Failed to load problems' });

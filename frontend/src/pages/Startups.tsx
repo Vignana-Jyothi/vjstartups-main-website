@@ -285,7 +285,7 @@ const Startups = () => {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
               {filteredStartups.map((startup) => (
-                <StartupCard key={startup._id} startup={startup} />
+                <StartupCard key={startup.id} startup={startup} />
               ))}
             </div>
           )}

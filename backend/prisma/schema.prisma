@@ -1,0 +1,775 @@
+// Prisma Schema for VJ Startups Platform
+// PostgreSQL Migration from MongoDB
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER MANAGEMENT
+// ============================================================================
+
+model User {
+  id                   String    @id @default(uuid())
+  email                String    @unique
+  name                 String?
+  picture              String?
+  role                 UserRole  @default(STUDENT)
+  adminToken           String?   @unique
+  adminTokenCreatedAt  DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // Relations
+  problemsCreated      Problem[]            @relation("ProblemCreator")
+  ideasCreated         Idea[]               @relation("IdeaCreator")
+  startupsCreated      Startup[]            @relation("StartupCreator")
+  projectsCreated      Project[]            @relation("ProjectCreator")
+  tasksCreated         Task[]               @relation("TaskCreator")
+  tasksAssigned        Task[]               @relation("TaskAssignee")
+  problemUpvotes       ProblemUpvote[]
+  ideaUpvotes          IdeaUpvote[]
+  problemComments      ProblemComment[]
+  ideaComments         IdeaComment[]
+  stageNotifications   StageNotification[]
+  projectMemberships   ProjectMember[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  STUDENT
+  WING_MEMBER
+  WING_MASTER
+  ADMIN
+
+  @@map("user_role")
+}
+
+// ============================================================================
+// PROBLEMS
+// ============================================================================
+
+model Problem {
+  id                   String             @id @default(uuid())
+  problemId            String             @unique  // Legacy sequential string ID
+  title                String
+  briefparagraph       String             @db.Text
+  description          String?            @db.Text
+  marketSize           String?            @db.Text
+  existingSolutions    String?            @db.Text
+  currentGaps          String?            @db.Text
+  targetCustomers      String?            @db.Text
+  image                String?
+  upvotes              Int                @default(0)
+  background           String?            @db.Text
+  scalability          String?            @db.Text
+  addedByName          String
+  addedByEmail         String
+  tags                 String[]           @default([])
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  // Relations
+  creator              User               @relation("ProblemCreator", fields: [addedByEmail], references: [email])
+  collaborators        ProblemCollaborator[]
+  comments             ProblemComment[]
+  upvotedBy            ProblemUpvote[]
+  ideas                Idea[]
+
+  @@index([problemId])
+  @@index([addedByEmail])
+  @@index([createdAt])
+  @@map("problems")
+}
+
+model ProblemCollaborator {
+  id         String   @id @default(uuid())
+  problemId  String
+  email      String
+  createdAt  DateTime @default(now())
+
+  problem    Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([problemId, email])
+  @@index([problemId])
+  @@index([email])
+  @@map("problem_collaborators")
+}
+
+model ProblemUpvote {
+  id         String   @id @default(uuid())
+  problemId  String
+  userEmail  String
+  createdAt  DateTime @default(now())
+
+  problem    Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+
+  @@unique([problemId, userEmail])
+  @@index([problemId])
+  @@index([userEmail])
+  @@map("problem_upvotes")
+}
+
+model ProblemComment {
+  id         String             @id @default(uuid())
+  commentId  String             @unique  // Legacy field
+  problemId  String
+  text       String             @db.Text
+  name       String
+  email      String
+  likes      Int                @default(0)
+  createdAt  DateTime           @default(now())
+
+  problem    Problem            @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user       User               @relation(fields: [email], references: [email], onDelete: Cascade)
+  likedBy    ProblemCommentLike[]
+  replies    ProblemCommentReply[]
+
+  @@index([problemId])
+  @@index([email])
+  @@index([createdAt])
+  @@map("problem_comments")
+}
+
+model ProblemCommentLike {
+  id        String         @id @default(uuid())
+  commentId String
+  userEmail String
+  createdAt DateTime       @default(now())
+
+  comment   ProblemComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userEmail])
+  @@index([commentId])
+  @@map("problem_comment_likes")
+}
+
+model ProblemCommentReply {
+  id        String         @id @default(uuid())
+  replyId   String         @unique  // Legacy field
+  commentId String
+  text      String         @db.Text
+  name      String
+  email     String
+  likes     Int            @default(0)
+  createdAt DateTime       @default(now())
+
+  comment   ProblemComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  likedBy   ProblemReplyLike[]
+
+  @@index([commentId])
+  @@index([createdAt])
+  @@map("problem_comment_replies")
+}
+
+model ProblemReplyLike {
+  id        String              @id @default(uuid())
+  replyId   String
+  userEmail String
+  createdAt DateTime            @default(now())
+
+  reply     ProblemCommentReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@unique([replyId, userEmail])
+  @@index([replyId])
+  @@map("problem_reply_likes")
+}
+
+// ============================================================================
+// IDEAS
+// ============================================================================
+
+model Idea {
+  id                  String               @id @default(uuid())
+  ideaId              String               @unique  // UUID from MongoDB
+  title               String
+  description         String               @db.Text
+  titleImage          String?
+  relatedProblemId    String?
+  stage               Int                  @default(1)
+  upvotes             Int                  @default(0)
+  mentor              String?
+  contact             String?
+  addedByName         String
+  addedByEmail        String
+  tags                String[]             @default([])
+  targetCustomers     String?              @db.Text
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  // Startup worthiness
+  isStartupWorthy     Boolean              @default(false)
+  worthinessLevel     WorthinessLevel?
+  evaluatedAt         DateTime?
+  hasStartupCreated   Boolean              @default(false)
+
+  // Relations
+  creator             User                 @relation("IdeaCreator", fields: [addedByEmail], references: [email])
+  problem             Problem?             @relation(fields: [relatedProblemId], references: [problemId])
+  collaborators       IdeaCollaborator[]
+  teamMembers         IdeaTeamMember[]
+  comments            IdeaComment[]
+  upvotedBy           IdeaUpvote[]
+  attachments         IdeaAttachment[]
+  links               IdeaLink[]
+  questionnaires      QuestionnaireResponse[]
+  startup             Startup?
+  stageNotifications  StageNotification[]
+
+  @@index([ideaId])
+  @@index([addedByEmail])
+  @@index([relatedProblemId])
+  @@index([stage])
+  @@index([createdAt])
+  @@map("ideas")
+}
+
+enum WorthinessLevel {
+  HIGH
+  MEDIUM
+  LOW
+
+  @@map("worthiness_level")
+}
+
+model IdeaCollaborator {
+  id        String   @id @default(uuid())
+  ideaId    String
+  email     String
+  createdAt DateTime @default(now())
+
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@unique([ideaId, email])
+  @@index([ideaId])
+  @@index([email])
+  @@map("idea_collaborators")
+}
+
+model IdeaTeamMember {
+  id        String   @id @default(uuid())
+  ideaId    String
+  name      String
+  email     String?
+  role      String
+  image     String?
+  createdAt DateTime @default(now())
+
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@index([ideaId])
+  @@map("idea_team_members")
+}
+
+model IdeaUpvote {
+  id        String   @id @default(uuid())
+  ideaId    String
+  userEmail String
+  createdAt DateTime @default(now())
+
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+
+  @@unique([ideaId, userEmail])
+  @@index([ideaId])
+  @@index([userEmail])
+  @@map("idea_upvotes")
+}
+
+model IdeaComment {
+  id        String           @id @default(uuid())
+  commentId String           @unique  // Legacy UUID
+  ideaId    String
+  author    String
+  content   String           @db.Text
+  email     String
+  createdAt DateTime         @default(now())
+
+  idea      Idea             @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [email], references: [email], onDelete: Cascade)
+  likes     IdeaCommentLike[]
+  replies   IdeaCommentReply[]
+
+  @@index([ideaId])
+  @@index([email])
+  @@index([createdAt])
+  @@map("idea_comments")
+}
+
+model IdeaCommentLike {
+  id        String      @id @default(uuid())
+  commentId String
+  userEmail String
+  createdAt DateTime    @default(now())
+
+  comment   IdeaComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userEmail])
+  @@index([commentId])
+  @@map("idea_comment_likes")
+}
+
+model IdeaCommentReply {
+  id        String              @id @default(uuid())
+  replyId   String              @unique  // Legacy UUID
+  commentId String
+  author    String
+  content   String              @db.Text
+  email     String
+  createdAt DateTime            @default(now())
+
+  comment   IdeaComment         @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  likes     IdeaReplyLike[]
+
+  @@index([commentId])
+  @@index([createdAt])
+  @@map("idea_comment_replies")
+}
+
+model IdeaReplyLike {
+  id        String           @id @default(uuid())
+  replyId   String
+  userEmail String
+  createdAt DateTime         @default(now())
+
+  reply     IdeaCommentReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@unique([replyId, userEmail])
+  @@index([replyId])
+  @@map("idea_reply_likes")
+}
+
+model IdeaAttachment {
+  id          String   @id @default(uuid())
+  ideaId      String
+  name        String
+  url         String
+  type        String
+  size        String
+  accessLevel AccessLevel @default(PUBLIC)
+  uploadedBy  String
+  uploadedAt  DateTime @default(now())
+
+  idea        Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@index([ideaId])
+  @@index([accessLevel])
+  @@map("idea_attachments")
+}
+
+model IdeaLink {
+  id          String      @id @default(uuid())
+  ideaId      String
+  title       String
+  url         String
+  description String?     @db.Text
+  accessLevel AccessLevel @default(PUBLIC)
+  addedBy     String
+  addedAt     DateTime    @default(now())
+
+  idea        Idea        @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@index([ideaId])
+  @@index([accessLevel])
+  @@map("idea_links")
+}
+
+enum AccessLevel {
+  PUBLIC
+  PRIVATE
+
+  @@map("access_level")
+}
+
+// ============================================================================
+// STARTUPS
+// ============================================================================
+
+model Startup {
+  id                   String              @id @default(uuid())
+  startupName          String
+  tagline              String
+  description          String              @db.Text
+  coverImage           String?
+  logo                 String?
+  founders             String
+  stage                Int
+  fundingStatus        FundingStatus
+  fundingAmount        String?
+  revenue              String?
+  customers            String?
+  markets              String?
+  incorporationStatus  IncorporationStatus
+  website              String?
+  businessModel        String?             @db.Text
+  keyFeatures          String[]            @default([])
+  technologyStack      String[]            @default([])
+  marketSize           String?
+  annualGrowthRate     String?
+  targetUsers          String?             @db.Text
+  teamSize             Int                 @default(1)
+  pitchDeck            String?
+  onePager             String?
+  upvotes              Int                 @default(0)
+  views                Int                 @default(0)
+  problemStatement     String?             @db.Text
+  solution             String?             @db.Text
+  targetAudience       String?             @db.Text
+  competitiveAdvantage String?             @db.Text
+  createdBy            String
+  ideaId               String?             @unique
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  // Relations
+  creator              User                @relation("StartupCreator", fields: [createdBy], references: [email])
+  idea                 Idea?               @relation(fields: [ideaId], references: [ideaId])
+  teamMembers          StartupTeamMember[]
+  milestones           StartupMilestone[]
+  supportPrograms      StartupSupportProgram[]
+
+  @@index([createdBy])
+  @@index([ideaId])
+  @@index([stage])
+  @@index([createdAt])
+  @@map("startups")
+}
+
+enum FundingStatus {
+  BOOTSTRAPPED
+  SEEKING_FUNDING
+  PRE_SEED
+  SEED
+  SERIES_A
+  LATER_STAGE
+
+  @@map("funding_status")
+}
+
+enum IncorporationStatus {
+  NOT_INCORPORATED
+  INCORPORATED
+  LLC
+  PARTNERSHIP
+  OTHER
+
+  @@map("incorporation_status")
+}
+
+model StartupTeamMember {
+  id        String   @id @default(uuid())
+  startupId String
+  name      String
+  role      String
+  avatar    String?
+  createdAt DateTime @default(now())
+
+  startup   Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+
+  @@index([startupId])
+  @@map("startup_team_members")
+}
+
+model StartupMilestone {
+  id        String   @id @default(uuid())
+  startupId String
+  title     String
+  date      DateTime
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  startup   Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+
+  @@index([startupId])
+  @@index([date])
+  @@map("startup_milestones")
+}
+
+model StartupSupportProgram {
+  id        String   @id @default(uuid())
+  startupId String
+  program   String
+  createdAt DateTime @default(now())
+
+  startup   Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+
+  @@index([startupId])
+  @@map("startup_support_programs")
+}
+
+// ============================================================================
+// QUESTIONNAIRES
+// ============================================================================
+
+model QuestionnaireResponse {
+  id               String                    @id @default(uuid())
+  responseId       String                    @unique  // Legacy field
+  userId           String?
+  userEmail        String
+  userName         String?
+  ideaId           String
+  stageFrom        Int
+  stageTo          Int
+  responses        Json                      // Dynamic responses
+  overallScore     Int?
+  status           QuestionnaireStatus       @default(DRAFT)
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  // Relations
+  idea             Idea                      @relation(fields: [ideaId], references: [ideaId])
+  scores           QuestionnaireScore[]
+  recommendations  QuestionnaireRecommendation[]
+  worthinessCriteria QuestionnaireCriteria[]
+
+  @@index([ideaId])
+  @@index([userEmail])
+  @@index([createdAt])
+  @@map("questionnaire_responses")
+}
+
+enum QuestionnaireStatus {
+  DRAFT
+  COMPLETED
+
+  @@map("questionnaire_status")
+}
+
+model QuestionnaireScore {
+  id                    String                 @id @default(uuid())
+  questionnaireId       String
+  problemClarity        Int?
+  marketPotential       Int?
+  solutionViability     Int?
+  competitivePosition   Int?
+  executionReadiness    Int?
+
+  questionnaire         QuestionnaireResponse  @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+
+  @@unique([questionnaireId])
+  @@map("questionnaire_scores")
+}
+
+model QuestionnaireRecommendation {
+  id              String                 @id @default(uuid())
+  questionnaireId String
+  recommendation  String                 @db.Text
+
+  questionnaire   QuestionnaireResponse  @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+
+  @@index([questionnaireId])
+  @@map("questionnaire_recommendations")
+}
+
+model QuestionnaireCriteria {
+  id                        String                 @id @default(uuid())
+  questionnaireId           String
+  revenueModelValidated     Boolean                @default(false)
+  customerWillingnessToPay  Boolean                @default(false)
+  marketValidation          Boolean                @default(false)
+  revenueGenerated          Boolean                @default(false)
+  technicalReadiness        Boolean                @default(false)
+  customerBase              Boolean                @default(false)
+  scalabilityPlan           Boolean                @default(false)
+  metCriteria               Int                    @default(0)
+  totalCriteria             Int                    @default(7)
+  isStartupWorthy           Boolean                @default(false)
+  worthinessLevel           WorthinessLevel?
+
+  questionnaire             QuestionnaireResponse  @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+
+  @@unique([questionnaireId])
+  @@map("questionnaire_criteria")
+}
+
+// ============================================================================
+// PROJECTS & TASKS (Plane Board)
+// ============================================================================
+
+model Project {
+  id          String          @id @default(uuid())
+  name        String
+  description String?         @db.Text
+  color       String          @default("#7c3aed")
+  emoji       String          @default("📋")
+  status      ProjectStatus   @default(ACTIVE)
+  createdBy   String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  creator     User            @relation("ProjectCreator", fields: [createdBy], references: [email])
+  members     ProjectMember[]
+  tasks       Task[]
+
+  @@index([createdBy])
+  @@index([status])
+  @@index([createdAt])
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+
+  @@map("project_status")
+}
+
+model ProjectMember {
+  id        String            @id @default(uuid())
+  projectId String
+  userId    String
+  name      String
+  email     String
+  picture   String?
+  role      ProjectMemberRole @default(MEMBER)
+  createdAt DateTime          @default(now())
+
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id])
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+enum ProjectMemberRole {
+  MEMBER
+  LEAD
+
+  @@map("project_member_role")
+}
+
+model Task {
+  id             String       @id @default(uuid())
+  title          String
+  description    String?      @db.Text
+  status         TaskStatus   @default(TODO)
+  priority       TaskPriority @default(NONE)
+  projectId      String
+  assigneeUserId String?
+  assigneeName   String?
+  assigneePicture String?
+  labels         String[]     @default([])
+  dueDate        DateTime?
+  order          Int          @default(0)
+  createdByUserId String
+  createdByName  String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator        User         @relation("TaskCreator", fields: [createdByUserId], references: [id])
+  assignee       User?        @relation("TaskAssignee", fields: [assigneeUserId], references: [id])
+  comments       TaskComment[]
+
+  @@index([projectId, status])
+  @@index([projectId, order])
+  @@index([assigneeUserId])
+  @@index([createdByUserId])
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+
+  @@map("task_status")
+}
+
+enum TaskPriority {
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
+  NONE
+
+  @@map("task_priority")
+}
+
+model TaskComment {
+  id            String   @id @default(uuid())
+  taskId        String
+  content       String   @db.Text
+  authorId      String
+  authorName    String
+  authorPicture String?
+  createdAt     DateTime @default(now())
+
+  task          Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([createdAt])
+  @@map("task_comments")
+}
+
+// ============================================================================
+// ANNOUNCEMENTS
+// ============================================================================
+
+model Announcement {
+  id          String   @id @default(uuid())
+  title       String
+  content     String   @db.Text
+  postedByName String
+  postedByEmail String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("announcements")
+}
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+model StageNotification {
+  id            String   @id @default(uuid())
+  ideaId        String
+  ideaTitle     String
+  userEmail     String
+  userName      String?
+  userAvatar    String?
+  previousStage Int
+  newStage      Int
+  stageName     String
+  stageType     StageType @default(IDEA)
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime // Auto-delete after 30 days
+
+  // Relations
+  idea          Idea     @relation(fields: [ideaId], references: [ideaId])
+  user          User     @relation(fields: [userEmail], references: [email])
+
+  @@index([ideaId, createdAt])
+  @@index([userEmail, createdAt])
+  @@index([createdAt])
+  @@index([expiresAt]) // For TTL functionality
+  @@map("stage_notifications")
+}
+
+enum StageType {
+  PROBLEM
+  IDEA
+  STARTUP
+
+  @@map("stage_type")
+}

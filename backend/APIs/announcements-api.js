@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const Announcement = require('../models/Announcement');
+const prisma = require('../config/prisma');
 
 // GET /announcements-api/ — returns all active announcements, sorted by createdAt descending
 router.get('/', async (req, res) => {
   try {
-    const announcements = await Announcement.find({ isActive: true })
-      .sort({ createdAt: -1 });
+    const announcements = await prisma.announcement.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: 'desc' }
+    });
     
     res.json({
       success: true,
@@ -35,16 +37,15 @@ router.post('/', async (req, res) => {
     }
 
     // Create new announcement
-    const announcement = new Announcement({
-      title,
-      content,
-      postedBy: {
-        name: posterName || 'Anonymous',
-        email: posterEmail || ''
+    const announcement = await prisma.announcement.create({
+      data: {
+        title,
+        content,
+        postedByName: posterName || 'Anonymous',
+        postedByEmail: posterEmail || '',
+        isActive: true
       }
     });
-
-    await announcement.save();
 
     res.status(201).json({
       success: true,
@@ -64,18 +65,10 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const announcement = await Announcement.findByIdAndUpdate(
-      id,
-      { isActive: false },
-      { new: true }
-    );
-
-    if (!announcement) {
-      return res.status(404).json({
-        success: false,
-        message: 'Announcement not found'
-      });
-    }
+    const announcement = await prisma.announcement.update({
+      where: { id },
+      data: { isActive: false }
+    });
 
     res.json({
       success: true,
@@ -83,6 +76,13 @@ router.delete('/:id', async (req, res) => {
       announcement
     });
   } catch (error) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({
+        success: false,
+        message: 'Announcement not found'
+      });
+    }
+    
     console.error('Error deleting announcement:', error);
     res.status(500).json({
       success: false,

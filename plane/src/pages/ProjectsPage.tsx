@@ -5,7 +5,7 @@ import { fetchProjects, createProject } from "../services/planeApi";
 import { useAuth } from "../context/AuthContext";
 
 interface Project {
-  _id: string;
+  id: string;
   name: string;
   description: string;
   color: string;
@@ -117,8 +117,8 @@ const ProjectsPage = () => {
             const pct = proj.taskCount > 0 ? Math.round((proj.completedCount / proj.taskCount) * 100) : 0;
             return (
               <Link
-                key={proj._id}
-                to={`/projects/${proj._id}`}
+                key={proj.id}
+                to={`/projects/${proj.id}`}
                 className="plane-card no-underline group block relative overflow-hidden"
               >
                 {/* Top color strip */}

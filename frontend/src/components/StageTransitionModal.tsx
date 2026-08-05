@@ -84,7 +84,7 @@ const StageTransitionModal = ({
         const mergedResponses = {};
         response.data.forEach(questionnaire => {
           if (questionnaire.responses) {
-            console.log('Merging responses from questionnaire:', questionnaire._id, questionnaire.responses);
+            console.log('Merging responses from questionnaire:', questionnaire.id || questionnaire.responseId, questionnaire.responses);
             Object.assign(mergedResponses, questionnaire.responses);
           }
         });

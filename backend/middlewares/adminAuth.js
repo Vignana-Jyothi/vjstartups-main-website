@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const prisma = require('../config/prisma');
 
 /**
  * Admin authentication middleware.
@@ -19,7 +19,12 @@ const adminAuth = async (req, res, next) => {
   }
 
   try {
-    const user = await User.findOne({ adminToken: token, role: 'admin' });
+    const user = await prisma.user.findFirst({
+      where: {
+        adminToken: token,
+        role: 'ADMIN'
+      }
+    });
 
     if (!user) {
       return res.status(403).json({ success: false, message: 'Access denied: not an admin or invalid token' });

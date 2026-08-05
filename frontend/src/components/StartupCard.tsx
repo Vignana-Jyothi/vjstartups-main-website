@@ -59,7 +59,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
       </div>
 
       <div className="flex justify-between items-center pt-2 border-t border-startup-primary/10">
-        <Link to={`/startups/${startup._id}`}>
+        <Link to={`/startups/${startup.id}`}>
           <Button
             size="sm"
             className="bg-startup-primary hover:bg-startup-primary/90 text-white"

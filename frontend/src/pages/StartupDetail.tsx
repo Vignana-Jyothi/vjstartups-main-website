@@ -552,7 +552,7 @@ export default function StartupDetail() {
                 )}
                 {startup.pitchDeck && (
                   <a 
-                    href={`${import.meta.env.VITE_API_BASE_URL}/startup-api/${startup._id}/download/pitchDeck`}
+                    href={`${import.meta.env.VITE_API_BASE_URL}/startup-api/${startup.id}/download/pitchDeck`}
                     download
                     className="w-full"
                   >
@@ -564,7 +564,7 @@ export default function StartupDetail() {
                 )}
                 {startup.onePager && (
                   <a 
-                    href={`${import.meta.env.VITE_API_BASE_URL}/startup-api/${startup._id}/download/onePager`}
+                    href={`${import.meta.env.VITE_API_BASE_URL}/startup-api/${startup.id}/download/onePager`}
                     download
                     className="w-full"
                   >

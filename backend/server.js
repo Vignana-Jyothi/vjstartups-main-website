@@ -1,8 +1,8 @@
 // server.js
 const express = require('express');
 const dotenv = require('dotenv');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const prisma = require('./config/prisma');
 
 dotenv.config();
 const app = express();
@@ -29,15 +29,16 @@ app.use(cors({
 // Serve static files from uploads directory
 app.use('/uploads', express.static('uploads'));
 
-// Connect to MongoDB
-console.log("URI:", JSON.stringify(process.env.MONGO_URI));
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('✅ MongoDB Connected'))
-    .catch(err => {
-        console.error('❌ DB Connection Failed:', err);
-        process.exit(1);
-    });
-
+// Test database connection
+(async () => {
+  try {
+    await prisma.$connect();
+    console.log('✅ PostgreSQL Connected via Prisma');
+  } catch (err) {
+    console.error('❌ DB Connection Failed:', err);
+    process.exit(1);
+  }
+})();
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
@@ -49,15 +50,28 @@ app.use('/startup-api', require('./APIs/startups-api'));
 app.use('/auth', require('./APIs/auth-api'));
 app.use('/notification-api', require('./APIs/notifications-api'));
 
-// New: Admin routes (all protected by adminAuth middleware inside)
+// Admin routes (all protected by adminAuth middleware inside)
 app.use('/admin-api', require('./APIs/admin-api'));
 
-// New: Tasks/Projects routes (public reads, write requires userId in body)
+// Tasks/Projects routes (public reads, write requires userId in body)
 app.use('/tasks-api', require('./APIs/tasks-api'));
 
 app.use('/announcements-api', require('./APIs/announcements-api'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 6220;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\n🛑 Shutting down gracefully...');
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('\n🛑 Shutting down gracefully...');
+  await prisma.$disconnect();
+  process.exit(0);
+});

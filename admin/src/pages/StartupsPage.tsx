@@ -67,7 +67,7 @@ const StartupsPage = () => {
     setActionLoading(id);
     try {
       await updateStartupStage(id, stage);
-      setStartups((prev) => prev.map((s) => s._id === id ? { ...s, stage } : s));
+      setStartups((prev) => prev.map((s) => s.id === id ? { ...s, stage } : s));
     } catch {
       alert("Failed to update stage");
     } finally {
@@ -136,7 +136,7 @@ const StartupsPage = () => {
                   </td>
                 </tr>
               ) : startups.map((s) => (
-                <tr key={s._id}>
+                <tr key={s.id}>
                   <td>
                     <div>
                       <p className="font-medium text-[#e2e8f0]">{s.startupName}</p>
@@ -166,8 +166,8 @@ const StartupsPage = () => {
                       {/* Stage selector */}
                       <select
                         value={s.stage}
-                        onChange={(e) => handleStageChange(s._id, parseInt(e.target.value))}
-                        disabled={actionLoading === s._id}
+                        onChange={(e) => handleStageChange(s.id, parseInt(e.target.value))}
+                        disabled={actionLoading === s.id}
                         className="admin-select text-xs py-1 px-2"
                         title="Change stage"
                       >
@@ -178,7 +178,7 @@ const StartupsPage = () => {
 
                       {/* View on site */}
                       <a
-                        href={`${API_URL.replace("6220", "4000")}/startups/${s._id}`}
+                        href={`${API_URL.replace("6220", "4000")}/startups/${s.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn btn-xs btn-ghost"

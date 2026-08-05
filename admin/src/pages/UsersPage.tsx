@@ -51,7 +51,7 @@ const UsersPage = () => {
     setActionLoading(userId);
     try {
       await updateUserRole(userId, newRole);
-      setUsers((prev) => prev.map((u) => u._id === userId ? { ...u, role: newRole } : u));
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role: newRole } : u));
     } catch {
       alert("Failed to update role");
     } finally {
@@ -64,7 +64,7 @@ const UsersPage = () => {
     setActionLoading(userId);
     try {
       await deleteUser(userId);
-      setUsers((prev) => prev.filter((u) => u._id !== userId));
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
       setTotal((t) => t - 1);
     } catch (e: any) {
       alert(e.response?.data?.message || "Failed to delete user");
@@ -132,7 +132,7 @@ const UsersPage = () => {
                   </td>
                 </tr>
               ) : users.map((u) => (
-                <tr key={u._id}>
+                <tr key={u.id}>
                   <td>
                     <div className="flex items-center gap-2.5">
                       <img
@@ -155,14 +155,14 @@ const UsersPage = () => {
                   <td>
                     <div className="flex items-center justify-end gap-2">
                       {/* Role toggle — disabled for self */}
-                      {currentAdmin?._id !== u._id ? (
+                      {currentAdmin?.id !== u.id ? (
                         <button
-                          onClick={() => handleRoleChange(u._id, u.role === "admin" ? "user" : "admin")}
-                          disabled={actionLoading === u._id}
+                          onClick={() => handleRoleChange(u.id, u.role === "admin" ? "user" : "admin")}
+                          disabled={actionLoading === u.id}
                           className={`btn btn-xs ${u.role === "admin" ? "btn-ghost" : "btn-ghost"}`}
                           title={u.role === "admin" ? "Demote to user" : "Promote to admin"}
                         >
-                          {actionLoading === u._id ? (
+                          {actionLoading === u.id ? (
                             <div className="spinner w-3 h-3" />
                           ) : (
                             <Shield className="w-3 h-3" />
@@ -173,10 +173,10 @@ const UsersPage = () => {
                         <span className="text-xs text-[#475569] px-2">(you)</span>
                       )}
 
-                      {currentAdmin?._id !== u._id && (
+                      {currentAdmin?.id !== u.id && (
                         <button
-                          onClick={() => handleDelete(u._id, u.name)}
-                          disabled={actionLoading === u._id}
+                          onClick={() => handleDelete(u.id, u.name)}
+                          disabled={actionLoading === u.id}
                           className="btn btn-xs btn-danger"
                         >
                           <UserX className="w-3 h-3" />

@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import TaskDetailPage from "./TaskDetailPage";
 
 interface Task {
-  _id: string;
+  id: string;
   title: string;
   description: string;
   status: "todo" | "in-progress" | "review" | "done";
@@ -19,7 +19,7 @@ interface Task {
 }
 
 interface Project {
-  _id: string;
+  id: string;
   name: string;
   emoji: string;
   color: string;
@@ -103,7 +103,7 @@ const BoardPage = () => {
 
   const handleMoveStatus = async (taskId: string, newStatus: Task["status"]) => {
     // Optimistic update
-    setTasks((prev) => prev.map((t) => t._id === taskId ? { ...t, status: newStatus } : t));
+    setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status: newStatus } : t));
     try {
       await updateTaskStatus(taskId, newStatus);
     } catch {
@@ -178,8 +178,8 @@ const BoardPage = () => {
               <div className="flex-1 space-y-2.5 overflow-y-auto max-h-[calc(100vh-260px)] pr-1">
                 {colTasks.map((task) => (
                   <div
-                    key={task._id}
-                    onClick={() => setSelectedTaskId(task._id)}
+                    key={task.id}
+                    onClick={() => setSelectedTaskId(task.id)}
                     className="kanban-card space-y-2.5"
                   >
                     {/* Priority & Move status */}
@@ -196,7 +196,7 @@ const BoardPage = () => {
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) => {
                           e.stopPropagation();
-                          handleMoveStatus(task._id, e.target.value as Task["status"]);
+                          handleMoveStatus(task.id, e.target.value as Task["status"]);
                         }}
                         className="bg-black/40 text-[11px] text-[#94a3b8] rounded px-1.5 py-0.5 border border-white/10 outline-none cursor-pointer"
                       >

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const QuestionnaireResponse = require('../models/Questionnaire');
+const prisma = require('../config/prisma');
 
 router.use(express.json());
 
@@ -40,28 +40,42 @@ const evaluateStartupWorthiness = (responses) => {
 // Test endpoint to create database collection
 router.post('/test-create', async (req, res) => {
   try {
-    const testResponse = new QuestionnaireResponse({
-      responseId: 'test-' + Date.now(),
-      userId: 'test-user',
-      userEmail: 'test@example.com',
-      userName: 'Test User',
-      responses: {
-        problemDescription: 'Test problem description',
-        problemSeverity: 5
+    const testResponse = await prisma.questionnaireResponse.create({
+      data: {
+        responseId: 'test-' + Date.now(),
+        userId: 'test-user',
+        userEmail: 'test@example.com',
+        userName: 'Test User',
+        ideaId: 'test-idea-id',
+        stageFrom: 1,
+        stageTo: 2,
+        responses: {
+          problemDescription: 'Test problem description',
+          problemSeverity: 5
+        },
+        overallScore: 70,
+        status: 'COMPLETED',
+        scores: {
+          create: {
+            problemClarity: 75,
+            marketPotential: 60,
+            solutionViability: 80,
+            competitivePosition: 70,
+            executionReadiness: 65
+          }
+        },
+        recommendations: {
+          create: [
+            { recommendation: 'Test recommendation' }
+          ]
+        }
       },
-      score: {
-        problemClarity: 75,
-        marketPotential: 60,
-        solutionViability: 80,
-        competitivePosition: 70,
-        executionReadiness: 65,
-        overallScore: 70
-      },
-      recommendations: ['Test recommendation'],
-      status: 'completed'
+      include: {
+        scores: true,
+        recommendations: true
+      }
     });
 
-    await testResponse.save();
     res.status(201).json({ 
       message: 'Test questionnaire created successfully! Database collection should now exist.',
       data: testResponse 
@@ -75,10 +89,39 @@ router.post('/test-create', async (req, res) => {
 // Get all questionnaire responses for a user
 router.get('/responses/:userEmail', async (req, res) => {
   try {
-    const responses = await QuestionnaireResponse.find({ 
-      userEmail: req.params.userEmail 
-    }).sort({ createdAt: -1 });
-    res.json(responses);
+    const responses = await prisma.questionnaireResponse.findMany({
+      where: { userEmail: req.params.userEmail },
+      include: {
+        scores: true,
+        recommendations: true,
+        worthinessCriteria: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Convert enums to lowercase for frontend
+    const responsesFormatted = responses.map(r => ({
+      ...r,
+      status: r.status.toLowerCase(),
+      score: r.scores,
+      startupWorthiness: r.worthinessCriteria?.[0] ? {
+        criteria: {
+          revenueModelValidated: r.worthinessCriteria[0].revenueModelValidated,
+          customerWillingnessToPay: r.worthinessCriteria[0].customerWillingnessToPay,
+          marketValidation: r.worthinessCriteria[0].marketValidation,
+          revenueGenerated: r.worthinessCriteria[0].revenueGenerated,
+          technicalReadiness: r.worthinessCriteria[0].technicalReadiness,
+          customerBase: r.worthinessCriteria[0].customerBase,
+          scalabilityPlan: r.worthinessCriteria[0].scalabilityPlan
+        },
+        metCriteria: r.worthinessCriteria[0].metCriteria,
+        totalCriteria: r.worthinessCriteria[0].totalCriteria,
+        isStartupWorthy: r.worthinessCriteria[0].isStartupWorthy,
+        worthinessLevel: r.worthinessCriteria[0].worthinessLevel?.toLowerCase()
+      } : null
+    }));
+
+    res.json(responsesFormatted);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error fetching questionnaire responses", error: err.message });
@@ -88,13 +131,42 @@ router.get('/responses/:userEmail', async (req, res) => {
 // Get a specific questionnaire response
 router.get('/response/:responseId', async (req, res) => {
   try {
-    const response = await QuestionnaireResponse.findOne({ 
-      responseId: req.params.responseId 
+    const response = await prisma.questionnaireResponse.findUnique({
+      where: { responseId: req.params.responseId },
+      include: {
+        scores: true,
+        recommendations: true,
+        worthinessCriteria: true
+      }
     });
+
     if (!response) {
       return res.status(404).json({ message: "Questionnaire response not found" });
     }
-    res.json(response);
+
+    // Convert enums to lowercase for frontend
+    const responseFormatted = {
+      ...response,
+      status: response.status.toLowerCase(),
+      score: response.scores,
+      startupWorthiness: response.worthinessCriteria?.[0] ? {
+        criteria: {
+          revenueModelValidated: response.worthinessCriteria[0].revenueModelValidated,
+          customerWillingnessToPay: response.worthinessCriteria[0].customerWillingnessToPay,
+          marketValidation: response.worthinessCriteria[0].marketValidation,
+          revenueGenerated: response.worthinessCriteria[0].revenueGenerated,
+          technicalReadiness: response.worthinessCriteria[0].technicalReadiness,
+          customerBase: response.worthinessCriteria[0].customerBase,
+          scalabilityPlan: response.worthinessCriteria[0].scalabilityPlan
+        },
+        metCriteria: response.worthinessCriteria[0].metCriteria,
+        totalCriteria: response.worthinessCriteria[0].totalCriteria,
+        isStartupWorthy: response.worthinessCriteria[0].isStartupWorthy,
+        worthinessLevel: response.worthinessCriteria[0].worthinessLevel?.toLowerCase()
+      } : null
+    };
+
+    res.json(responseFormatted);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error fetching questionnaire response", error: err.message });
@@ -104,10 +176,39 @@ router.get('/response/:responseId', async (req, res) => {
 // Get questionnaire responses for a specific idea
 router.get('/responses/idea/:ideaId', async (req, res) => {
   try {
-    const responses = await QuestionnaireResponse.find({ 
-      ideaId: req.params.ideaId 
-    }).sort({ createdAt: -1 });
-    res.json(responses);
+    const responses = await prisma.questionnaireResponse.findMany({
+      where: { ideaId: req.params.ideaId },
+      include: {
+        scores: true,
+        recommendations: true,
+        worthinessCriteria: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Convert enums to lowercase for frontend
+    const responsesFormatted = responses.map(r => ({
+      ...r,
+      status: r.status.toLowerCase(),
+      score: r.scores,
+      startupWorthiness: r.worthinessCriteria?.[0] ? {
+        criteria: {
+          revenueModelValidated: r.worthinessCriteria[0].revenueModelValidated,
+          customerWillingnessToPay: r.worthinessCriteria[0].customerWillingnessToPay,
+          marketValidation: r.worthinessCriteria[0].marketValidation,
+          revenueGenerated: r.worthinessCriteria[0].revenueGenerated,
+          technicalReadiness: r.worthinessCriteria[0].technicalReadiness,
+          customerBase: r.worthinessCriteria[0].customerBase,
+          scalabilityPlan: r.worthinessCriteria[0].scalabilityPlan
+        },
+        metCriteria: r.worthinessCriteria[0].metCriteria,
+        totalCriteria: r.worthinessCriteria[0].totalCriteria,
+        isStartupWorthy: r.worthinessCriteria[0].isStartupWorthy,
+        worthinessLevel: r.worthinessCriteria[0].worthinessLevel?.toLowerCase()
+      } : null
+    }));
+
+    res.json(responsesFormatted);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error fetching idea questionnaire responses", error: err.message });
@@ -134,51 +235,100 @@ router.post('/response', async (req, res) => {
     // Calculate startup worthiness
     const startupEvaluation = evaluateStartupWorthiness(responses);
 
-    const newResponse = new QuestionnaireResponse({
-      responseId: uuidv4(),
-      userId,
-      userEmail,
-      userName,
-      ideaId,
-      stageTransition,
-      responses,
-      score: scores,
-      recommendations,
-      startupWorthiness: startupEvaluation,
-      status,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-
-    await newResponse.save();
-    
-    // If idea is startup worthy and we have an ideaId, update the idea's startup status
-    if (ideaId && startupEvaluation.isStartupWorthy) {
-      try {
-        // Import the Ideas model to update directly
-        const Idea = require('../models/Ideas');
-        
-        await Idea.findOneAndUpdate(
-          { ideaId: ideaId },
-          {
-            startupStatus: {
-              isWorthy: true,
-              level: startupEvaluation.worthinessLevel,
-              evaluatedAt: new Date(),
-              hasStartupCreated: false
+    // Create response with all related records in a transaction
+    const newResponse = await prisma.$transaction(async (tx) => {
+      const questionnaire = await tx.questionnaireResponse.create({
+        data: {
+          responseId: uuidv4(),
+          userId,
+          userEmail,
+          userName,
+          ideaId,
+          stageFrom: stageTransition?.from || 0,
+          stageTo: stageTransition?.to || 0,
+          responses,
+          overallScore: scores.overallScore,
+          status: status.toUpperCase(), // Convert to enum format
+          scores: {
+            create: {
+              problemClarity: scores.problemClarity,
+              marketPotential: scores.marketPotential,
+              solutionViability: scores.solutionViability,
+              competitivePosition: scores.competitivePosition,
+              executionReadiness: scores.executionReadiness
             }
           },
-          { new: true }
-        );
-        
-        console.log(`✅ Updated startup status for idea ${ideaId}: ${startupEvaluation.worthinessLevel}`);
-      } catch (ideaUpdateError) {
-        console.log('❌ Could not update idea startup status:', ideaUpdateError.message);
-        // Continue without failing the questionnaire response
+          recommendations: {
+            create: recommendations.map(rec => ({ recommendation: rec }))
+          },
+          worthinessCriteria: {
+            create: {
+              revenueModelValidated: startupEvaluation.criteria.revenueModelValidated,
+              customerWillingnessToPay: startupEvaluation.criteria.customerWillingnessToPay,
+              marketValidation: startupEvaluation.criteria.marketValidation,
+              revenueGenerated: startupEvaluation.criteria.revenueGenerated,
+              technicalReadiness: startupEvaluation.criteria.technicalReadiness,
+              customerBase: startupEvaluation.criteria.customerBase,
+              scalabilityPlan: startupEvaluation.criteria.scalabilityPlan,
+              metCriteria: startupEvaluation.metCriteria,
+              totalCriteria: startupEvaluation.totalCriteria,
+              isStartupWorthy: startupEvaluation.isStartupWorthy,
+              worthinessLevel: startupEvaluation.worthinessLevel.toUpperCase() // Convert to enum format
+            }
+          }
+        },
+        include: {
+          scores: true,
+          recommendations: true,
+          worthinessCriteria: true
+        }
+      });
+
+      // If idea is startup worthy and we have an ideaId, update the idea's startup status
+      if (ideaId && startupEvaluation.isStartupWorthy) {
+        try {
+          await tx.idea.update({
+            where: { ideaId: ideaId },
+            data: {
+              isStartupWorthy: true,
+              worthinessLevel: startupEvaluation.worthinessLevel.toUpperCase(),
+              evaluatedAt: new Date()
+            }
+          });
+          
+          console.log(`✅ Updated startup status for idea ${ideaId}: ${startupEvaluation.worthinessLevel}`);
+        } catch (ideaUpdateError) {
+          console.log('❌ Could not update idea startup status:', ideaUpdateError.message);
+          // Continue without failing the questionnaire response
+        }
       }
-    }
+
+      return questionnaire;
+    });
+
+    // Format response for frontend
+    const responseFormatted = {
+      ...newResponse,
+      status: newResponse.status.toLowerCase(),
+      score: newResponse.scores,
+      startupWorthiness: newResponse.worthinessCriteria?.[0] ? {
+        criteria: {
+          revenueModelValidated: newResponse.worthinessCriteria[0].revenueModelValidated,
+          customerWillingnessToPay: newResponse.worthinessCriteria[0].customerWillingnessToPay,
+          marketValidation: newResponse.worthinessCriteria[0].marketValidation,
+          revenueGenerated: newResponse.worthinessCriteria[0].revenueGenerated,
+          technicalReadiness: newResponse.worthinessCriteria[0].technicalReadiness,
+          customerBase: newResponse.worthinessCriteria[0].customerBase,
+          scalabilityPlan: newResponse.worthinessCriteria[0].scalabilityPlan
+        },
+        metCriteria: newResponse.worthinessCriteria[0].metCriteria,
+        totalCriteria: newResponse.worthinessCriteria[0].totalCriteria,
+        isStartupWorthy: newResponse.worthinessCriteria[0].isStartupWorthy,
+        worthinessLevel: newResponse.worthinessCriteria[0].worthinessLevel?.toLowerCase()
+      } : null
+    };
     
-    res.status(201).json(newResponse);
+    res.status(201).json(responseFormatted);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error creating questionnaire response", error: err.message });
@@ -188,8 +338,12 @@ router.post('/response', async (req, res) => {
 // Update questionnaire response
 router.put('/response/:responseId', async (req, res) => {
   try {
-    const response = await QuestionnaireResponse.findOne({ 
-      responseId: req.params.responseId 
+    const response = await prisma.questionnaireResponse.findUnique({
+      where: { responseId: req.params.responseId },
+      include: {
+        scores: true,
+        recommendations: true
+      }
     });
     
     if (!response) {
@@ -201,26 +355,106 @@ router.put('/response/:responseId', async (req, res) => {
       return res.status(403).json({ message: "Unauthorized to update this response" });
     }
 
-    // Update fields
+    // Merge responses
+    const mergedResponses = { ...response.responses, ...req.body.responses };
+    
+    // Recalculate scores and recommendations if responses changed
+    let updateData = {};
     if (req.body.responses) {
-      response.responses = { ...response.responses, ...req.body.responses };
+      const scores = calculateScores(mergedResponses);
+      const recommendations = generateRecommendations(scores, mergedResponses);
       
-      // Recalculate scores and recommendations
-      const scores = calculateScores(response.responses);
-      const recommendations = generateRecommendations(scores, response.responses);
-      
-      response.score = scores;
-      response.recommendations = recommendations;
+      updateData = {
+        responses: mergedResponses,
+        overallScore: scores.overallScore
+      };
+
+      // Update in transaction
+      await prisma.$transaction(async (tx) => {
+        // Update main response
+        await tx.questionnaireResponse.update({
+          where: { responseId: req.params.responseId },
+          data: updateData
+        });
+
+        // Update scores
+        if (response.scores) {
+          await tx.questionnaireScore.update({
+            where: { questionnaireId: response.id },
+            data: {
+              problemClarity: scores.problemClarity,
+              marketPotential: scores.marketPotential,
+              solutionViability: scores.solutionViability,
+              competitivePosition: scores.competitivePosition,
+              executionReadiness: scores.executionReadiness
+            }
+          });
+        } else {
+          await tx.questionnaireScore.create({
+            data: {
+              questionnaireId: response.id,
+              problemClarity: scores.problemClarity,
+              marketPotential: scores.marketPotential,
+              solutionViability: scores.solutionViability,
+              competitivePosition: scores.competitivePosition,
+              executionReadiness: scores.executionReadiness
+            }
+          });
+        }
+
+        // Delete old recommendations and create new ones
+        await tx.questionnaireRecommendation.deleteMany({
+          where: { questionnaireId: response.id }
+        });
+        await tx.questionnaireRecommendation.createMany({
+          data: recommendations.map(rec => ({
+            questionnaireId: response.id,
+            recommendation: rec
+          }))
+        });
+      });
     }
     
     if (req.body.status) {
-      response.status = req.body.status;
+      await prisma.questionnaireResponse.update({
+        where: { responseId: req.params.responseId },
+        data: { status: req.body.status.toUpperCase() }
+      });
     }
-    
-    response.updatedAt = new Date();
 
-    await response.save();
-    res.json(response);
+    // Fetch updated response
+    const updatedResponse = await prisma.questionnaireResponse.findUnique({
+      where: { responseId: req.params.responseId },
+      include: {
+        scores: true,
+        recommendations: true,
+        worthinessCriteria: true
+      }
+    });
+
+    // Format response for frontend
+    const responseFormatted = {
+      ...updatedResponse,
+      status: updatedResponse.status.toLowerCase(),
+      score: updatedResponse.scores,
+      startupWorthiness: updatedResponse.worthinessCriteria?.[0] ? {
+        criteria: {
+          revenueModelValidated: updatedResponse.worthinessCriteria[0].revenueModelValidated,
+          customerWillingnessToPay: updatedResponse.worthinessCriteria[0].customerWillingnessToPay,
+          marketValidation: updatedResponse.worthinessCriteria[0].marketValidation,
+          revenueGenerated: updatedResponse.worthinessCriteria[0].revenueGenerated,
+          technicalReadiness: updatedResponse.worthinessCriteria[0].technicalReadiness,
+          customerBase: updatedResponse.worthinessCriteria[0].customerBase,
+          scalabilityPlan: updatedResponse.worthinessCriteria[0].scalabilityPlan
+        },
+        metCriteria: updatedResponse.worthinessCriteria[0].metCriteria,
+        totalCriteria: updatedResponse.worthinessCriteria[0].totalCriteria,
+        isStartupWorthy: updatedResponse.worthinessCriteria[0].isStartupWorthy,
+        worthinessLevel: updatedResponse.worthinessCriteria[0].worthinessLevel?.toLowerCase()
+      } : null
+    };
+
+    res.json(responseFormatted);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error updating questionnaire response", error: err.message });
@@ -230,8 +464,8 @@ router.put('/response/:responseId', async (req, res) => {
 // Delete questionnaire response
 router.delete('/response/:responseId', async (req, res) => {
   try {
-    const response = await QuestionnaireResponse.findOne({ 
-      responseId: req.params.responseId 
+    const response = await prisma.questionnaireResponse.findUnique({
+      where: { responseId: req.params.responseId }
     });
     
     if (!response) {
@@ -243,10 +477,17 @@ router.delete('/response/:responseId', async (req, res) => {
       return res.status(403).json({ message: "Unauthorized to delete this response" });
     }
 
-    await QuestionnaireResponse.deleteOne({ responseId: req.params.responseId });
+    await prisma.questionnaireResponse.delete({
+      where: { responseId: req.params.responseId }
+    });
+    // Related records (scores, recommendations, criteria) are cascade deleted
+
     res.json({ message: "Questionnaire response deleted successfully" });
   } catch (err) {
     console.error(err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ message: "Questionnaire response not found" });
+    }
     res.status(500).json({ message: "Error deleting questionnaire response", error: err.message });
   }
 });

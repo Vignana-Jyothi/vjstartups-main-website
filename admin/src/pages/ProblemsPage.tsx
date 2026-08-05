@@ -96,7 +96,7 @@ const ProblemsPage = () => {
                   </td>
                 </tr>
               ) : problems.map((problem) => (
-                <tr key={problem._id}>
+                <tr key={problem.id}>
                   <td>
                     <p className="font-medium text-[#e2e8f0]">{problem.title}</p>
                     {problem.description && (

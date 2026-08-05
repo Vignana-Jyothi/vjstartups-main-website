@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const Idea = require('../models/Ideas');
-const Problem = require('../models/Problems');
-const StageNotification = require('../models/StageNotifications');
+const prisma = require('../config/prisma');
 const upload = require('../middlewares/upload');
 const cloudinary = require('../config/cloudinary');
 
@@ -31,27 +29,33 @@ const createStageNotification = async (idea, previousStage, newStage) => {
     if (previousStage === newStage) return;
     
     const stageInfo = getStageInfo(newStage);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30); // Expire after 30 days
     
     // Delete any recent notifications for the same idea/user (last minute)
-    await StageNotification.deleteMany({
-      ideaId: idea.ideaId,
-      userEmail: idea.addedByEmail,
-      createdAt: { $gte: new Date(Date.now() - 60000) }
+    await prisma.stageNotification.deleteMany({
+      where: {
+        ideaId: idea.ideaId,
+        userEmail: idea.addedByEmail,
+        createdAt: { gte: new Date(Date.now() - 60000) }
+      }
     });
     
-    const notification = new StageNotification({
-      ideaId: idea.ideaId,
-      ideaTitle: idea.title,
-      userEmail: idea.addedByEmail,
-      userName: idea.addedByName,
-      userAvatar: idea.team?.[0]?.image || null,
-      previousStage,
-      newStage,
-      stageName: stageInfo.name,
-      stageType: stageInfo.type
+    await prisma.stageNotification.create({
+      data: {
+        ideaId: idea.ideaId,
+        ideaTitle: idea.title,
+        userEmail: idea.addedByEmail,
+        userName: idea.addedByName,
+        userAvatar: null, // Will be enriched from team if needed
+        previousStage,
+        newStage,
+        stageName: stageInfo.name,
+        stageType: stageInfo.type.toUpperCase(),
+        expiresAt
+      }
     });
     
-    await notification.save();
     console.log(`✅ Stage notification created: ${idea.title} moved to stage ${newStage}`);
   } catch (err) {
     console.error('Error creating stage notification:', err);
@@ -62,7 +66,28 @@ const createStageNotification = async (idea, previousStage, newStage) => {
 // Get all ideas (database only)
 router.get('/ideas', async (req, res) => {
   try {
-    const ideas = await Idea.find();
+    const ideas = await prisma.idea.findMany({
+      include: {
+        teamMembers: true,
+        collaborators: true,
+        upvotedBy: true,
+        comments: {
+          include: {
+            replies: {
+              include: {
+                likes: true
+              }
+            },
+            likes: true
+          },
+          orderBy: { createdAt: 'desc' }
+        },
+        attachments: true,
+        links: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
     res.json(ideas);
   } catch (err) {
     console.error(err);
@@ -73,7 +98,24 @@ router.get('/ideas', async (req, res) => {
 // Get ideas related to a specific problem (database only)
 router.get('/ideas/problem/:problemId', async (req, res) => {
   try {
-    const ideas = await Idea.find({ relatedProblemId: req.params.problemId });
+    const ideas = await prisma.idea.findMany({
+      where: { relatedProblemId: req.params.problemId },
+      include: {
+        teamMembers: true,
+        collaborators: true,
+        upvotedBy: true,
+        comments: {
+          include: {
+            replies: true,
+            likes: true
+          }
+        },
+        attachments: true,
+        links: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
     res.json(ideas);
   } catch (err) {
     console.error(err);
@@ -81,64 +123,66 @@ router.get('/ideas/problem/:problemId', async (req, res) => {
   }
 });
 
-// Helper function to filter links and attachments based on access control
-const filterContentBasedOnAccess = (idea, userEmail) => {
-  if (!idea.links && !idea.attachments) return idea;
-  
-  const filteredIdea = { ...idea };
-  
-  // Filter links
-  if (idea.links) {
-    filteredIdea.links = idea.links.filter(link => {
-      // Public links are visible to everyone
-      if (link.accessLevel === 'public') return true;
-      
-      // Private links are visible only to the creator and team members
-      if (link.accessLevel === 'private') {
-        if (userEmail === idea.addedByEmail) return true;
-        if (idea.team && idea.team.some(member => member.email === userEmail)) return true;
-        if (idea.collaborators && idea.collaborators.includes(userEmail)) return true;
-        return false;
-      }
-      
-      return false;
-    });
-  }
-  
-  // Filter attachments
-  if (idea.attachments) {
-    filteredIdea.attachments = idea.attachments.filter(attachment => {
-      // Public attachments are visible to everyone
-      if (attachment.accessLevel === 'public') return true;
-      
-      // Private attachments are visible only to the creator and team members
-      if (attachment.accessLevel === 'private') {
-        if (userEmail === idea.addedByEmail) return true;
-        if (idea.team && idea.team.some(member => member.email === userEmail)) return true;
-        if (idea.collaborators && idea.collaborators.includes(userEmail)) return true;
-        return false;
-      }
-      
-      return false;
-    });
-  }
-  
-  return filteredIdea;
-};
-
 // Get a specific idea (database only with access control)
 router.get('/ideas/:ideaId', async (req, res) => {
   try {
     const userEmail = req.query.userEmail || req.headers['user-email'];
     
     // Find in database only
-    let idea = await Idea.findOne({ ideaId: req.params.ideaId });
-    if (idea) {
-      idea = filterContentBasedOnAccess(idea.toObject(), userEmail);
-      return res.json(idea);
+    let idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId },
+      include: {
+        teamMembers: true,
+        collaborators: true,
+        upvotedBy: true,
+        comments: {
+          include: {
+            replies: {
+              include: {
+                likes: true
+              },
+              orderBy: { createdAt: 'asc' }
+            },
+            likes: true
+          },
+          orderBy: { createdAt: 'desc' }
+        },
+        attachments: {
+          orderBy: { uploadedAt: 'desc' }
+        },
+        links: {
+          orderBy: { addedAt: 'desc' }
+        }
+      }
+    });
+    
+    if (!idea) {
+      return res.status(404).json({ message: "Idea not found" });
     }
     
-    return res.status(404).json({ message: "Idea not found" });
+    // Apply access control filtering
+    const isOwner = userEmail && idea.addedByEmail === userEmail;
+    const isTeamMember = userEmail && idea.teamMembers.some(m => m.email === userEmail);
+    const isCollaborator = userEmail && idea.collaborators.some(c => c.email === userEmail);
+    const hasAccess = isOwner || isTeamMember || isCollaborator;
+    
+    if (!hasAccess) {
+      // Filter private content for non-authorized users
+      idea.attachments = idea.attachments.filter(a => a.accessLevel === 'PUBLIC');
+      idea.links = idea.links.filter(l => l.accessLevel === 'PUBLIC');
+    }
+    
+    // Convert enums to lowercase for frontend compatibility
+    idea.attachments = idea.attachments.map(a => ({
+      ...a,
+      accessLevel: a.accessLevel.toLowerCase()
+    }));
+    idea.links = idea.links.map(l => ({
+      ...l,
+      accessLevel: l.accessLevel.toLowerCase()
+    }));
+    
+    return res.json(idea);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error fetching idea", error: err.message });
@@ -203,6 +247,11 @@ router.post('/idea', upload.fields([
     } else {
       console.log('📋 Team members already parsed:', teamMembers);
     }
+    
+    // Ensure teamMembers is an array
+    if (!Array.isArray(teamMembers)) {
+      teamMembers = teamMembers ? [teamMembers] : [];
+    }
 
     // Upload title image if provided
     let titleImageUrl = '';
@@ -236,14 +285,7 @@ router.post('/idea', upload.fields([
       try {
         const parsedLinks = typeof links === 'string' ? JSON.parse(links) : links;
         console.log('✅ Links parsed:', parsedLinks);
-        linksData = parsedLinks.map(link => ({
-          title: link.title,
-          url: link.url,
-          description: link.description || '',
-          accessLevel: link.accessLevel || 'public',
-          addedBy: addedByEmail,
-          addedAt: new Date()
-        }));
+        linksData = Array.isArray(parsedLinks) ? parsedLinks : [parsedLinks];
         console.log('✅ Links data formatted:', linksData);
       } catch (error) {
         console.error('⚠️ Error parsing links:', error);
@@ -258,6 +300,10 @@ router.post('/idea', upload.fields([
     let attachmentsData = [];
     if (req.files && req.files.attachments) {
       console.log('📎 Found attachments:', req.files.attachments.length);
+      
+      const attachmentMeta = attachmentMetadata ? 
+        (typeof attachmentMetadata === 'string' ? JSON.parse(attachmentMetadata) : attachmentMetadata) : [];
+      
       for (let i = 0; i < req.files.attachments.length; i++) {
         console.log(`📎 Processing attachment ${i + 1}/${req.files.attachments.length}`);
         const file = req.files.attachments[i];
@@ -272,25 +318,15 @@ router.post('/idea', upload.fields([
           });
           console.log('✅ Attachment uploaded successfully:', result.secure_url);
           
-          // Parse attachment metadata from form data
-          let attachmentMeta = {};
-          if (attachmentMetadata) {
-            try {
-              const attachmentsArray = typeof attachmentMetadata === 'string' ? JSON.parse(attachmentMetadata) : attachmentMetadata;
-              attachmentMeta = attachmentsArray[i] || {};
-            } catch (error) {
-              console.error('⚠️ Error parsing attachment metadata:', error);
-            }
-          }
+          const meta = attachmentMeta[i] || {};
           
           attachmentsData.push({
-            name: attachmentMeta.name || file.originalname,
+            name: meta.name || file.originalname,
             url: result.secure_url,
             type: file.mimetype,
             size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-            accessLevel: attachmentMeta.accessLevel || 'public',
-            uploadedBy: addedByEmail,
-            uploadedAt: new Date()
+            accessLevel: meta.accessLevel || 'public',
+            uploadedBy: addedByEmail
           });
         } catch (error) {
           console.error("❌ Cloudinary upload error for attachment:", error);
@@ -300,38 +336,90 @@ router.post('/idea', upload.fields([
       console.log('📎 No attachments found');
     }
     
-    // Create a new idea
-    const newIdea = new Idea({
-      ideaId: uuidv4(),
-      title,
-      description,
-      titleImage: titleImageUrl,
-      relatedProblemId,
-      stage: parseInt(stage) || 1,
-      mentor,
-      contact,
-      targetCustomers,
-      team: teamMembers,
-      links: linksData,
-      attachments: attachmentsData,
-      upvotes: 0,
-      upvotedBy: [],
-      comments: [],
-      addedByName,
-      addedByEmail,
-      tags: [],
-      createdAt: new Date()
+    console.log('💾 Creating idea in database with transaction...');
+    // Create idea with all relations in transaction
+    const newIdea = await prisma.$transaction(async (tx) => {
+      const idea = await tx.idea.create({
+        data: {
+          ideaId: uuidv4(),
+          title,
+          description,
+          titleImage: titleImageUrl,
+          relatedProblemId,
+          stage: parseInt(stage) || 1,
+          mentor,
+          contact,
+          targetCustomers,
+          upvotes: 0,
+          addedByName,
+          addedByEmail,
+          tags: []
+        }
+      });
+      
+      // Create team members
+      if (teamMembers.length > 0) {
+        await tx.ideaTeamMember.createMany({
+          data: teamMembers.map(m => ({
+            ideaId: idea.id,
+            name: m.name,
+            email: m.email || null,
+            role: m.role,
+            image: m.image || null
+          }))
+        });
+      }
+      
+      // Create links
+      if (linksData.length > 0) {
+        await tx.ideaLink.createMany({
+          data: linksData.map(l => ({
+            ideaId: idea.id,
+            title: l.title,
+            url: l.url,
+            description: l.description || null,
+            accessLevel: (l.accessLevel || 'public').toUpperCase(),
+            addedBy: addedByEmail
+          }))
+        });
+      }
+      
+      // Create attachments
+      if (attachmentsData.length > 0) {
+        await tx.ideaAttachment.createMany({
+          data: attachmentsData.map(a => ({
+            ideaId: idea.id,
+            name: a.name,
+            url: a.url,
+            type: a.type,
+            size: a.size,
+            accessLevel: a.accessLevel.toUpperCase(),
+            uploadedBy: a.uploadedBy
+          }))
+        });
+      }
+      
+      return idea;
     });
-
-    console.log('💾 Saving idea to database...');
-    await newIdea.save();
+    
     console.log('✅ Idea saved successfully:', newIdea.ideaId);
     
     // Create notification for new idea creation
     await createStageNotification(newIdea, 0, newIdea.stage);
     console.log('🔔 Notification created for new idea');
     
-    res.status(201).json(newIdea);
+    // Fetch with relations for response
+    const ideaWithRelations = await prisma.idea.findUnique({
+      where: { id: newIdea.id },
+      include: {
+        teamMembers: true,
+        links: true,
+        attachments: true,
+        collaborators: true
+      }
+    });
+    
+    res.status(201).json(ideaWithRelations);
   } catch (err) {
     console.error('❌ Error creating idea:', err);
     console.error('❌ Error stack:', err.stack);
@@ -342,7 +430,10 @@ router.post('/idea', upload.fields([
 // Update idea
 router.put('/idea/:ideaId', upload.array('teamImages'), async (req, res) => {
   try {
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId }
+    });
+    
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
@@ -355,36 +446,78 @@ router.put('/idea/:ideaId', upload.array('teamImages'), async (req, res) => {
     // Store previous stage for notification
     const previousStage = idea.stage;
 
-    // Update idea fields
-    idea.title = req.body.title || idea.title;
-    idea.description = req.body.description || idea.description;
-    idea.relatedProblemId = req.body.relatedProblemId || idea.relatedProblemId;
-    idea.stage = req.body.stage ? parseInt(req.body.stage) : idea.stage;
-    idea.mentor = req.body.mentor || idea.mentor;
-    idea.contact = req.body.contact || idea.contact;
-    idea.targetCustomers = req.body.targetCustomers || idea.targetCustomers;
-
-    // Update team if provided
+    // Parse team if provided
+    let teamMembers = null;
     if (req.body.team) {
-      let teamMembers = req.body.team;
-      if (typeof req.body.team === 'string') {
-        try {
-          teamMembers = JSON.parse(req.body.team);
-        } catch (error) {
-          teamMembers = idea.team; // Keep existing team if parsing fails
+      teamMembers = typeof req.body.team === 'string' ? JSON.parse(req.body.team) : req.body.team;
+      if (!Array.isArray(teamMembers)) {
+        teamMembers = [teamMembers];
+      }
+    }
+
+    // Update in transaction
+    await prisma.$transaction(async (tx) => {
+      // Update idea fields
+      await tx.idea.update({
+        where: { id: idea.id },
+        data: {
+          title: req.body.title || idea.title,
+          description: req.body.description || idea.description,
+          relatedProblemId: req.body.relatedProblemId || idea.relatedProblemId,
+          stage: req.body.stage ? parseInt(req.body.stage) : idea.stage,
+          mentor: req.body.mentor || idea.mentor,
+          contact: req.body.contact || idea.contact,
+          targetCustomers: req.body.targetCustomers || idea.targetCustomers
+        }
+      });
+
+      // Update team if provided
+      if (teamMembers !== null) {
+        // Delete existing team members
+        await tx.ideaTeamMember.deleteMany({
+          where: { ideaId: idea.id }
+        });
+        
+        // Create new team members
+        if (teamMembers.length > 0) {
+          await tx.ideaTeamMember.createMany({
+            data: teamMembers.map(m => ({
+              ideaId: idea.id,
+              name: m.name,
+              email: m.email || null,
+              role: m.role,
+              image: m.image || null
+            }))
+          });
         }
       }
-      idea.team = teamMembers;
-    }
-
-    await idea.save();
+    });
     
     // Create stage notification if stage changed
-    if (previousStage !== idea.stage) {
-      await createStageNotification(idea, previousStage, idea.stage);
+    const newStage = req.body.stage ? parseInt(req.body.stage) : idea.stage;
+    if (previousStage !== newStage) {
+      await createStageNotification(idea, previousStage, newStage);
     }
     
-    res.json(idea);
+    // Fetch updated idea with relations
+    const updatedIdea = await prisma.idea.findUnique({
+      where: { id: idea.id },
+      include: {
+        teamMembers: true,
+        collaborators: true,
+        upvotedBy: true,
+        comments: {
+          include: {
+            replies: true,
+            likes: true
+          }
+        },
+        attachments: true,
+        links: true
+      }
+    });
+    
+    res.json(updatedIdea);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error updating idea", error: err.message });
@@ -394,7 +527,9 @@ router.put('/idea/:ideaId', upload.array('teamImages'), async (req, res) => {
 // Delete idea
 router.delete('/idea/:ideaId', async (req, res) => {
   try {
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId }
+    });
     
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
@@ -405,18 +540,26 @@ router.delete('/idea/:ideaId', async (req, res) => {
       return res.status(403).json({ message: "Unauthorized to delete this idea" });
     }
 
-    await Idea.deleteOne({ ideaId: req.params.ideaId });
+    await prisma.idea.delete({
+      where: { id: idea.id }
+    });
+    
     res.json({ message: "Idea deleted successfully" });
   } catch (err) {
     console.error(err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ message: "Idea not found" });
+    }
     res.status(500).json({ message: "Error deleting idea", error: err.message });
   }
 });
 
-// Upvote an idea
+// Upvote an idea (toggle)
 router.post('/idea/:ideaId/upvote', async (req, res) => {
   try {
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId }
+    });
     
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
@@ -427,31 +570,66 @@ router.post('/idea/:ideaId/upvote', async (req, res) => {
       return res.status(400).json({ message: "Email is required" });
     }
 
-    // Toggle upvote
-    const hasUpvoted = idea.upvotedBy.includes(userEmail);
-    
-    if (hasUpvoted) {
+    // Check if user already upvoted
+    const existingUpvote = await prisma.ideaUpvote.findUnique({
+      where: {
+        ideaId_userEmail: {
+          ideaId: idea.id,
+          userEmail: userEmail
+        }
+      }
+    });
+
+    if (existingUpvote) {
       // Remove upvote
-      idea.upvotedBy = idea.upvotedBy.filter(email => email !== userEmail);
-      idea.upvotes = Math.max(0, idea.upvotes - 1);
+      await prisma.$transaction([
+        prisma.ideaUpvote.delete({
+          where: { id: existingUpvote.id }
+        }),
+        prisma.idea.update({
+          where: { id: idea.id },
+          data: { upvotes: { decrement: 1 } }
+        })
+      ]);
     } else {
       // Add upvote
-      idea.upvotedBy.push(userEmail);
-      idea.upvotes += 1;
+      await prisma.$transaction([
+        prisma.ideaUpvote.create({
+          data: {
+            ideaId: idea.id,
+            userEmail: userEmail
+          }
+        }),
+        prisma.idea.update({
+          where: { id: idea.id },
+          data: { upvotes: { increment: 1 } }
+        })
+      ]);
     }
 
-    await idea.save();
-    res.json(idea);
+    // Fetch updated idea
+    const updatedIdea = await prisma.idea.findUnique({
+      where: { id: idea.id },
+      include: {
+        upvotedBy: true,
+        teamMembers: true,
+        collaborators: true
+      }
+    });
+
+    res.json(updatedIdea);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error upvoting idea", error: err.message });
   }
 });
 
-// Add comment to an idea
+// Add comment to an idea (v1)
 router.post('/idea/:ideaId/comment', async (req, res) => {
   try {
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId }
+    });
     
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
@@ -463,18 +641,15 @@ router.post('/idea/:ideaId/comment', async (req, res) => {
       return res.status(400).json({ message: "Comment, name, and email are required" });
     }
 
-    const newComment = {
-      _id: uuidv4(),
-      author: name,
-      content: comment,
-      email: email,
-      createdAt: new Date(),
-      likes: [],
-      replies: []
-    };
-
-    idea.comments.push(newComment);
-    await idea.save();
+    const newComment = await prisma.ideaComment.create({
+      data: {
+        commentId: uuidv4(),
+        ideaId: idea.id,
+        author: name,
+        content: comment,
+        email: email
+      }
+    });
 
     res.json(newComment);
   } catch (err) {
@@ -486,7 +661,24 @@ router.post('/idea/:ideaId/comment', async (req, res) => {
 // Get all comments for an idea
 router.get('/ideas/:ideaId/comments', async (req, res) => {
   try {
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId },
+      include: {
+        comments: {
+          include: {
+            replies: {
+              include: {
+                likes: true
+              },
+              orderBy: { createdAt: 'asc' }
+            },
+            likes: true
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+    
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
@@ -498,28 +690,28 @@ router.get('/ideas/:ideaId/comments', async (req, res) => {
   }
 });
 
-// Add a comment to an idea
+// Add a comment to an idea (v2)
 router.post('/ideas/:ideaId/comments', async (req, res) => {
   try {
     const { author, content, email } = req.body;
     
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId }
+    });
+    
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
     
-    const newComment = {
-      _id: uuidv4(),
-      author,
-      content,
-      email,
-      createdAt: new Date(),
-      likes: [],
-      replies: []
-    };
-    
-    idea.comments.push(newComment);
-    await idea.save();
+    const newComment = await prisma.ideaComment.create({
+      data: {
+        commentId: uuidv4(),
+        ideaId: idea.id,
+        author,
+        content,
+        email
+      }
+    });
     
     res.status(201).json(newComment);
   } catch (err) {
@@ -528,36 +720,67 @@ router.post('/ideas/:ideaId/comments', async (req, res) => {
   }
 });
 
-// Like a comment
+// Like a comment (toggle)
 router.post('/ideas/:ideaId/comments/:commentId/like', async (req, res) => {
   try {
     const { email } = req.body;
     
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId }
+    });
+    
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
     
-    const comment = idea.comments.find(c => c._id === req.params.commentId);
+    const comment = await prisma.ideaComment.findUnique({
+      where: { commentId: req.params.commentId },
+      include: { likes: true }
+    });
+    
     if (!comment) {
       return res.status(404).json({ message: "Comment not found" });
     }
     
-    // Toggle like
-    if (!comment.likes) comment.likes = [];
+    // Check if user already liked
+    const existingLike = await prisma.ideaCommentLike.findUnique({
+      where: {
+        commentId_userEmail: {
+          commentId: comment.id,
+          userEmail: email
+        }
+      }
+    });
     
-    const likeIndex = comment.likes.indexOf(email);
-    if (likeIndex > -1) {
+    if (existingLike) {
       // Remove like
-      comment.likes.splice(likeIndex, 1);
+      await prisma.ideaCommentLike.delete({
+        where: { id: existingLike.id }
+      });
     } else {
       // Add like
-      comment.likes.push(email);
+      await prisma.ideaCommentLike.create({
+        data: {
+          commentId: comment.id,
+          userEmail: email
+        }
+      });
     }
     
-    await idea.save();
+    // Fetch updated comment
+    const updatedComment = await prisma.ideaComment.findUnique({
+      where: { id: comment.id },
+      include: {
+        likes: true,
+        replies: {
+          include: {
+            likes: true
+          }
+        }
+      }
+    });
     
-    res.json(comment);
+    res.json(updatedComment);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error liking comment", error: err.message });
@@ -569,31 +792,47 @@ router.post('/ideas/:ideaId/comments/:commentId/replies', async (req, res) => {
   try {
     const { author, content, email } = req.body;
     
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId }
+    });
+    
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
     
-    const comment = idea.comments.find(c => c._id === req.params.commentId);
+    const comment = await prisma.ideaComment.findUnique({
+      where: { commentId: req.params.commentId }
+    });
+    
     if (!comment) {
       return res.status(404).json({ message: "Comment not found" });
     }
     
-    const newReply = {
-      _id: uuidv4(),
-      author,
-      content,
-      email,
-      createdAt: new Date(),
-      likes: []
-    };
+    const newReply = await prisma.ideaCommentReply.create({
+      data: {
+        replyId: uuidv4(),
+        commentId: comment.id,
+        author,
+        content,
+        email
+      }
+    });
     
-    if (!comment.replies) comment.replies = [];
-    comment.replies.push(newReply);
+    // Fetch updated comment with replies
+    const updatedComment = await prisma.ideaComment.findUnique({
+      where: { id: comment.id },
+      include: {
+        replies: {
+          include: {
+            likes: true
+          },
+          orderBy: { createdAt: 'asc' }
+        },
+        likes: true
+      }
+    });
     
-    await idea.save();
-    
-    res.status(201).json(comment);
+    res.status(201).json(updatedComment);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error adding reply", error: err.message });
@@ -606,15 +845,22 @@ router.post('/ideas/:ideaId/attachments', upload.single('file'), async (req, res
     const { name, type } = req.body;
     const userEmail = req.body.email;
     
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId },
+      include: {
+        teamMembers: true,
+        collaborators: true
+      }
+    });
+    
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
     
     // Check if user has permission to add attachments
     const canEdit = userEmail === idea.addedByEmail || 
-                   (idea.team && idea.team.some(member => member.email === userEmail)) ||
-                   (idea.collaborators && idea.collaborators.includes(userEmail));
+                   (idea.teamMembers && idea.teamMembers.some(member => member.email === userEmail)) ||
+                   (idea.collaborators && idea.collaborators.some(c => c.email === userEmail));
     
     if (!canEdit) {
       return res.status(403).json({ message: "Unauthorized to add attachments" });
@@ -640,21 +886,25 @@ router.post('/ideas/:ideaId/attachments', upload.single('file'), async (req, res
       }
     }
     
-    const newAttachment = {
-      name: name || req.file.originalname,
-      url: fileUrl,
-      type: type || req.file.mimetype,
-      size: fileSize,
-      uploadedBy: userEmail,
-      uploadedAt: new Date()
+    const newAttachment = await prisma.ideaAttachment.create({
+      data: {
+        ideaId: idea.id,
+        name: name || req.file.originalname,
+        url: fileUrl,
+        type: type || req.file.mimetype,
+        size: fileSize,
+        accessLevel: req.body.accessLevel ? req.body.accessLevel.toUpperCase() : 'PUBLIC',
+        uploadedBy: userEmail
+      }
+    });
+    
+    // Convert enum to lowercase for response
+    const responseAttachment = {
+      ...newAttachment,
+      accessLevel: newAttachment.accessLevel.toLowerCase()
     };
     
-    if (!idea.attachments) idea.attachments = [];
-    idea.attachments.push(newAttachment);
-    
-    await idea.save();
-    
-    res.status(201).json(newAttachment);
+    res.status(201).json(responseAttachment);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error adding attachment", error: err.message });
@@ -667,7 +917,16 @@ router.delete('/ideas/:ideaId/attachments/:attachmentIndex', async (req, res) =>
     const userEmail = req.body.email;
     const attachmentIndex = parseInt(req.params.attachmentIndex);
     
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId },
+      include: {
+        teamMembers: true,
+        attachments: {
+          orderBy: { uploadedAt: 'asc' }
+        }
+      }
+    });
+    
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
@@ -681,14 +940,15 @@ router.delete('/ideas/:ideaId/attachments/:attachmentIndex', async (req, res) =>
     // Check if user has permission to delete attachment
     const canDelete = userEmail === idea.addedByEmail || 
                      userEmail === attachment.uploadedBy ||
-                     (idea.team && idea.team.some(member => member.email === userEmail));
+                     (idea.teamMembers && idea.teamMembers.some(member => member.email === userEmail));
     
     if (!canDelete) {
       return res.status(403).json({ message: "Unauthorized to delete attachment" });
     }
     
-    idea.attachments.splice(attachmentIndex, 1);
-    await idea.save();
+    await prisma.ideaAttachment.delete({
+      where: { id: attachment.id }
+    });
     
     res.json({ message: "Attachment deleted successfully" });
   } catch (err) {
@@ -703,35 +963,45 @@ router.post('/ideas/:ideaId/links', async (req, res) => {
     const { title, description, url, accessLevel } = req.body;
     const userEmail = req.body.email;
     
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId },
+      include: {
+        teamMembers: true,
+        collaborators: true
+      }
+    });
+    
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
     
     // Check if user has permission to add links
     const canEdit = userEmail === idea.addedByEmail || 
-                   (idea.team && idea.team.some(member => member.email === userEmail)) ||
-                   (idea.collaborators && idea.collaborators.includes(userEmail));
+                   (idea.teamMembers && idea.teamMembers.some(member => member.email === userEmail)) ||
+                   (idea.collaborators && idea.collaborators.some(c => c.email === userEmail));
     
     if (!canEdit) {
       return res.status(403).json({ message: "Unauthorized to add links" });
     }
     
-    const newLink = {
-      title,
-      description,
-      url,
-      accessLevel: accessLevel || 'public',
-      addedBy: userEmail,
-      addedAt: new Date()
+    const newLink = await prisma.ideaLink.create({
+      data: {
+        ideaId: idea.id,
+        title,
+        description,
+        url,
+        accessLevel: (accessLevel || 'public').toUpperCase(),
+        addedBy: userEmail
+      }
+    });
+    
+    // Convert enum to lowercase for response
+    const responseLink = {
+      ...newLink,
+      accessLevel: newLink.accessLevel.toLowerCase()
     };
     
-    if (!idea.links) idea.links = [];
-    idea.links.push(newLink);
-    
-    await idea.save();
-    
-    res.status(201).json(newLink);
+    res.status(201).json(responseLink);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error adding link", error: err.message });
@@ -745,7 +1015,16 @@ router.put('/ideas/:ideaId/links/:linkIndex', async (req, res) => {
     const userEmail = req.body.email;
     const linkIndex = parseInt(req.params.linkIndex);
     
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId },
+      include: {
+        teamMembers: true,
+        links: {
+          orderBy: { addedAt: 'asc' }
+        }
+      }
+    });
+    
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
@@ -759,22 +1038,30 @@ router.put('/ideas/:ideaId/links/:linkIndex', async (req, res) => {
     // Check if user has permission to edit link
     const canEdit = userEmail === idea.addedByEmail || 
                    userEmail === link.addedBy ||
-                   (idea.team && idea.team.some(member => member.email === userEmail));
+                   (idea.teamMembers && idea.teamMembers.some(member => member.email === userEmail));
     
     if (!canEdit) {
       return res.status(403).json({ message: "Unauthorized to edit link" });
     }
     
-    // Update link properties
-    if (title) link.title = title;
-    if (description) link.description = description;
-    if (url) link.url = url;
-    if (accessLevel) link.accessLevel = accessLevel;
-    link.updatedAt = new Date();
+    // Update link
+    const updatedLink = await prisma.ideaLink.update({
+      where: { id: link.id },
+      data: {
+        ...(title && { title }),
+        ...(description !== undefined && { description }),
+        ...(url && { url }),
+        ...(accessLevel && { accessLevel: accessLevel.toUpperCase() })
+      }
+    });
     
-    await idea.save();
+    // Convert enum to lowercase for response
+    const responseLink = {
+      ...updatedLink,
+      accessLevel: updatedLink.accessLevel.toLowerCase()
+    };
     
-    res.json(link);
+    res.json(responseLink);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error updating link", error: err.message });
@@ -787,7 +1074,16 @@ router.delete('/ideas/:ideaId/links/:linkIndex', async (req, res) => {
     const userEmail = req.body.email;
     const linkIndex = parseInt(req.params.linkIndex);
     
-    const idea = await Idea.findOne({ ideaId: req.params.ideaId });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId },
+      include: {
+        teamMembers: true,
+        links: {
+          orderBy: { addedAt: 'asc' }
+        }
+      }
+    });
+    
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
@@ -801,14 +1097,15 @@ router.delete('/ideas/:ideaId/links/:linkIndex', async (req, res) => {
     // Check if user has permission to delete link
     const canDelete = userEmail === idea.addedByEmail || 
                      userEmail === link.addedBy ||
-                     (idea.team && idea.team.some(member => member.email === userEmail));
+                     (idea.teamMembers && idea.teamMembers.some(member => member.email === userEmail));
     
     if (!canDelete) {
       return res.status(403).json({ message: "Unauthorized to delete link" });
     }
     
-    idea.links.splice(linkIndex, 1);
-    await idea.save();
+    await prisma.ideaLink.delete({
+      where: { id: link.id }
+    });
     
     res.json({ message: "Link deleted successfully" });
   } catch (err) {
@@ -822,21 +1119,34 @@ router.put('/idea/:id/startup-status', async (req, res) => {
   try {
     const { isStartupWorthy, worthinessLevel, evaluatedAt, userEmail, hasStartupCreated } = req.body;
     
-    const idea = await Idea.findOne({ ideaId: req.params.id });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.id }
+    });
+    
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
     
-    // Update startup status
-    idea.startupStatus = {
-      isWorthy: isStartupWorthy !== undefined ? isStartupWorthy : idea.startupStatus?.isWorthy || false,
-      level: worthinessLevel || idea.startupStatus?.level,
-      evaluatedAt: evaluatedAt || idea.startupStatus?.evaluatedAt || new Date(),
-      hasStartupCreated: hasStartupCreated !== undefined ? hasStartupCreated : idea.startupStatus?.hasStartupCreated || false
+    // Update startup status fields
+    const updatedIdea = await prisma.idea.update({
+      where: { id: idea.id },
+      data: {
+        isStartupWorthy: isStartupWorthy !== undefined ? isStartupWorthy : idea.isStartupWorthy,
+        worthinessLevel: worthinessLevel ? worthinessLevel.toUpperCase() : idea.worthinessLevel,
+        evaluatedAt: evaluatedAt ? new Date(evaluatedAt) : idea.evaluatedAt || new Date(),
+        hasStartupCreated: hasStartupCreated !== undefined ? hasStartupCreated : idea.hasStartupCreated
+      }
+    });
+    
+    // Build response in old format
+    const startupStatus = {
+      isWorthy: updatedIdea.isStartupWorthy,
+      level: updatedIdea.worthinessLevel ? updatedIdea.worthinessLevel.toLowerCase() : null,
+      evaluatedAt: updatedIdea.evaluatedAt,
+      hasStartupCreated: updatedIdea.hasStartupCreated
     };
     
-    await idea.save();
-    res.json({ message: "Startup status updated successfully", startupStatus: idea.startupStatus });
+    res.json({ message: "Startup status updated successfully", startupStatus });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error updating startup status", error: err.message });
@@ -846,15 +1156,35 @@ router.put('/idea/:id/startup-status', async (req, res) => {
 // Test endpoint to check startup status of an idea
 router.get('/idea/:id/startup-status', async (req, res) => {
   try {
-    const idea = await Idea.findOne({ ideaId: req.params.id });
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.id },
+      select: {
+        ideaId: true,
+        title: true,
+        stage: true,
+        isStartupWorthy: true,
+        worthinessLevel: true,
+        evaluatedAt: true,
+        hasStartupCreated: true
+      }
+    });
+    
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
     
+    // Build response in old format
+    const startupStatus = {
+      isWorthy: idea.isStartupWorthy,
+      level: idea.worthinessLevel ? idea.worthinessLevel.toLowerCase() : null,
+      evaluatedAt: idea.evaluatedAt,
+      hasStartupCreated: idea.hasStartupCreated
+    };
+    
     res.json({ 
       ideaId: idea.ideaId,
       title: idea.title,
-      startupStatus: idea.startupStatus || null,
+      startupStatus: startupStatus || null,
       stage: idea.stage
     });
   } catch (err) {

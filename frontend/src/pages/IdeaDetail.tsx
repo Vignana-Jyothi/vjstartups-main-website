@@ -230,7 +230,7 @@ export default function IdeaDetail() {
       
       // Update the comment in the list - make sure we don't accidentally use the whole comment object directly
       setComments(comments.map(comment =>
-        comment._id === commentId ? {...response.data} : comment
+        comment.id === commentId ? {...response.data} : comment
       ));
     } catch (error) {
       console.error("Error liking comment:", error);
@@ -252,7 +252,7 @@ export default function IdeaDetail() {
       
       // Update the comment with the new reply - use a copy to avoid React rendering issues
       setComments(comments.map(comment =>
-        comment._id === commentId ? {...response.data} : comment
+        comment.id === commentId ? {...response.data} : comment
       ));
     } catch (error) {
       console.error("Error adding reply:", error);
@@ -947,7 +947,7 @@ export default function IdeaDetail() {
             const safeComment = typeof comment === 'object' ? comment : {};
             
             return {
-              id: safeComment._id || `temp-${Math.random().toString(36).substring(7)}`,
+              id: safeComment.id || safeComment.commentId || `temp-${Math.random().toString(36).substring(7)}`,
               author: safeComment.author || "Anonymous",
               avatar: "",  // We don't have avatars in our API
               content: safeComment.content || "",
@@ -959,7 +959,7 @@ export default function IdeaDetail() {
                 const safeReply = typeof reply === 'object' ? reply : {};
                 
                 return {
-                  id: safeReply._id || `temp-reply-${Math.random().toString(36).substring(7)}`,
+                  id: safeReply.id || safeReply.replyId || `temp-reply-${Math.random().toString(36).substring(7)}`,
                   author: safeReply.author || "Anonymous",
                   avatar: "",
                   content: safeReply.content || "",

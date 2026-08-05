@@ -154,12 +154,12 @@ const AllChanges = () => {
                 );
 
                 if (!ideaSlug) {
-                  return <div key={change._id}>{row}</div>;
+                  return <div key={change.id || change._id}>{row}</div>;
                 }
 
                 return (
                   <Link
-                    key={change._id}
+                    key={change.id || change._id}
                     to={`/ideas/${ideaSlug}`}
                     onClick={() => window.scrollTo({ top: 0, left: 0, behavior: "auto" })}
                     className="block"

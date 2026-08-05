@@ -200,7 +200,7 @@ const Dashboard = () => {
           </div>
           <div className="space-y-3">
             {recentUsers.map((u) => (
-              <div key={u._id} className="flex items-center gap-3">
+              <div key={u.id} className="flex items-center gap-3">
                 <img src={u.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=7c3aed&color=fff`} alt={u.name} className="avatar w-8 h-8" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[#e2e8f0] truncate">{u.name}</p>
@@ -223,7 +223,7 @@ const Dashboard = () => {
           </div>
           <div className="space-y-3">
             {recentStartups.map((s) => (
-              <div key={s._id} className="flex items-start gap-3">
+              <div key={s.id} className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
                   <Rocket className="w-3.5 h-3.5 text-blue-400" />
                 </div>
