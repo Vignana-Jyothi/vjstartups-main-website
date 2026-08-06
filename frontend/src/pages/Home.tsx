@@ -1,5 +1,21 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Lightbulb, Users, TrendingUp, Award, Rocket, Globe, Zap, Sparkles, Brain, Target, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
+import {
+  ArrowRight,
+  Lightbulb,
+  Users,
+  TrendingUp,
+  Award,
+  Rocket,
+  Globe,
+  Zap,
+  Sparkles,
+  Brain,
+  Target,
+  Instagram,
+  Linkedin,
+  Twitter,
+  Youtube,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import QuestionnaireHistory from "@/components/QuestionnaireHistory";
@@ -11,7 +27,9 @@ import { PageHero } from "@/components/design-system/PageHero";
 import { useUser } from "./UserContext";
 import VirtualStartupJourney from "@/components/InteractiveLearningHub";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
-import ExploreProblemsModal, { ExploreProblemsDialog } from "@/components/ExploreProblemsModal";
+import ExploreProblemsModal, {
+  ExploreProblemsDialog,
+} from "@/components/ExploreProblemsModal";
 import { useState } from "react";
 
 const Home = () => {
@@ -31,41 +49,44 @@ const Home = () => {
       icon: Award,
       title: "Best Innovation Award",
       description: "Winner at National Startup Competition 2024",
-      year: "2024"
+      year: "2024",
     },
     {
       icon: Rocket,
       title: "8 Startups Funded",
       description: "Total funding raised: Rs 2.8Cr",
-      year: "2024"
+      year: "2024",
     },
     {
       icon: Globe,
       title: "Global Recognition",
       description: "Featured in TechCrunch and Forbes",
-      year: "2023"
-    }
+      year: "2023",
+    },
   ];
 
   const innovations = [
     {
-    title: "ATLAST Hydrogen Solutions",
-    category: "Clean Energy",
-    image: "/src/assets/ecotrack-startup.jpg",
-    description: "Revolutionary hydrogen fuel-cell technology transforming automotive and energy sectors"
-  },
-  {
-    title: "Salcit AI Health",
-    category: "HealthTech",
-    image: "/src/assets/studyspace-startup.jpg", 
-    description: "AI-powered cough analysis platform for respiratory health screening and remote patient monitoring"
-  },
-  {
-    title: "Alltronics IoT Solutions",
-    category: "Industrial IoT",
-    image: "/src/assets/mindbridge-idea.jpg",
-    description: "Smart IoT and AI-enabled electronic test equipment, EV battery monitoring, and industrial automation"
-  }
+      title: "ATLAST Hydrogen Solutions",
+      category: "Clean Energy",
+      image: "/src/assets/ecotrack-startup.jpg",
+      description:
+        "Revolutionary hydrogen fuel-cell technology transforming automotive and energy sectors",
+    },
+    {
+      title: "Salcit AI Health",
+      category: "HealthTech",
+      image: "/src/assets/studyspace-startup.jpg",
+      description:
+        "AI-powered cough analysis platform for respiratory health screening and remote patient monitoring",
+    },
+    {
+      title: "Alltronics IoT Solutions",
+      category: "Industrial IoT",
+      image: "/src/assets/mindbridge-idea.jpg",
+      description:
+        "Smart IoT and AI-enabled electronic test equipment, EV battery monitoring, and industrial automation",
+    },
   ];
 
   // image: ,
@@ -76,11 +97,23 @@ const Home = () => {
     <div className="min-h-screen">
       <AnnouncementBanner />
       <PageHero
-        eyebrow="Innovation Starts Here"
+        //eyebrow="Innovation Starts Here"
         title={"Build for the future, start here."}
-        description={"Empowering college entrepreneurs to turn real-world challenges into bold innovations. Connect, create, and shape the future of startups."}
-        primaryAction={{ label: "Explore Problems", onClick: handleExploreProblems, variant: "default", icon: ArrowRight }}
-        secondaryAction={{ label: "View Solutions", to: "/ideas", variant: "secondary", icon: Brain }}
+        description={
+          "Empowering college entrepreneurs to turn real-world challenges into bold innovations. Connect, create, and shape the future of startups."
+        }
+        // primaryAction={{
+        //   label: "Explore Problems",
+        //   onClick: handleExploreProblems,
+        //   variant: "default",
+        //   icon: ArrowRight,
+        // }}
+        // secondaryAction={{
+        //   label: "View Solutions",
+        //   to: "/ideas",
+        //   variant: "secondary",
+        //   icon: Brain,
+        // }}
         backgroundClassName="relative min-h-screen"
       >
         {/* Preserve custom background and decorative elements inside PageHero */}
@@ -88,7 +121,10 @@ const Home = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-vj-surface/98 via-vj-surface/95 to-vj-accent-light/90" />
         <div className="absolute top-20 left-10 w-32 h-32 bg-vj-accent/5 rounded-full animate-floating blur-xl" />
         <div className="absolute top-40 right-20 w-24 h-24 bg-vj-accent/8 rounded-vj-large rotate-12 animate-glow" />
-        <div className="absolute bottom-32 left-20 w-40 h-40 bg-vj-accent/3 rounded-full animate-floating" style={{ animationDelay: '2s' }} />
+        <div
+          className="absolute bottom-32 left-20 w-40 h-40 bg-vj-accent/3 rounded-full animate-floating"
+          style={{ animationDelay: "2s" }}
+        />
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 text-center">
           <div className="mb-8 animate-fade-in">
@@ -99,7 +135,10 @@ const Home = () => {
             />
           </div>
 
-          <div className="flex justify-center gap-4 mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          {/* <div
+            className="flex justify-center gap-4 mb-8 animate-fade-in"
+            style={{ animationDelay: "0.2s" }}
+          >
             <a
               href="#"
               aria-label="Instagram"
@@ -128,52 +167,83 @@ const Home = () => {
             >
               <Youtube className="h-5 w-5" />
             </a>
-          </div>
+          </div> */}
 
-          <div className="grid grid-cols-3 gap-4 sm:gap-8 md:gap-16 mb-16">
-            <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
-              <AnimatedCounter end={counters.startups} duration={2} label="Startups" />
+          {/* <div className="grid grid-cols-3 gap-4 sm:gap-8 md:gap-16 mb-16">
+            <div className="animate-fade-in" style={{ animationDelay: "0.4s" }}>
+              <AnimatedCounter
+                end={counters.startups}
+                duration={2}
+                label="Startups"
+              />
             </div>
-            <div className="animate-fade-in" style={{ animationDelay: '0.6s' }}>
-              <AnimatedCounter end={counters.students} duration={2.2} label="Future Builders" />
+            <div className="animate-fade-in" style={{ animationDelay: "0.6s" }}>
+              <AnimatedCounter
+                end={counters.students}
+                duration={2.2}
+                label="Future Builders"
+              />
             </div>
-            <div className="animate-fade-in" style={{ animationDelay: '0.8s' }}>
-              <AnimatedCounter end={counters.funded} duration={2.4} label="Funded Startups" />
+            <div className="animate-fade-in" style={{ animationDelay: "0.8s" }}>
+              <AnimatedCounter
+                end={counters.funded}
+                duration={2.4}
+                label="Funded Startups"
+              />
             </div>
-          </div>
+          </div> */}
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in px-2" style={{ animationDelay: '1s' }}>
+          <div
+            className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in px-2"
+            style={{ animationDelay: "1s" }}
+          >
             <ExploreProblemsModal>
-              <Button size="lg" className="btn-primary group min-h-[44px] w-full sm:w-auto">
+              <Button
+                size="lg"
+                className="btn-primary group min-h-[44px] w-full sm:w-auto"
+              >
                 Explore Problems
-                <ArrowRight size={20} className="ml-2 transition-transform group-hover:translate-x-1" />
+                <ArrowRight
+                  size={20}
+                  className="ml-2 transition-transform group-hover:translate-x-1"
+                />
               </Button>
             </ExploreProblemsModal>
             <Link to="/ideas">
-              <Button size="lg" className="btn-secondary group min-h-[44px] w-full sm:w-auto">
+              <Button
+                size="lg"
+                className="btn-secondary group min-h-[44px] w-full sm:w-auto"
+              >
                 View Solutions
-                <Brain size={20} className="ml-2 transition-transform group-hover:translate-x-1" />
+                <Brain
+                  size={20}
+                  className="ml-2 transition-transform group-hover:translate-x-1"
+                />
               </Button>
             </Link>
           </div>
         </div>
       </PageHero>
-      <ExploreProblemsDialog open={exploreModalOpen} onOpenChange={setExploreModalOpen} />
+      <ExploreProblemsDialog
+        open={exploreModalOpen}
+        onOpenChange={setExploreModalOpen}
+      />
 
       {/* Virtual Startup Journey - NEW SECTION */}
       {/* Featured Section */}
-      <section className="py-24 px-4 bg-vj-neutral">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+      {/* <section className="py-24 px-4 bg-vj-neutral">
+        <div className="max-w-7xl mx-auto"> */}
+      {/* <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-vj-primary mb-4 font-playfair">
               What's Happening
             </h2>
             <p className="text-xl text-vj-muted max-w-2xl mx-auto">
-              Discover the latest problems, innovative ideas, and growing startups from our community
+              Discover the latest problems, innovative ideas, and growing
+              startups from our community
             </p>
-          </div>
+          </div> */}
 
-          {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <div className="vj-card-minimal">
               <div className="flex items-center mb-4">
@@ -221,19 +291,18 @@ const Home = () => {
               </Link>
             </div>
           </div> */}
-        </div>
-      </section>
+      {/* </div>
+      </section> */}
       <VirtualStartupJourney />
 
       {/* Achievements Section */}
-      <section className="py-32 px-4 bg-gradient-to-br from-vj-surface via-vj-neutral to-vj-accent-light/30">
+      {/* <section className="py-32 px-4 bg-gradient-to-br from-vj-surface via-vj-neutral to-vj-accent-light/30">
         <div className="max-w-7xl mx-auto">
-          {/* Brand Showcase */}
           <div className="text-center mb-20">
             <div className="mb-12">
-              <img 
-                src={vjLogo} 
-                alt="VJ Startups" 
+              <img
+                src={vjLogo}
+                alt="VJ Startups"
                 className="h-24 md:h-32 mx-auto mb-6 opacity-90 hover:opacity-100 transition-opacity duration-300"
               />
               <p className="text-lg text-vj-muted max-w-2xl mx-auto">
@@ -245,13 +314,16 @@ const Home = () => {
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-vj-accent-light border border-vj-accent/20 rounded-full mb-6">
               <Target size={16} className="text-vj-accent" />
-              <span className="text-sm font-medium text-vj-accent">Proven Excellence</span>
+              <span className="text-sm font-medium text-vj-accent">
+                Proven Excellence
+              </span>
             </div>
             <h2 className="text-5xl md:text-6xl font-bold text-vj-primary mb-6 font-playfair">
               Innovation Recognition
             </h2>
             <p className="text-xl text-vj-muted max-w-3xl mx-auto leading-relaxed">
-              Celebrating breakthrough achievements and milestones that define our community's impact on the future
+              Celebrating breakthrough achievements and milestones that define
+              our community's impact on the future
             </p>
           </div>
 
@@ -264,14 +336,20 @@ const Home = () => {
                   </div>
                   <div className="absolute inset-0 bg-vj-accent/20 rounded-vj-large animate-glow opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
-                <div className="inline-block px-3 py-1 bg-vj-accent-light text-vj-accent text-xs font-bold rounded-full mb-4">{achievement.year}</div>
-                <h3 className="text-2xl font-bold text-vj-primary mb-4">{achievement.title}</h3>
-                <p className="text-vj-muted leading-relaxed">{achievement.description}</p>
+                <div className="inline-block px-3 py-1 bg-vj-accent-light text-vj-accent text-xs font-bold rounded-full mb-4">
+                  {achievement.year}
+                </div>
+                <h3 className="text-2xl font-bold text-vj-primary mb-4">
+                  {achievement.title}
+                </h3>
+                <p className="text-vj-muted leading-relaxed">
+                  {achievement.description}
+                </p>
               </div>
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Latest Innovations */}
       {/* <section className="py-32 px-4 relative overflow-hidden">
@@ -331,8 +409,6 @@ const Home = () => {
         </div>
       </section> */}
 
-      
-
       {/* Innovation Stats */}
       <section className="py-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -341,19 +417,29 @@ const Home = () => {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-vj-accent mb-2">8</div>
-              <div className="text-sm text-vj-muted">Entrepreneurship Partners</div>
+              <div className="text-3xl md:text-4xl font-bold text-vj-accent mb-2">
+                8
+              </div>
+              <div className="text-sm text-vj-muted">
+                Entrepreneurship Partners
+              </div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-vj-accent mb-2">₹2.8M</div>
+              <div className="text-3xl md:text-4xl font-bold text-vj-accent mb-2">
+                ₹2.8M
+              </div>
               <div className="text-sm text-vj-muted">Total Funding</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-vj-accent mb-2">15</div>
+              <div className="text-3xl md:text-4xl font-bold text-vj-accent mb-2">
+                15
+              </div>
               <div className="text-sm text-vj-muted">Research Partners</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-vj-accent mb-2">10+</div>
+              <div className="text-3xl md:text-4xl font-bold text-vj-accent mb-2">
+                10+
+              </div>
               <div className="text-sm text-vj-muted">Industry Mentors</div>
             </div>
           </div>
@@ -361,7 +447,7 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 px-4 bg-vj-neutral">
+      {/* <section className="py-24 px-4 bg-vj-neutral">
         <div className="max-w-4xl mx-auto text-center">
           <div className="w-20 h-20 bg-vj-accent/10 rounded-full flex items-center justify-center mx-auto mb-8">
             <Zap size={40} className="text-vj-accent" />
@@ -375,7 +461,7 @@ const Home = () => {
           
 
         </div>
-      </section>
+      </section> */}
 
       {/* Questionnaire History Section - Only show if user is logged in */}
       {/* {currentUser && (
