@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Upload, X, AlertTriangle, CheckCircle, Eye } from "lucide-react";
+import { Plus, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "../pages/UserContext";
 import { useNavigate } from "react-router-dom";
@@ -48,12 +48,6 @@ const ProblemSubmissionForm = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [collaboratorErrors, setCollaboratorErrors] = useState<string[]>([]);
   
-  // Duplicate detection states
-  const [verificationStep, setVerificationStep] = useState<'input' | 'checking' | 'verified' | 'duplicates'>('input');
-  const [duplicates, setDuplicates] = useState<any[]>([]);
-  const [verificationStats, setVerificationStats] = useState<any>(null);
-  const [lastVerifiedContent, setLastVerifiedContent] = useState<{title: string, excerpt: string} | null>(null);
-  
   const { toast } = useToast();
   const { user } = useUser();
   const navigate = useNavigate();
@@ -62,51 +56,6 @@ const ProblemSubmissionForm = ({
     defaultValues: initialData || {},
   });
   const { errors, isSubmitting } = formState;
-
-  // Watch title and brief paragraph for changes
-  const watchedTitle = watch('title');
-  const watchedExcerpt = watch('excerpt');
-
-  // Reset verification when title or brief paragraph changes (with proper debounce)
-  useEffect(() => {
-    if (!initialData) {
-      const currentContent = { title: watchedTitle || '', excerpt: watchedExcerpt || '' };
-      
-      // Only reset if we have verified content and the current content is significantly different
-      if (lastVerifiedContent && (verificationStep === 'verified' || verificationStep === 'duplicates')) {
-        const titleChanged = currentContent.title !== lastVerifiedContent.title;
-        const excerptChanged = currentContent.excerpt !== lastVerifiedContent.excerpt;
-        
-        // Add a delay to avoid flickering during typing
-        if (titleChanged || excerptChanged) {
-          const timeoutId = setTimeout(() => {
-            // Double-check the content hasn't changed back
-            const latestTitle = watch('title') || '';
-            const latestExcerpt = watch('excerpt') || '';
-            
-            if (latestTitle !== lastVerifiedContent.title || latestExcerpt !== lastVerifiedContent.excerpt) {
-              setVerificationStep('input');
-              setDuplicates([]);
-              setVerificationStats(null);
-              setLastVerifiedContent(null);
-              
-              // Only show toast if user has actually made substantial changes
-              if (Math.abs(latestTitle.length - lastVerifiedContent.title.length) > 5 || 
-                  Math.abs(latestExcerpt.length - lastVerifiedContent.excerpt.length) > 10) {
-                toast({
-                  title: "Content Changed", 
-                  description: "Please verify for duplicates again since you modified the title or description",
-                  variant: "default",
-                });
-              }
-            }
-          }, 2000); // 2 second delay to prevent flicker
-          
-          return () => clearTimeout(timeoutId);
-        }
-      }
-    }
-  }, [watchedTitle, watchedExcerpt, initialData, verificationStep, lastVerifiedContent, watch, toast]);
 
   useEffect(() => {
     if (initialData) reset(initialData);
@@ -141,84 +90,12 @@ const ProblemSubmissionForm = ({
     return validEmails;
   };
 
-  const handleVerifyDuplicates = async () => {
-    const title = watchedTitle;
-    const briefparagraph = watchedExcerpt;
-    
-    if (!title || !briefparagraph) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in both Title and Brief Paragraph before verifying",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setVerificationStep('checking');
-    
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/problem-api/check-duplicates`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ title, briefparagraph }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to check duplicates');
-      }
-      
-      const data = await response.json();
-      console.log('📋 Duplicate check response:', data); // Debug log
-      setDuplicates(data.duplicates);
-      setVerificationStats(data.stats);
-      
-      // Store the content that was verified
-      setLastVerifiedContent({ title, excerpt: briefparagraph });
-      
-      if (data.duplicates.length > 0) {
-        console.log('⚠️ Duplicates found:', data.duplicates); // Debug log
-        setVerificationStep('duplicates');
-        toast({
-          title: "Similar Problems Found",
-          description: `Found ${data.duplicates.length} similar problems. Please review before submitting.`,
-          variant: "default",
-        });
-      } else {
-        setVerificationStep('verified');
-        toast({
-          title: "No Duplicates Found",
-          description: "No similar problems found. You can submit your problem!",
-          variant: "default",
-        });
-      }
-      
-    } catch (error) {
-      console.error('Error checking duplicates:', error);
-      toast({
-        title: "Error",
-        description: "Failed to check for duplicates. Please try again.",
-        variant: "destructive",
-      });
-      setVerificationStep('input');
-    }
-  };
-
   const handleOpenChange = (isOpen: boolean) => {
     if (!user) {
       navigate("/login");
       return;
     }
     setOpen(isOpen);
-    
-    // Reset verification state when dialog closes or opens
-    if (!isOpen || !initialData) {
-      setVerificationStep('input');
-      setDuplicates([]);
-      setVerificationStats(null);
-      setLastVerifiedContent(null);
-    }
   };
 
   const onSubmit = async (data: ProblemFormData) => {
@@ -226,16 +103,6 @@ const ProblemSubmissionForm = ({
       toast({
         title: "Login required",
         description: "Please login to submit a problem.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check if verification is completed for new submissions (not updates)
-    if (!initialData && verificationStep === 'input') {
-      toast({
-        title: "Verification Required",
-        description: "Please verify for duplicates before submitting",
         variant: "destructive",
       });
       return;
@@ -561,185 +428,22 @@ const ProblemSubmissionForm = ({
             </p>
           </div>
 
-          {/* Duplicate Verification Section - Only for new submissions */}
-          {!initialData && (
-            <div className="space-y-4 pt-4 border-t border-gray-200">
-              {/* Verification Button */}
-              {verificationStep === 'input' && (
-                <div className="space-y-2">
-                  <Button
-                    type="button"
-                    onClick={handleVerifyDuplicates}
-                    disabled={!watchedTitle || !watchedExcerpt}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  >
-                    <AlertTriangle className="mr-2 h-4 w-4" />
-                    🔍 VERIFY FOR DUPLICATES
-                  </Button>
-                  {(!watchedTitle || !watchedExcerpt) && (
-                    <p className="text-xs text-gray-500 text-center">
-                      Please fill in both Title and Brief Paragraph to verify
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Checking State */}
-              {verificationStep === 'checking' && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                    <span className="text-blue-700 dark:text-blue-300">
-                      Checking for similar problems... 
-                      {verificationStats && ` (${verificationStats.totalProblems} problems to compare)`}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* No Duplicates Found */}
-              {verificationStep === 'verified' && duplicates.length === 0 && (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="text-green-700 dark:text-green-300 font-medium">
-                        ✅ No similar problems found!
-                      </p>
-                      <p className="text-green-600 dark:text-green-400 text-sm">
-                        Verified against {verificationStats?.totalProblems} existing problems 
-                        in {verificationStats?.processingTime}ms
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Duplicates Found */}
-              {verificationStep === 'duplicates' && duplicates.length > 0 && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4">
-                  <div className="flex items-start space-x-2">
-                    <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-amber-700 dark:text-amber-300 font-medium">
-                        ⚠️ Found {duplicates.length} similar problem{duplicates.length > 1 ? 's' : ''}:
-                      </p>
-                      
-                      <div className="mt-3 space-y-3 max-h-60 overflow-y-auto">
-                        {duplicates.map((duplicate, index) => (
-                          <div key={duplicate.problemId} className="bg-white dark:bg-gray-800 rounded-md p-3 border">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm flex-1 pr-2">
-                                {index + 1}. {duplicate.title}
-                              </h4>
-                              <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-3 py-1 rounded-full text-sm font-bold text-center min-w-[60px] flex-shrink-0">
-                                {duplicate.similarity}%
-                              </span>
-                            </div>
-                            
-                            <p className="text-gray-600 dark:text-gray-400 text-xs mb-2 leading-relaxed">
-                              {duplicate.briefparagraph}
-                            </p>
-                            
-                            <div className="flex justify-between items-center text-xs text-gray-500">
-                              <span>By: {duplicate.addedByName}</span>
-                              <span>{duplicate.upvotes} upvotes</span>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => window.open(`/problems/${duplicate.problemId}`, '_blank')}
-                                className="h-6 px-2 text-xs"
-                              >
-                                <Eye className="h-3 w-3 mr-1" />
-                                View
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <div className="mt-4 flex space-x-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setVerificationStep('input');
-                            setDuplicates([]);
-                            setVerificationStats(null);
-                            setLastVerifiedContent(null);
-                          }}
-                          className="flex-1"
-                        >
-                          ← Modify Problem
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            setVerificationStep('verified');
-                            // Keep the lastVerifiedContent so it doesn't reset when user continues
-                          }}
-                          className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
-                        >
-                          ✅ PROCEED ANYWAY
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-4">{!initialData && verificationStep !== 'verified' ? (
-              // Show only Cancel button if not verified
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                className="w-full"
-              >
-                Cancel
-              </Button>
-            ) : (
-              // Show both Cancel and Submit/Update buttons
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setOpen(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className={`flex-1 ${
-                    verificationStep === 'verified' 
-                      ? 'bg-green-600 hover:bg-green-700' 
-                      : 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700'
-                  } text-white border-0`}
-                >
-                  {verificationStep === 'verified' && !initialData ? (
-                    <>
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      {isSubmitting ? "Submitting..." : "✅ SUBMIT PROBLEM"}
-                    </>
-                  ) : (
-                    <>
-                      {isSubmitting
-                        ? initialData
-                          ? "Updating..."
-                          : "Submitting..."
-                        : initialData
-                        ? "Update Problem"
-                        : "Submit Problem"}
-                    </>
-                  )}
-                </Button>
-              </>
-            )}
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white border-0"
+            >
+              {isSubmitting ? (initialData ? "Updating..." : "Submitting...") : initialData ? "Update Problem" : "Submit Problem"}
+            </Button>
           </div>
         </form>
       </DialogContent>

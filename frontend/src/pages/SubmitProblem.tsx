@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, AlertTriangle, Target, Users, TrendingUp, BarChart3, Lightbulb, Upload, X, CheckCircle, Eye } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Target, Users, TrendingUp, BarChart3, Lightbulb, Upload, X, CheckCircle } from 'lucide-react';
 import { useUser } from '@/pages/UserContext';
 import { useToast } from '@/hooks/use-toast';
 import { QuestionHelp } from '@/components/QuestionHelp';
@@ -51,12 +50,6 @@ const SubmitProblem: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [collaboratorErrors, setCollaboratorErrors] = useState<string[]>([]);
-  
-  // Duplicate detection states
-  const [verificationStep, setVerificationStep] = useState<'input' | 'checking' | 'verified' | 'duplicates'>('input');
-  const [duplicates, setDuplicates] = useState<any[]>([]);
-  const [verificationStats, setVerificationStats] = useState<any>(null);
-  const [lastVerifiedContent, setLastVerifiedContent] = useState<{title: string, excerpt: string} | null>(null);
 
   useEffect(() => {
     document.title = "Submit Problem - VJHub";
@@ -75,38 +68,6 @@ const SubmitProblem: React.FC = () => {
       navigate('/login');
     }
   }, [user, navigate, toast]);
-
-  // Reset verification when title or brief paragraph changes
-  useEffect(() => {
-    const currentContent = { title: formData.title || '', excerpt: formData.briefparagraph || '' };
-    
-    if (lastVerifiedContent && (verificationStep === 'verified' || verificationStep === 'duplicates')) {
-      const titleChanged = currentContent.title !== lastVerifiedContent.title;
-      const excerptChanged = currentContent.excerpt !== lastVerifiedContent.excerpt;
-      
-      if (titleChanged || excerptChanged) {
-        const timeoutId = setTimeout(() => {
-          if (formData.title !== lastVerifiedContent.title || formData.briefparagraph !== lastVerifiedContent.excerpt) {
-            setVerificationStep('input');
-            setDuplicates([]);
-            setVerificationStats(null);
-            setLastVerifiedContent(null);
-            
-            if (Math.abs(formData.title.length - lastVerifiedContent.title.length) > 5 || 
-                Math.abs(formData.briefparagraph.length - lastVerifiedContent.excerpt.length) > 10) {
-              toast({
-                title: "Content Changed", 
-                description: "Please verify for duplicates again",
-                variant: "default",
-              });
-            }
-          }
-        }, 2000);
-        
-        return () => clearTimeout(timeoutId);
-      }
-    }
-  }, [formData.title, formData.briefparagraph, verificationStep, lastVerifiedContent, toast]);
 
   const handleInputChange = (field: keyof ProblemFormData, value: string | File | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -143,58 +104,6 @@ const SubmitProblem: React.FC = () => {
     return validEmails;
   };
 
-  const handleVerifyDuplicates = async () => {
-    const title = formData.title;
-    const briefparagraph = formData.briefparagraph;
-    
-    if (!title || !briefparagraph) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in both Title and Brief Summary before verifying",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setVerificationStep('checking');
-    
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/problem-api/check-duplicates`,
-        { title, briefparagraph }
-      );
-      
-      const data = response.data;
-      setDuplicates(data.duplicates);
-      setVerificationStats(data.stats);
-      setLastVerifiedContent({ title, excerpt: briefparagraph });
-      
-      if (data.duplicates.length > 0) {
-        setVerificationStep('duplicates');
-        toast({
-          title: "Similar Problems Found",
-          description: `Found ${data.duplicates.length} similar problems. Please review before submitting.`,
-          variant: "default",
-        });
-      } else {
-        setVerificationStep('verified');
-        toast({
-          title: "No Duplicates Found",
-          description: "No similar problems found. You can submit your problem!",
-          variant: "default",
-        });
-      }
-    } catch (error) {
-      console.error('Error checking duplicates:', error);
-      toast({
-        title: "Error",
-        description: "Failed to check for duplicates. Please try again.",
-        variant: "destructive",
-      });
-      setVerificationStep('input');
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -210,11 +119,18 @@ const SubmitProblem: React.FC = () => {
       return;
     }
 
-    if (verificationStep === 'input') {
+    const missingFields = [
+      { key: 'title', label: 'Problem Title', value: formData.title.trim() },
+      { key: 'briefparagraph', label: 'Brief Summary', value: formData.briefparagraph.trim() },
+      { key: 'targetCustomers', label: 'Target Customer(s)', value: formData.targetCustomers.trim() },
+      { key: 'description', label: 'Detailed Description', value: formData.description.trim() },
+    ].filter(({ value }) => !value);
+
+    if (missingFields.length > 0) {
       toast({
-        title: "Verification Required",
-        description: "Please verify for duplicates before submitting",
-        variant: "destructive",
+        title: 'Missing Information',
+        description: `Please fill in: ${missingFields.map(({ label }) => label).join(', ')}`,
+        variant: 'destructive',
       });
       setIsSubmitting(false);
       return;
@@ -233,10 +149,10 @@ const SubmitProblem: React.FC = () => {
 
     try {
       const submitData = new FormData();
-      submitData.append("title", formData.title);
-      submitData.append("briefparagraph", formData.briefparagraph);
-      submitData.append("description", formData.description);
-      submitData.append("targetCustomers", formData.targetCustomers);
+      submitData.append("title", formData.title.trim());
+      submitData.append("briefparagraph", formData.briefparagraph.trim());
+      submitData.append("description", formData.description.trim());
+      submitData.append("targetCustomers", formData.targetCustomers.trim());
       submitData.append("background", formData.background || "");
       submitData.append("scalability", formData.scalability || "");
       submitData.append("marketSize", formData.marketSize || "");
@@ -597,126 +513,6 @@ const SubmitProblem: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Duplicate Verification */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5" />
-                Duplicate Verification
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {verificationStep === 'input' && (
-                <div className="space-y-2">
-                  <Button
-                    type="button"
-                    onClick={handleVerifyDuplicates}
-                    disabled={!formData.title || !formData.briefparagraph}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
-                  >
-                    <AlertTriangle className="mr-2 h-4 w-4" />
-                    🔍 VERIFY FOR DUPLICATES
-                  </Button>
-                  {(!formData.title || !formData.briefparagraph) && (
-                    <p className="text-xs text-gray-500 text-center">
-                      Fill in Title and Brief Summary to verify
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {verificationStep === 'checking' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                    <span className="text-blue-700">Checking for similar problems...</span>
-                  </div>
-                </div>
-              )}
-
-              {verificationStep === 'verified' && duplicates.length === 0 && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="text-green-700 font-medium">✅ No similar problems found!</p>
-                      <p className="text-green-600 text-sm">
-                        Verified against {verificationStats?.totalProblems} existing problems
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {verificationStep === 'duplicates' && duplicates.length > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-start space-x-2">
-                    <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-amber-700 font-medium mb-3">
-                        ⚠️ Found {duplicates.length} similar problem{duplicates.length > 1 ? 's' : ''}:
-                      </p>
-                      
-                      <div className="space-y-3 max-h-60 overflow-y-auto">
-                        {duplicates.map((duplicate, index) => (
-                          <div key={duplicate.problemId} className="bg-white rounded-md p-3 border">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-medium text-gray-900 text-sm flex-1 pr-2">
-                                {index + 1}. {duplicate.title}
-                              </h4>
-                              <Badge variant="destructive" className="text-xs">
-                                {duplicate.similarity}%
-                              </Badge>
-                            </div>
-                            <p className="text-gray-600 text-xs mb-2 line-clamp-2">
-                              {duplicate.briefparagraph}
-                            </p>
-                            <div className="flex justify-between items-center text-xs text-gray-500">
-                              <span>By: {duplicate.addedByName}</span>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => window.open(`/problems/${duplicate.problemId}`, '_blank')}
-                                className="h-6 px-2 text-xs"
-                              >
-                                <Eye className="h-3 w-3 mr-1" />
-                                View
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <div className="mt-4 flex space-x-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setVerificationStep('input');
-                            setDuplicates([]);
-                            setVerificationStats(null);
-                            setLastVerifiedContent(null);
-                          }}
-                          className="flex-1"
-                        >
-                          ← Modify Problem
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={() => setVerificationStep('verified')}
-                          className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
-                        >
-                          ✅ PROCEED ANYWAY
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           {/* Submit Buttons */}
           <div className="flex gap-3 pt-4">
             <Button
@@ -729,22 +525,16 @@ const SubmitProblem: React.FC = () => {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || verificationStep !== 'verified'}
-              className={`flex-1 ${
-                verificationStep === 'verified' 
-                  ? 'bg-green-600 hover:bg-green-700' 
-                  : 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700'
-              } text-white`}
+              disabled={isSubmitting}
+              className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white"
             >
               {isSubmitting ? (
                 "Submitting..."
-              ) : verificationStep === 'verified' ? (
+              ) : (
                 <>
                   <CheckCircle className="mr-2 h-4 w-4" />
-                  ✅ SUBMIT PROBLEM
+                  Submit Problem
                 </>
-              ) : (
-                "Submit Problem"
               )}
             </Button>
           </div>

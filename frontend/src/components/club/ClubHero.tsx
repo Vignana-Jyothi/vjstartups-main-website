@@ -1,7 +1,6 @@
 import { Users, Rocket, TrendingUp, Award, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { clubInfo } from "@/data/clubInfo";
-import { ClubStatCard } from "./ClubStatCard";
 import { PageHero } from "@/components/design-system/PageHero";
 
 interface ClubHeroProps {
@@ -48,11 +47,6 @@ export function ClubHero({ onExploreWings, onGetInvolved }: ClubHeroProps) {
         </Button>
       </div>
 
-      <div className="mt-14 grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4" role="list" aria-label="Club statistics">
-        {stats.map((stat) => (
-          <ClubStatCard key={stat.label} value={stat.value} label={stat.label} icon={stat.icon} delay={stat.delay} />
-        ))}
-      </div>
     </PageHero>
   );
 }
