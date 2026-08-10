@@ -1,0 +1,40 @@
+name: Deploy Applications
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  deploy:
+    name: Deploy to Environment
+    runs-on: ${{ github.ref == 'refs/heads/main' && 'gamma' || 'dev-ai' }}
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'vj-production' || 'vj-development' }}
+      url: ${{ github.ref == 'refs/heads/main' && 'https://vjstartup.com' || 'https://dev-vj.vjstartup.com' }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create .env file for backend
+        run: |
+          cat << EOF > backend/.env
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          PORT=${{ secrets.PORT || 6220 }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          ADMIN_EMAILS=${{ secrets.ADMIN_EMAILS }}
+          EOF
+
+      - name: Create .env file for frontend (if needed)
+        run: |
+          cat << EOF > frontend/.env
+          # Add any frontend environment variables here
+          # VITE_API_URL=${{ secrets.VITE_API_URL }}
+          EOF
+
+      - name: Deploy with Docker Compose
+        run: |
+          docker-compose down
+          docker-compose up -d --build
