@@ -17,8 +17,23 @@ services:
       dockerfile: Dockerfile
     ports:
       - "6220:6220"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    depends_on:
+      - db
     restart: always
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: kavya@2007
+      POSTGRES_DB: vj
+    ports:
+      - "5433:5432"
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
 
 
