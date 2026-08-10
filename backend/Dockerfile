@@ -17,5 +17,5 @@ RUN npx prisma generate
 # Expose port (assuming standard 5000 or 3000, will map in compose)
 EXPOSE 5000
 
-# Start server
-CMD ["npm", "start"]
+# Start server and automatically push schema to database
+CMD ["sh", "-c", "npx prisma db push && npm start"]
