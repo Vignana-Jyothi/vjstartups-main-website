@@ -22,6 +22,8 @@ services:
       - PORT=6220
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - ADMIN_EMAILS=${ADMIN_EMAILS}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: always
 
 
