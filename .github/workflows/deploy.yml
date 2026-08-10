@@ -20,7 +20,7 @@ jobs:
 
       - name: Create .env file for backend
         run: |
-          cat << EOF > backend/.env
+          cat << 'EOF' > backend/.env
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           PORT=${{ secrets.PORT || 6220 }}
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
@@ -29,7 +29,7 @@ jobs:
 
       - name: Create .env file for frontend
         run: |
-          cat << EOF > frontend/.env
+          cat << 'EOF' > frontend/.env
           VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
           VITE_GOOGLE_CLIENT=${{ secrets.VITE_GOOGLE_CLIENT }}
           VITE_AUTH_URL=${{ secrets.VITE_AUTH_URL }}
