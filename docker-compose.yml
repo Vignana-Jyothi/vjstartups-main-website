@@ -22,21 +22,6 @@ services:
       - PORT=6220
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - ADMIN_EMAILS=${ADMIN_EMAILS}
-    depends_on:
-      - db
     restart: always
 
-  db:
-    image: postgres:15-alpine
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=username
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=vjstartups
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: always
 
-volumes:
-  postgres_data:
