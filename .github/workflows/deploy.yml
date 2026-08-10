@@ -27,11 +27,15 @@ jobs:
           ADMIN_EMAILS=${{ secrets.ADMIN_EMAILS }}
           EOF
 
-      - name: Create .env file for frontend (if needed)
+      - name: Create .env file for frontend
         run: |
           cat << EOF > frontend/.env
-          # Add any frontend environment variables here
-          # VITE_API_URL=${{ secrets.VITE_API_URL }}
+          VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+          VITE_GOOGLE_CLIENT=${{ secrets.VITE_GOOGLE_CLIENT }}
+          VITE_AUTH_URL=${{ secrets.VITE_AUTH_URL }}
+          VITE_DEBUG_MODE=${{ secrets.VITE_DEBUG_MODE || 'false' }}
+          VITE_GOOGLE_SPREADSHEET_ID=${{ secrets.VITE_GOOGLE_SPREADSHEET_ID }}
+          VITE_GOOGLE_SHEETS_API_KEY=${{ secrets.VITE_GOOGLE_SHEETS_API_KEY }}
           EOF
 
       - name: Deploy with Docker Compose
