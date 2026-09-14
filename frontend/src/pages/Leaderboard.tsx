@@ -80,13 +80,24 @@ const Leaderboard = () => {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/notification-api/stage-notifications/leaderboard`);
+        const response = await fetch('http://localhost:8000/api/vj-startups/leaderboards/members/');
         if (!response.ok) {
           throw new Error('Failed to fetch leaderboard');
         }
 
         const data = await response.json();
-        setEntries(data.leaderboard || []);
+        // Map Django OrganizationMemberProfile array to LeaderboardEntry interface
+        const mappedEntries: LeaderboardEntry[] = (data || []).map((profile: any, index: number) => ({
+          rank: index + 1,
+          email: profile.user?.email || '',
+          name: `${profile.user?.first_name || ''} ${profile.user?.last_name || ''}`.trim() || profile.user?.username || 'Member',
+          avatar: profile.user?.avatar,
+          stagesCompleted: Math.min(Math.round(profile.reputation_score / 10), 7), // cap stages at 7 for visuals
+          lastActivityAt: profile.updated_at || new Date().toISOString(),
+          badgeType: 'founder',
+          reputationScore: profile.reputation_score
+        }));
+        setEntries(mappedEntries);
       } catch (error) {
         console.error('Error loading leaderboard:', error);
       } finally {
@@ -95,6 +106,8 @@ const Leaderboard = () => {
     };
 
     fetchLeaderboard();
+    const interval = setInterval(fetchLeaderboard, 30000); // 30 second poll for frontend feel
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -147,7 +160,7 @@ const Leaderboard = () => {
                   </div>
 
                   <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900 dark:text-white">{entry.stagesCompleted} stages</div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">Score: {(entry as any).reputationScore?.toFixed(2) || '0'}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {getTimeAgo(entry.lastActivityAt)}
