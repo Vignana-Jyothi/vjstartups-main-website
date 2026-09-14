@@ -1,4 +1,5 @@
 const express = require('express');
+const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 const adminAuth = require('../middlewares/adminAuth');
 const prisma = require('../config/prisma');
@@ -193,12 +194,36 @@ router.patch('/users/:id/role', async (req, res) => {
       return res.status(400).json({ success: false, message: 'You cannot demote yourself' });
     }
 
+    const existingUser = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      select: {
+        role: true,
+        adminToken: true,
+        adminTokenCreatedAt: true
+      }
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
     const updateData = {
       role: enumRole
     };
 
-    // Clear admin token if demoting from admin
-    if (enumRole !== 'ADMIN') {
+    if (enumRole === 'ADMIN') {
+      const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+      const hasValidAdminToken =
+        existingUser.role === 'ADMIN' &&
+        Boolean(existingUser.adminToken) &&
+        (!existingUser.adminTokenCreatedAt ||
+          Date.now() - existingUser.adminTokenCreatedAt.getTime() <= thirtyDays);
+
+      if (!hasValidAdminToken) {
+        updateData.adminToken = uuidv4();
+        updateData.adminTokenCreatedAt = new Date();
+      }
+    } else {
       updateData.adminToken = null;
       updateData.adminTokenCreatedAt = null;
     }
