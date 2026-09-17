@@ -74,6 +74,10 @@ model Problem {
   scalability          String?            @db.Text
   addedByName          String
   addedByEmail         String
+  verified             Boolean            @default(false)
+  verifiedBy           String?
+  verifiedAt           DateTime?
+  verificationNotes    String?            @db.Text
   tags                 String[]           @default([])
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
