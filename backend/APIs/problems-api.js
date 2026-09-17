@@ -143,10 +143,17 @@ router.get("/problems", async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
     const skip = (page - 1) * limit;
-    
+
+    // Filter by verified status if provided: ?verified=true|false
+    const verifiedFilter = req.query.verified;
+    const where = verifiedFilter !== undefined
+      ? { verified: verifiedFilter === "true" }
+      : {};
+
     // Get problems with pagination
     const [problems, total] = await Promise.all([
       prisma.problem.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -160,7 +167,7 @@ router.get("/problems", async (req, res) => {
           }
         }
       }),
-      prisma.problem.count()
+      prisma.problem.count({ where })
     ]);
     
     // If no problems in database, return mock data
@@ -237,6 +244,63 @@ router.get("/problems/:id", async (req, res) => {
   } catch (error) {
     console.error("Error fetching problem:", error);
     res.status(500).json({ message: "Failed to fetch problem" });
+  }
+});
+
+// PATCH verify a problem
+router.patch("/problem/:id/verify", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { verificationNotes } = req.body;
+
+    // Role check: Talent-wing (WING_MEMBER, WING_MASTER) or ADMIN
+    // Assuming req.user is populated by your auth middleware
+    if (!req.user || !["WING_MEMBER", "WING_MASTER", "ADMIN"].includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden – insufficient role" });
+    }
+
+    const updated = await prisma.problem.update({
+      where: { id },
+      data: {
+        verified: true,
+        verifiedBy: req.user.email,
+        verifiedAt: new Date(),
+        verificationNotes,
+      },
+      include: { collaborators: true, upvotedBy: true, comments: { include: { replies: true, likedBy: true } } },
+    });
+
+    res.json(updated);
+  } catch (e) {
+    console.error("Verify error:", e);
+    res.status(500).json({ message: "Verification failed" });
+  }
+});
+
+// PATCH un-verify a problem
+router.patch("/problem/:id/unverify", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.user || !["WING_MEMBER", "WING_MASTER", "ADMIN"].includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden – insufficient role" });
+    }
+
+    const updated = await prisma.problem.update({
+      where: { id },
+      data: {
+        verified: false,
+        verifiedBy: null,
+        verifiedAt: null,
+        verificationNotes: null,
+      },
+      include: { collaborators: true, upvotedBy: true, comments: { include: { replies: true, likedBy: true } } },
+    });
+
+    res.json(updated);
+  } catch (e) {
+    console.error("Un-verify error:", e);
+    res.status(500).json({ message: "Un-verification failed" });
   }
 });
 
