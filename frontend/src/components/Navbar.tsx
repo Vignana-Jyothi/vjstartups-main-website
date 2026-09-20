@@ -9,6 +9,10 @@ import { useState } from "react";
 import { useUser } from "../pages/UserContext"; // import the context
 import vjLogo from "@/assets/vj-logo.png";
 
+// The admin "god-mode" dashboard lives in the separate Plane admin app,
+// not in this repo - there is no /admin route here.
+const PLANE_ADMIN_URL = import.meta.env.VITE_PLANE_ADMIN_URL || "http://localhost:3001/god-mode/";
+
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -114,7 +118,9 @@ const Navbar = () => {
             )}
             {user?.role === "admin" && (
               <a
-                href="/admin"
+                href={PLANE_ADMIN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center text-vj-muted"
               >
                 Admin Panel
@@ -257,7 +263,9 @@ const Navbar = () => {
                   )}
                   {user?.role === "admin" && (
                     <a
-                      href="/admin"
+                      href={PLANE_ADMIN_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-sm font-medium transition-colors hover:text-vj-primary min-h-[44px] flex items-center text-vj-muted"
                       onClick={handleNavClick}
                     >
