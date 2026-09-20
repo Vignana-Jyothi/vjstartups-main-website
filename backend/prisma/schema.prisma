@@ -75,6 +75,10 @@ model Problem {
   addedByName          String
   addedByEmail         String
   tags                 String[]           @default([])
+  verified             Boolean            @default(false)
+  verifiedBy           String?
+  verifiedAt           DateTime?
+  verificationNotes    String?            @db.Text
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 
@@ -88,6 +92,7 @@ model Problem {
   @@index([problemId])
   @@index([addedByEmail])
   @@index([createdAt])
+  @@index([verified])
   @@map("problems")
 }
 

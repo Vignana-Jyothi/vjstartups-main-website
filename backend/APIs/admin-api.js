@@ -211,15 +211,20 @@ router.patch('/users/:id/role', async (req, res) => {
       role: enumRole
     };
 
-    if (enumRole === 'ADMIN') {
+    // WING_MEMBER and WING_MASTER need a Bearer token too (e.g. to verify
+    // problems), not just ADMIN - otherwise they're promoted into a role
+    // they have no way to authenticate as.
+    const TOKEN_ROLES = ['ADMIN', 'WING_MEMBER', 'WING_MASTER'];
+
+    if (TOKEN_ROLES.includes(enumRole)) {
       const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-      const hasValidAdminToken =
-        existingUser.role === 'ADMIN' &&
+      const hasValidToken =
+        TOKEN_ROLES.includes(existingUser.role) &&
         Boolean(existingUser.adminToken) &&
         (!existingUser.adminTokenCreatedAt ||
           Date.now() - existingUser.adminTokenCreatedAt.getTime() <= thirtyDays);
 
-      if (!hasValidAdminToken) {
+      if (!hasValidToken) {
         updateData.adminToken = uuidv4();
         updateData.adminTokenCreatedAt = new Date();
       }
