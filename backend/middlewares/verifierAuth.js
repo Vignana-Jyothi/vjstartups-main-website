@@ -24,24 +24,26 @@ const verifierAuth = async (req, res, next) => {
   }
 
   try {
-    const user = await prisma.user.findFirst({
+    const profile = await prisma.organizationMemberProfile.findFirst({
       where: {
-        adminToken: token,
-        role: { in: ALLOWED_ROLES }
-      }
+        publicAdminToken: token,
+        publicRole: { in: ALLOWED_ROLES },
+        deletedAt: null,
+      },
+      include: { user: true },
     });
 
-    if (!user) {
+    if (!profile || profile.user.deletedAt) {
       return res.status(403).json({ success: false, message: 'Access denied: requires wing member, wing master, or admin role' });
     }
 
     // Token expiry check: 30 days (matches adminAuth.js's policy)
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-    if (user.adminTokenCreatedAt && Date.now() - user.adminTokenCreatedAt.getTime() > thirtyDays) {
+    if (profile.publicAdminTokenCreatedAt && Date.now() - profile.publicAdminTokenCreatedAt.getTime() > thirtyDays) {
       return res.status(401).json({ success: false, message: 'Session expired — please log in again' });
     }
 
-    req.user = user;
+    req.user = { ...profile.user, adminProfile: profile };
     next();
   } catch (err) {
     console.error('Verifier auth middleware error:', err);

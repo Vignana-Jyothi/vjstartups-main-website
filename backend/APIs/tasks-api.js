@@ -78,9 +78,9 @@ router.post('/projects', async (req, res) => {
         data: {
           projectId: newProject.id,
           userId: user.id,
-          name: creatorName || user.name || 'Unknown',
+          name: creatorName || [user.firstName, user.lastName].filter(Boolean).join(' ') || user.displayName || 'Unknown',
           email: createdBy,
-          picture: user.picture,
+          picture: user.avatar,
           role: 'LEAD'
         }
       });

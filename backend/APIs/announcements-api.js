@@ -42,7 +42,7 @@ router.post('/', verifierAuth, async (req, res) => {
       data: {
         title,
         content,
-        postedByName: req.user.name || 'Anonymous',
+        postedByName: [req.user.firstName, req.user.lastName].filter(Boolean).join(' ') || req.user.displayName || 'Anonymous',
         postedByEmail: req.user.email,
         isActive: true
       }

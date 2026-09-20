@@ -12,22 +12,40 @@ datasource db {
 
 // ============================================================================
 // USER MANAGEMENT
+//
+// User and OrganizationMemberProfile are Django/Plane-owned tables in Plane's
+// own Postgres database (merged from what used to be this app's own separate
+// database - see the migration in apps/api/plane/vj_startups for the Django
+// side). Django remains the sole owner of migrations for both tables.
+//
+// These two models are READ-ONLY from Prisma's side. Never call
+// prisma.user.create/update/upsert/delete or the same on
+// organizationMemberProfile - user creation must go through Django's own API
+// (see auth-api.js) so it fires Django's onboarding signals (workspace
+// membership, profile creation, etc.) and correctly populates the ~35 other
+// NOT NULL columns on `users` that belong to Django's own bookkeeping, none
+// of which Prisma has any business setting.
+//
+// Both tables use Django's soft-delete convention (a deletedAt column, no
+// hard deletes) - any query against them should filter deletedAt: null,
+// since Prisma has no built-in awareness of that convention the way Django's
+// own default manager does.
 // ============================================================================
 
 model User {
-  id                   String    @id @default(uuid())
-  email                String    @unique
-  name                 String?
-  picture              String?
-  role                 UserRole  @default(STUDENT)
-  adminToken           String?   @unique
-  adminTokenCreatedAt  DateTime?
-  sessionToken         String?   @unique
-  sessionTokenCreatedAt DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  id          String    @id @db.Uuid
+  email       String?   @unique
+  firstName   String    @map("first_name")
+  lastName    String    @map("last_name")
+  displayName String    @map("display_name")
+  avatar      String
+  createdAt   DateTime  @map("created_at")
+  updatedAt   DateTime  @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
 
-  // Relations
+  vjProfile   OrganizationMemberProfile?
+
+  // Relations (still keyed by email - Django's users.email is unique too)
   problemsCreated      Problem[]            @relation("ProblemCreator")
   ideasCreated         Idea[]               @relation("IdeaCreator")
   startupsCreated      Startup[]            @relation("StartupCreator")
@@ -41,19 +59,26 @@ model User {
   stageNotifications   StageNotification[]
   projectMemberships   ProjectMember[]
 
-  @@index([email])
-  @@index([role])
   @@map("users")
 }
 
-enum UserRole {
-  USER
-  STUDENT
-  WING_MEMBER
-  WING_MASTER
-  ADMIN
+// The public site's former User.role/adminToken/sessionToken now live here -
+// see OrganizationMemberProfile.public_role etc. on the Django side. This is
+// the public site's own permission level, distinct from Plane's own
+// workspace roles/InstanceAdmin.
+model OrganizationMemberProfile {
+  id                           String    @id @db.Uuid
+  userId                       String    @unique @map("user_id") @db.Uuid
+  publicRole                   String    @default("STUDENT") @map("public_role")
+  publicAdminToken             String?   @unique @map("public_admin_token")
+  publicAdminTokenCreatedAt    DateTime? @map("public_admin_token_created_at")
+  publicSessionToken           String?   @unique @map("public_session_token")
+  publicSessionTokenCreatedAt  DateTime? @map("public_session_token_created_at")
+  deletedAt                    DateTime? @map("deleted_at")
 
-  @@map("user_role")
+  user                         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("vj_organization_member_profiles")
 }
 
 // ============================================================================
@@ -234,7 +259,6 @@ model Idea {
   attachments         IdeaAttachment[]
   links               IdeaLink[]
   questionnaires      QuestionnaireResponse[]
-  startup             Startup?
   stageNotifications  StageNotification[]
 
   @@index([ideaId])
@@ -407,116 +431,140 @@ enum AccessLevel {
 // STARTUPS
 // ============================================================================
 
+// Startup, StartupTeamMember and StartupSupportProgram are Django/Plane-owned
+// tables too (see the note above OrganizationMemberProfile) - same rules
+// apply: Django owns migrations, filter deletedAt: null, and this model can
+// be written to directly since every field here is plain business data
+// Prisma fully understands (unlike User's Django-internal bookkeeping
+// columns). createdById/updatedById mirror Django's audit convention - set
+// them explicitly when creating/updating from backend-2 if you have the
+// acting user's id, otherwise they're left null.
+//
+// There's no formal Prisma relation to Idea here even though
+// relatedIdeaId/ideaId conceptually link them: enforcing it would require a
+// migration that adds an FK constraint onto this Django-owned table, which
+// crosses the ownership boundary. Look the Idea up manually by ideaId
+// instead of using `include`.
 model Startup {
-  id                   String              @id @default(uuid())
-  startupName          String
-  tagline              String
-  description          String              @db.Text
-  coverImage           String?
-  logo                 String?
-  founders             String
-  stage                Int
-  fundingStatus        FundingStatus
-  fundingAmount        String?
-  revenue              String?
-  customers            String?
-  markets              String?
-  incorporationStatus  IncorporationStatus
-  website              String?
-  businessModel        String?             @db.Text
-  keyFeatures          String[]            @default([])
-  technologyStack      String[]            @default([])
-  marketSize           String?
-  annualGrowthRate     String?
-  targetUsers          String?             @db.Text
-  teamSize             Int                 @default(1)
-  pitchDeck            String?
-  onePager             String?
-  upvotes              Int                 @default(0)
-  views                Int                 @default(0)
-  problemStatement     String?             @db.Text
-  solution             String?             @db.Text
-  targetAudience       String?             @db.Text
-  competitiveAdvantage String?             @db.Text
-  createdBy            String
-  ideaId               String?             @unique
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
+  id                   String                  @id @db.Uuid
+  createdAt            DateTime                @default(now()) @map("created_at")
+  updatedAt            DateTime                @default(now()) @updatedAt @map("updated_at")
+  deletedAt            DateTime?               @map("deleted_at")
+  createdById          String?                 @map("created_by_id") @db.Uuid
+  updatedById          String?                 @map("updated_by_id") @db.Uuid
 
-  // Relations
-  creator              User                @relation("StartupCreator", fields: [createdBy], references: [email])
-  idea                 Idea?               @relation(fields: [ideaId], references: [ideaId])
+  name                 String                  @map("name")
+  slug                 String                  @unique
+  tagline              String                  @default("")
+  description          String                  @default("") @db.Text
+  logo                 String                  @default("")
+  coverImage           String                  @default("") @map("cover_image")
+  foundersText         String                  @default("") @map("founders_text")
+  trlStage             Int                     @default(1) @map("trl_stage")
+  fundingStatus        String                  @default("") @map("funding_status")
+  incorporationStatus  String                  @default("") @map("incorporation_status")
+  financialNotes       String                  @default("") @map("financial_notes")
+  revenue              Decimal                 @default(0) @db.Decimal(12, 2)
+  fundingRaised        Decimal                 @default(0) @map("funding_raised") @db.Decimal(15, 2)
+  customers            String                  @default("")
+  markets              String                  @default("")
+  website              String                  @default("")
+  businessModel        String                  @default("") @map("business_model")
+  keyFeatures          Json                    @default("[]") @map("key_features")
+  technologyStack      Json                    @default("[]") @map("technology_stack")
+  marketSize           String                  @default("") @map("market_size")
+  annualGrowthRate     String                  @default("") @map("annual_growth_rate")
+  targetUsers          String                  @default("") @db.Text @map("target_users")
+  teamSize             Int                     @default(1) @map("team_size")
+  pitchDeckUrl          String                 @default("") @map("pitch_deck_url")
+  onePagerUrl          String                  @default("") @map("one_pager_url")
+  githubUrl            String                  @default("") @map("github_url")
+  upvotes              Int                     @default(0)
+  views                Int                     @default(0)
+  userCount            Int                     @default(0) @map("users")
+  problemStatement     String                  @default("") @db.Text @map("problem_statement")
+  solutionStatement    String                  @default("") @db.Text @map("solution_statement")
+  targetAudience       String                  @default("") @db.Text @map("target_audience")
+  competitiveAdvantage String                  @default("") @db.Text @map("competitive_advantage")
+  industry             String                  @default("")
+  status               String                  @default("active")
+  publicVisibility     Boolean                 @default(false) @map("public_visibility")
+  foundedDate          DateTime?               @map("founded_date") @db.Date
+  invitedEmails        Json                    @default("[]") @map("invited_emails")
+  ideaId               String?                 @unique @map("related_idea_id")
+
+  creator              User?                   @relation("StartupCreator", fields: [createdById], references: [id])
   teamMembers          StartupTeamMember[]
-  milestones           StartupMilestone[]
   supportPrograms      StartupSupportProgram[]
+  milestones           Milestone[]
 
-  @@index([createdBy])
   @@index([ideaId])
-  @@index([stage])
+  @@index([trlStage])
   @@index([createdAt])
-  @@map("startups")
-}
-
-enum FundingStatus {
-  BOOTSTRAPPED
-  SEEKING_FUNDING
-  PRE_SEED
-  SEED
-  SERIES_A
-  LATER_STAGE
-
-  @@map("funding_status")
-}
-
-enum IncorporationStatus {
-  NOT_INCORPORATED
-  INCORPORATED
-  LLC
-  PARTNERSHIP
-  OTHER
-
-  @@map("incorporation_status")
+  @@map("vj_startups")
 }
 
 model StartupTeamMember {
-  id        String   @id @default(uuid())
-  startupId String
-  name      String
-  role      String
-  avatar    String?
-  createdAt DateTime @default(now())
+  id          String    @id @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  createdById String?   @map("created_by_id") @db.Uuid
+  updatedById String?   @map("updated_by_id") @db.Uuid
 
-  startup   Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId   String    @map("startup_id") @db.Uuid
+  name        String
+  role        String
+  avatar      String    @default("")
 
-  @@index([startupId])
-  @@map("startup_team_members")
-}
-
-model StartupMilestone {
-  id        String   @id @default(uuid())
-  startupId String
-  title     String
-  date      DateTime
-  completed Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  startup   Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startup     Startup   @relation(fields: [startupId], references: [id], onDelete: Cascade)
 
   @@index([startupId])
-  @@index([date])
-  @@map("startup_milestones")
+  @@map("vj_startup_team_members")
 }
 
 model StartupSupportProgram {
-  id        String   @id @default(uuid())
-  startupId String
-  program   String
-  createdAt DateTime @default(now())
+  id          String    @id @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  createdById String?   @map("created_by_id") @db.Uuid
+  updatedById String?   @map("updated_by_id") @db.Uuid
 
-  startup   Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId   String    @map("startup_id") @db.Uuid
+  program     String
+
+  startup     Startup   @relation(fields: [startupId], references: [id], onDelete: Cascade)
 
   @@index([startupId])
-  @@map("startup_support_programs")
+  @@map("vj_startup_support_programs")
+}
+
+// Replaces the old StartupMilestone - Plane already had a Milestone model
+// that's a strict superset (also auto-populated from completed project work
+// via a Django signal), so this maps onto that instead of a new table.
+// completed (from the old StartupMilestone shape) is derived as
+// achievedAt !== null rather than stored separately.
+model Milestone {
+  id          String    @id @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  createdById String?   @map("created_by_id") @db.Uuid
+  updatedById String?   @map("updated_by_id") @db.Uuid
+
+  startupId   String    @map("startup_id") @db.Uuid
+  title       String
+  description String    @default("") @db.Text
+  type        String    @default("manual")
+  achievedAt  DateTime? @map("achieved_at")
+  metadata    Json      @default("{}")
+
+  startup     Startup   @relation(fields: [startupId], references: [id], onDelete: Cascade)
+
+  @@index([startupId])
+  @@index([achievedAt])
+  @@map("vj_milestones")
 }
 
 // ============================================================================

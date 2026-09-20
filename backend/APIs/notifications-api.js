@@ -356,32 +356,18 @@ router.post('/stage-notifications', async (req, res) => {
     if (userEmail) {
       const normalizedEmail = String(userEmail).toLowerCase();
 
-      // Upsert user data if provided
-      if (userName || userAvatar) {
-        await prisma.user.upsert({
-          where: { email: normalizedEmail },
-          update: {
-            ...(userName ? { name: userName } : {}),
-            ...(userAvatar ? { picture: userAvatar } : {}),
-            updatedAt: new Date()
-          },
-          create: {
-            email: normalizedEmail,
-            name: userName || null,
-            picture: userAvatar || null
-          }
-        });
-      }
-
-      // Get user avatar if not provided
+      // User creation/updates go through Django now (see auth-api.js and
+      // public_auth.py on the Plane side) - it already keeps name/avatar in
+      // sync on every login, so there's nothing to upsert here any more.
+      // Just fall back to whatever's on record if the caller didn't send one.
       if (!resolvedUserAvatar) {
         const existingUser = await prisma.user.findUnique({
           where: { email: normalizedEmail },
-          select: { picture: true }
+          select: { avatar: true }
         });
 
-        if (existingUser?.picture) {
-          resolvedUserAvatar = existingUser.picture;
+        if (existingUser?.avatar) {
+          resolvedUserAvatar = existingUser.avatar;
         }
       }
     }

@@ -21,20 +21,21 @@ const userAuth = async (req, res, next) => {
   }
 
   try {
-    const user = await prisma.user.findFirst({
-      where: { sessionToken: token }
+    const profile = await prisma.organizationMemberProfile.findFirst({
+      where: { publicSessionToken: token, deletedAt: null },
+      include: { user: true },
     });
 
-    if (!user) {
+    if (!profile || profile.user.deletedAt) {
       return res.status(401).json({ success: false, message: 'Invalid session token' });
     }
 
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-    if (user.sessionTokenCreatedAt && Date.now() - user.sessionTokenCreatedAt.getTime() > thirtyDays) {
+    if (profile.publicSessionTokenCreatedAt && Date.now() - profile.publicSessionTokenCreatedAt.getTime() > thirtyDays) {
       return res.status(401).json({ success: false, message: 'Session expired — please log in again' });
     }
 
-    req.user = user;
+    req.user = { ...profile.user, adminProfile: profile };
     next();
   } catch (err) {
     console.error('User auth middleware error:', err);

@@ -16,28 +16,28 @@ router.use(adminAuth);
 router.get('/stats', async (req, res) => {
   try {
     const [totalUsers, totalStartups, totalIdeas, totalProblems,
-           adminCount, recentUsers, recentStartups] = await Promise.all([
-      prisma.user.count(),
-      prisma.startup.count(),
+           adminCount, recentProfiles, recentStartups] = await Promise.all([
+      prisma.user.count({ where: { deletedAt: null } }),
+      prisma.startup.count({ where: { deletedAt: null } }),
       prisma.idea.count(),
       prisma.problem.count(),
-      prisma.user.count({ where: { role: 'ADMIN' } }),
-      prisma.user.findMany({
+      prisma.organizationMemberProfile.count({ where: { publicRole: 'ADMIN', deletedAt: null } }),
+      prisma.organizationMemberProfile.findMany({
+        where: { deletedAt: null },
         select: {
-          name: true,
-          email: true,
-          picture: true,
-          role: true,
-          updatedAt: true
+          publicRole: true,
+          updatedAt: true,
+          user: { select: { firstName: true, lastName: true, displayName: true, email: true, avatar: true } }
         },
         orderBy: { updatedAt: 'desc' },
         take: 5
       }),
       prisma.startup.findMany({
+        where: { deletedAt: null },
         select: {
-          startupName: true,
+          name: true,
           tagline: true,
-          stage: true,
+          trlStage: true,
           createdAt: true
         },
         orderBy: { createdAt: 'desc' },
@@ -53,23 +53,23 @@ router.get('/stats', async (req, res) => {
 
     // Use raw queries for date grouping (PostgreSQL-specific)
     const userGrowth = await prisma.$queryRaw`
-      SELECT 
+      SELECT
         EXTRACT(YEAR FROM updated_at) as year,
         EXTRACT(MONTH FROM updated_at) as month,
         COUNT(*) as count
       FROM users
-      WHERE updated_at >= ${sixMonthsAgo}
+      WHERE updated_at >= ${sixMonthsAgo} AND deleted_at IS NULL
       GROUP BY year, month
       ORDER BY year, month
     `;
 
     const startupGrowth = await prisma.$queryRaw`
-      SELECT 
+      SELECT
         EXTRACT(YEAR FROM created_at) as year,
         EXTRACT(MONTH FROM created_at) as month,
         COUNT(*) as count
-      FROM startups
-      WHERE created_at >= ${sixMonthsAgo}
+      FROM vj_startups
+      WHERE created_at >= ${sixMonthsAgo} AND deleted_at IS NULL
       GROUP BY year, month
       ORDER BY year, month
     `;
@@ -85,10 +85,12 @@ router.get('/stats', async (req, res) => {
       count: Number(row.count)
     }));
 
-    // Convert role enum to lowercase for frontend compatibility
-    const formattedRecentUsers = recentUsers.map(user => ({
-      ...user,
-      role: user.role.toLowerCase()
+    const formattedRecentUsers = recentProfiles.map(p => ({
+      name: [p.user.firstName, p.user.lastName].filter(Boolean).join(' ') || p.user.displayName || p.user.email,
+      email: p.user.email,
+      picture: p.user.avatar,
+      role: p.publicRole.toLowerCase(),
+      updatedAt: p.updatedAt
     }));
 
     res.json({
@@ -100,13 +102,13 @@ router.get('/stats', async (req, res) => {
         totalProblems,
         adminCount,
       },
-      charts: { 
-        userGrowth: formattedUserGrowth, 
-        startupGrowth: formattedStartupGrowth 
+      charts: {
+        userGrowth: formattedUserGrowth,
+        startupGrowth: formattedStartupGrowth
       },
-      recent: { 
-        users: formattedRecentUsers, 
-        startups: recentStartups 
+      recent: {
+        users: formattedRecentUsers,
+        startups: recentStartups
       }
     });
   } catch (err) {
@@ -127,45 +129,46 @@ router.get('/users', async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const search = req.query.search || '';
 
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { email: { contains: search, mode: 'insensitive' } }
-          ]
-        }
-      : {};
+    const userWhere = { deletedAt: null };
+    if (search) {
+      userWhere.OR = [
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { displayName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } }
+      ];
+    }
 
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
+    const [profiles, total] = await Promise.all([
+      prisma.organizationMemberProfile.findMany({
+        where: { deletedAt: null, user: userWhere },
         select: {
-          id: true,
-          name: true,
-          email: true,
-          picture: true,
-          role: true,
-          updatedAt: true
+          publicRole: true,
+          updatedAt: true,
+          user: { select: { id: true, firstName: true, lastName: true, displayName: true, email: true, avatar: true } }
         },
         orderBy: { updatedAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit
       }),
-      prisma.user.count({ where })
+      prisma.organizationMemberProfile.count({ where: { deletedAt: null, user: userWhere } })
     ]);
 
-    // Convert role enum to lowercase for frontend
-    const formattedUsers = users.map(user => ({
-      ...user,
-      role: user.role.toLowerCase()
+    const formattedUsers = profiles.map(p => ({
+      id: p.user.id,
+      name: [p.user.firstName, p.user.lastName].filter(Boolean).join(' ') || p.user.displayName || p.user.email,
+      email: p.user.email,
+      picture: p.user.avatar,
+      role: p.publicRole.toLowerCase(),
+      updatedAt: p.updatedAt
     }));
 
-    res.json({ 
-      success: true, 
-      users: formattedUsers, 
-      total, 
-      page, 
-      totalPages: Math.ceil(total / limit) 
+    res.json({
+      success: true,
+      users: formattedUsers,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
     });
   } catch (err) {
     console.error('Admin users error:', err);
@@ -194,21 +197,21 @@ router.patch('/users/:id/role', async (req, res) => {
       return res.status(400).json({ success: false, message: 'You cannot demote yourself' });
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { id: req.params.id },
+    const existingProfile = await prisma.organizationMemberProfile.findUnique({
+      where: { userId: req.params.id },
       select: {
-        role: true,
-        adminToken: true,
-        adminTokenCreatedAt: true
+        publicRole: true,
+        publicAdminToken: true,
+        publicAdminTokenCreatedAt: true
       }
     });
 
-    if (!existingUser) {
+    if (!existingProfile) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
     const updateData = {
-      role: enumRole
+      publicRole: enumRole
     };
 
     // WING_MEMBER and WING_MASTER need a Bearer token too (e.g. to verify
@@ -219,35 +222,34 @@ router.patch('/users/:id/role', async (req, res) => {
     if (TOKEN_ROLES.includes(enumRole)) {
       const thirtyDays = 30 * 24 * 60 * 60 * 1000;
       const hasValidToken =
-        TOKEN_ROLES.includes(existingUser.role) &&
-        Boolean(existingUser.adminToken) &&
-        (!existingUser.adminTokenCreatedAt ||
-          Date.now() - existingUser.adminTokenCreatedAt.getTime() <= thirtyDays);
+        TOKEN_ROLES.includes(existingProfile.publicRole) &&
+        Boolean(existingProfile.publicAdminToken) &&
+        (!existingProfile.publicAdminTokenCreatedAt ||
+          Date.now() - existingProfile.publicAdminTokenCreatedAt.getTime() <= thirtyDays);
 
       if (!hasValidToken) {
-        updateData.adminToken = uuidv4();
-        updateData.adminTokenCreatedAt = new Date();
+        updateData.publicAdminToken = uuidv4();
+        updateData.publicAdminTokenCreatedAt = new Date();
       }
     } else {
-      updateData.adminToken = null;
-      updateData.adminTokenCreatedAt = null;
+      updateData.publicAdminToken = null;
+      updateData.publicAdminTokenCreatedAt = null;
     }
 
-    const user = await prisma.user.update({
-      where: { id: req.params.id },
+    const profile = await prisma.organizationMemberProfile.update({
+      where: { userId: req.params.id },
       data: updateData,
       select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true
+        publicRole: true,
+        user: { select: { id: true, firstName: true, lastName: true, displayName: true, email: true } }
       }
     });
 
-    // Convert role to lowercase for response
     const formattedUser = {
-      ...user,
-      role: user.role.toLowerCase()
+      id: profile.user.id,
+      name: [profile.user.firstName, profile.user.lastName].filter(Boolean).join(' ') || profile.user.displayName || profile.user.email,
+      email: profile.user.email,
+      role: profile.publicRole.toLowerCase()
     };
 
     res.json({ success: true, user: formattedUser });
@@ -262,7 +264,10 @@ router.patch('/users/:id/role', async (req, res) => {
 
 /**
  * DELETE /admin-api/users/:id
- * Delete a user
+ * Soft-deletes a user (sets deletedAt, matching Django's own soft-delete
+ * convention). A hard delete here would cascade against every Plane
+ * workspace/project/issue relationship this User has - far too dangerous
+ * now that this is the same users table Plane's whole instance depends on.
  */
 router.delete('/users/:id', async (req, res) => {
   try {
@@ -270,8 +275,9 @@ router.delete('/users/:id', async (req, res) => {
       return res.status(400).json({ success: false, message: 'You cannot delete yourself' });
     }
 
-    await prisma.user.delete({
-      where: { id: req.params.id }
+    await prisma.user.update({
+      where: { id: req.params.id },
+      data: { deletedAt: new Date() }
     });
 
     res.json({ success: true, message: 'User deleted' });
@@ -297,12 +303,12 @@ router.get('/startups', async (req, res) => {
     const search = req.query.search || '';
     const stageFilter = req.query.stage;
 
-    const where = {};
+    const where = { deletedAt: null };
     if (search) {
-      where.startupName = { contains: search, mode: 'insensitive' };
+      where.name = { contains: search, mode: 'insensitive' };
     }
     if (stageFilter) {
-      where.stage = parseInt(stageFilter);
+      where.trlStage = parseInt(stageFilter);
     }
 
     const [startups, total] = await Promise.all([
@@ -311,9 +317,11 @@ router.get('/startups', async (req, res) => {
         include: {
           creator: {
             select: {
-              name: true,
+              firstName: true,
+              lastName: true,
+              displayName: true,
               email: true,
-              picture: true
+              avatar: true
             }
           }
         },
@@ -350,11 +358,11 @@ router.patch('/startups/:id/stage', async (req, res) => {
 
     const startup = await prisma.startup.update({
       where: { id: req.params.id },
-      data: { stage },
+      data: { trlStage: stage },
       select: {
         id: true,
-        startupName: true,
-        stage: true
+        name: true,
+        trlStage: true
       }
     });
 
