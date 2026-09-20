@@ -4,6 +4,7 @@ const prisma = require("../config/prisma");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const verifierAuth = require("../middlewares/verifierAuth");
+const userAuth = require("../middlewares/userAuth");
 
 // -------------------- MULTER (memory storage) --------------------
 const storage = multer.memoryStorage(); 
@@ -683,14 +684,9 @@ router.post("/problem/:id/comment/:commentId/like", async (req, res) => {
 });
 
 // DELETE a problem (only owner or collaborator can delete)
-router.delete("/problems/:problemId", async (req, res) => {
+router.delete("/problems/:problemId", userAuth, async (req, res) => {
   try {
     const { problemId } = req.params;
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
 
     const problem = await prisma.problem.findUnique({
       where: { problemId: problemId },
@@ -703,9 +699,9 @@ router.delete("/problems/:problemId", async (req, res) => {
       return res.status(404).json({ message: "Problem not found" });
     }
 
-    // Check if user is owner or collaborator
-    const isOwner = problem.addedByEmail === email;
-    const isCollaborator = problem.collaborators.some(c => c.email === email);
+    // Check if the requesting session is the owner or a collaborator
+    const isOwner = problem.addedByEmail === req.user.email;
+    const isCollaborator = problem.collaborators.some(c => c.email === req.user.email);
     
     if (!isOwner && !isCollaborator) {
       return res.status(403).json({ message: "You are not allowed to delete this problem" });
@@ -727,13 +723,9 @@ router.delete("/problems/:problemId", async (req, res) => {
 });
 
 // PUT update a problem (only owner or collaborator can update)
-router.put("/problems/:id/:email", upload.single("image"), async (req, res) => {
+router.put("/problems/:id", userAuth, upload.single("image"), async (req, res) => {
   try {
-    const { id, email } = req.params;
-
-    if (!email) {
-      return res.status(400).json({ message: "User email is required" });
-    }
+    const { id } = req.params;
 
     const problem = await prisma.problem.findUnique({
       where: { problemId: id },
@@ -746,10 +738,10 @@ router.put("/problems/:id/:email", upload.single("image"), async (req, res) => {
       return res.status(404).json({ message: "Problem not found" });
     }
 
-    // Check if user is owner or collaborator
-    const isOwner = problem.addedByEmail === email;
-    const isCollaborator = problem.collaborators.some(c => c.email === email);
-    
+    // Check if the requesting session is the owner or a collaborator
+    const isOwner = problem.addedByEmail === req.user.email;
+    const isCollaborator = problem.collaborators.some(c => c.email === req.user.email);
+
     if (!isOwner && !isCollaborator) {
       return res.status(403).json({ message: "You are not allowed to edit this problem" });
     }

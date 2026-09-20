@@ -126,7 +126,9 @@ export default function IdeaDetail() {
       formData.append('stage', newStage.toString());
       formData.append('email', user.email);
       
-      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/idea-api/idea/${idea.ideaId}`, formData);
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/idea-api/idea/${idea.ideaId}`, formData, {
+        headers: { Authorization: `Bearer ${user.sessionToken}` }
+      });
       
       setIdea(prev => ({
         ...prev,

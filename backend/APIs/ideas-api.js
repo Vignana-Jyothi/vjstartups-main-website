@@ -5,6 +5,7 @@ const prisma = require('../config/prisma');
 const upload = require('../middlewares/upload');
 const cloudinary = require('../config/cloudinary');
 const verifierAuth = require('../middlewares/verifierAuth');
+const userAuth = require('../middlewares/userAuth');
 
 router.use(express.json());
 
@@ -434,18 +435,18 @@ router.post('/idea', upload.fields([
 });
 
 // Update idea
-router.put('/idea/:ideaId', upload.array('teamImages'), async (req, res) => {
+router.put('/idea/:ideaId', userAuth, upload.array('teamImages'), async (req, res) => {
   try {
     const idea = await prisma.idea.findUnique({
       where: { ideaId: req.params.ideaId }
     });
-    
+
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
 
-    // Check if the user is the creator of the idea
-    if (idea.addedByEmail !== req.body.email) {
+    // Check if the requesting session belongs to the creator of the idea
+    if (idea.addedByEmail !== req.user.email) {
       return res.status(403).json({ message: "Unauthorized to update this idea" });
     }
 
@@ -617,18 +618,18 @@ router.patch('/idea/:ideaId/unverify', verifierAuth, async (req, res) => {
 });
 
 // Delete idea
-router.delete('/idea/:ideaId', async (req, res) => {
+router.delete('/idea/:ideaId', userAuth, async (req, res) => {
   try {
     const idea = await prisma.idea.findUnique({
       where: { ideaId: req.params.ideaId }
     });
-    
+
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
 
-    // Check if the user is the creator of the idea
-    if (idea.addedByEmail !== req.body.email) {
+    // Check if the requesting session belongs to the creator of the idea
+    if (idea.addedByEmail !== req.user.email) {
       return res.status(403).json({ message: "Unauthorized to delete this idea" });
     }
 

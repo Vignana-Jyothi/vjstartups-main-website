@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../config/prisma');
 const upload = require('../middlewares/upload');
+const userAuth = require('../middlewares/userAuth');
 
 router.use(express.json());
 
@@ -390,7 +391,7 @@ router.post('/', upload.fields([
 });
 
 // PUT update startup
-router.put('/:id', upload.fields([
+router.put('/:id', userAuth, upload.fields([
     { name: 'coverImage', maxCount: 1 },
     { name: 'logo', maxCount: 1 },
     { name: 'pitchDeck', maxCount: 1 },
@@ -408,13 +409,8 @@ router.put('/:id', upload.fields([
             return res.status(404).json({ message: 'Startup not found' });
         }
 
-        const requestingUserEmail = req.body.requestingUserEmail;
-        if (!requestingUserEmail) {
-            return res.status(401).json({ message: 'You must be logged in to edit a startup.' });
-        }
-
-        // Check authorization - createdBy is email in our schema
-        if (startup.createdBy.toLowerCase() !== requestingUserEmail.toLowerCase()) {
+        // Check authorization against the verified session, not a client-supplied email
+        if (startup.createdBy.toLowerCase() !== req.user.email.toLowerCase()) {
             return res.status(403).json({ message: 'You are not authorized to edit this startup.' });
         }
 
@@ -550,7 +546,7 @@ router.put('/:id', upload.fields([
 });
 
 // DELETE startup
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', userAuth, async (req, res) => {
     try {
         const startup = await prisma.startup.findUnique({
             where: { id: req.params.id }
@@ -560,13 +556,8 @@ router.delete('/:id', async (req, res) => {
             return res.status(404).json({ message: 'Startup not found' });
         }
 
-        const requestingUserEmail = req.body.requestingUserEmail;
-        if (!requestingUserEmail) {
-            return res.status(401).json({ message: 'You must be logged in to delete a startup.' });
-        }
-
-        // Check authorization - createdBy is email in our schema
-        if (startup.createdBy.toLowerCase() !== requestingUserEmail.toLowerCase()) {
+        // Check authorization against the verified session, not a client-supplied email
+        if (startup.createdBy.toLowerCase() !== req.user.email.toLowerCase()) {
             return res.status(403).json({ message: 'You are not authorized to delete this startup.' });
         }
 

@@ -6,6 +6,8 @@ interface User {
   email: string;
   picture: string;
   role?: string;
+  sessionToken?: string;
+  adminToken?: string;
 }
 
 interface UserContextType {
