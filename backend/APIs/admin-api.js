@@ -17,7 +17,7 @@ router.get('/stats', async (req, res) => {
   try {
     const [totalUsers, totalStartups, totalIdeas, totalProblems,
            adminCount, recentProfiles, recentStartups] = await Promise.all([
-      prisma.user.count({ where: { deletedAt: null } }),
+      prisma.user.count({ where: { isActive: true } }),
       prisma.startup.count({ where: { deletedAt: null } }),
       prisma.idea.count(),
       prisma.problem.count(),
@@ -58,7 +58,7 @@ router.get('/stats', async (req, res) => {
         EXTRACT(MONTH FROM updated_at) as month,
         COUNT(*) as count
       FROM users
-      WHERE updated_at >= ${sixMonthsAgo} AND deleted_at IS NULL
+      WHERE updated_at >= ${sixMonthsAgo} AND is_active = true
       GROUP BY year, month
       ORDER BY year, month
     `;
@@ -129,7 +129,7 @@ router.get('/users', async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const search = req.query.search || '';
 
-    const userWhere = { deletedAt: null };
+    const userWhere = { isActive: true };
     if (search) {
       userWhere.OR = [
         { firstName: { contains: search, mode: 'insensitive' } },
@@ -264,10 +264,12 @@ router.patch('/users/:id/role', async (req, res) => {
 
 /**
  * DELETE /admin-api/users/:id
- * Soft-deletes a user (sets deletedAt, matching Django's own soft-delete
- * convention). A hard delete here would cascade against every Plane
- * workspace/project/issue relationship this User has - far too dangerous
- * now that this is the same users table Plane's whole instance depends on.
+ * Deactivates a user (sets is_active = false, Django's own convention for
+ * this table - it has no deletedAt/soft-delete column of its own, unlike
+ * the other merged tables). A hard delete here would cascade against every
+ * Plane workspace/project/issue relationship this User has - far too
+ * dangerous now that this is the same users table Plane's whole instance
+ * depends on.
  */
 router.delete('/users/:id', async (req, res) => {
   try {
@@ -277,7 +279,7 @@ router.delete('/users/:id', async (req, res) => {
 
     await prisma.user.update({
       where: { id: req.params.id },
-      data: { deletedAt: new Date() }
+      data: { isActive: false }
     });
 
     res.json({ success: true, message: 'User deleted' });

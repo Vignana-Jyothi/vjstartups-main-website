@@ -26,7 +26,7 @@ const userAuth = async (req, res, next) => {
       include: { user: true },
     });
 
-    if (!profile || profile.user.deletedAt) {
+    if (!profile || !profile.user.isActive) {
       return res.status(401).json({ success: false, message: 'Invalid session token' });
     }
 

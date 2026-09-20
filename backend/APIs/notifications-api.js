@@ -106,10 +106,10 @@ const enrichAvatarWithUserPicture = async (notifications) => {
       where: {
         email: { in: needsAvatarEmails }
       },
-      select: { email: true, picture: true }
+      select: { email: true, avatar: true }
     });
 
-    const pictureMap = new Map(userPictures.map((u) => [String(u.email).toLowerCase(), u.picture]));
+    const pictureMap = new Map(userPictures.map((u) => [String(u.email).toLowerCase(), u.avatar]));
 
     // Update notifications with user pictures
     return notifications.map((notif) => {
@@ -248,11 +248,11 @@ router.get('/stage-notifications/stats', async (req, res) => {
 
     const contributorProfiles = await prisma.user.findMany({
       where: { email: { in: contributorEmails } },
-      select: { email: true, picture: true }
+      select: { email: true, avatar: true }
     });
 
     const contributorPictureMap = new Map(
-      contributorProfiles.map((profile) => [String(profile.email).toLowerCase(), profile.picture])
+      contributorProfiles.map((profile) => [String(profile.email).toLowerCase(), profile.avatar])
     );
 
     res.json({
@@ -307,11 +307,11 @@ router.get('/stage-notifications/leaderboard', async (req, res) => {
 
     const leaderboardProfiles = await prisma.user.findMany({
       where: { email: { in: leaderboardEmails } },
-      select: { email: true, picture: true }
+      select: { email: true, avatar: true }
     });
 
     const leaderboardPictureMap = new Map(
-      leaderboardProfiles.map((profile) => [String(profile.email).toLowerCase(), profile.picture])
+      leaderboardProfiles.map((profile) => [String(profile.email).toLowerCase(), profile.avatar])
     );
 
     const rankedLeaderboard = leaderboardRaw.map((entry, index) => ({

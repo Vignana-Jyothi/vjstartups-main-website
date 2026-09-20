@@ -33,7 +33,7 @@ const verifierAuth = async (req, res, next) => {
       include: { user: true },
     });
 
-    if (!profile || profile.user.deletedAt) {
+    if (!profile || !profile.user.isActive) {
       return res.status(403).json({ success: false, message: 'Access denied: requires wing member, wing master, or admin role' });
     }
 

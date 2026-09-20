@@ -297,8 +297,8 @@ router.post('/tasks', async (req, res) => {
       });
       if (assigneeUser) {
         taskData.assigneeUserId = assigneeUser.id;
-        taskData.assigneeName = assignee.name || assigneeUser.name;
-        taskData.assigneePicture = assignee.picture || assigneeUser.picture;
+        taskData.assigneeName = assignee.name || [assigneeUser.firstName, assigneeUser.lastName].filter(Boolean).join(' ') || assigneeUser.displayName;
+        taskData.assigneePicture = assignee.picture || assigneeUser.avatar;
       }
     }
 
@@ -388,8 +388,8 @@ router.put('/tasks/:id', async (req, res) => {
         });
         if (assigneeUser) {
           updateData.assigneeUserId = assigneeUser.id;
-          updateData.assigneeName = assignee.name || assigneeUser.name;
-          updateData.assigneePicture = assignee.picture || assigneeUser.picture;
+          updateData.assigneeName = assignee.name || [assigneeUser.firstName, assigneeUser.lastName].filter(Boolean).join(' ') || assigneeUser.displayName;
+          updateData.assigneePicture = assignee.picture || assigneeUser.avatar;
         }
       } else {
         // Clear assignee
