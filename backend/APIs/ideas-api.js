@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const prisma = require('../config/prisma');
 const upload = require('../middlewares/upload');
 const cloudinary = require('../config/cloudinary');
+const verifierAuth = require('../middlewares/verifierAuth');
 
 router.use(express.json());
 
@@ -66,7 +67,12 @@ const createStageNotification = async (idea, previousStage, newStage) => {
 // Get all ideas (database only)
 router.get('/ideas', async (req, res) => {
   try {
+    const where = {};
+    if (req.query.verified === 'true') where.verified = true;
+    if (req.query.verified === 'false') where.verified = false;
+
     const ideas = await prisma.idea.findMany({
+      where,
       include: {
         teamMembers: true,
         collaborators: true,
@@ -541,6 +547,72 @@ router.put('/idea/:ideaId', upload.array('teamImages'), async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error updating idea", error: err.message });
+  }
+});
+
+// PATCH mark an idea as verified (wing member, wing master, or admin only)
+router.patch('/idea/:ideaId/verify', verifierAuth, async (req, res) => {
+  try {
+    const idea = await prisma.idea.findUnique({ where: { ideaId: req.params.ideaId } });
+    if (!idea) {
+      return res.status(404).json({ message: "Idea not found" });
+    }
+
+    const updated = await prisma.idea.update({
+      where: { id: idea.id },
+      data: {
+        verified: true,
+        verifiedBy: req.user.email,
+        verifiedAt: new Date(),
+        verificationNotes: req.body.verificationNotes || null
+      },
+      include: {
+        teamMembers: true,
+        collaborators: true,
+        upvotedBy: true,
+        comments: { include: { replies: true, likes: true } },
+        attachments: true,
+        links: true
+      }
+    });
+
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("Error verifying idea:", error);
+    res.status(500).json({ message: "Verification failed" });
+  }
+});
+
+// PATCH clear an idea's verified status (wing member, wing master, or admin only)
+router.patch('/idea/:ideaId/unverify', verifierAuth, async (req, res) => {
+  try {
+    const idea = await prisma.idea.findUnique({ where: { ideaId: req.params.ideaId } });
+    if (!idea) {
+      return res.status(404).json({ message: "Idea not found" });
+    }
+
+    const updated = await prisma.idea.update({
+      where: { id: idea.id },
+      data: {
+        verified: false,
+        verifiedBy: null,
+        verifiedAt: null,
+        verificationNotes: null
+      },
+      include: {
+        teamMembers: true,
+        collaborators: true,
+        upvotedBy: true,
+        comments: { include: { replies: true, likes: true } },
+        attachments: true,
+        links: true
+      }
+    });
+
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("Error unverifying idea:", error);
+    res.status(500).json({ message: "Unverification failed" });
   }
 });
 
