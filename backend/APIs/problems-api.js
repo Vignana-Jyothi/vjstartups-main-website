@@ -3,6 +3,7 @@ const router = express.Router();
 const prisma = require("../config/prisma");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
+const verifierAuth = require("../middlewares/verifierAuth");
 
 // -------------------- MULTER (memory storage) --------------------
 const storage = multer.memoryStorage(); 
@@ -143,10 +144,15 @@ router.get("/problems", async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
     const skip = (page - 1) * limit;
-    
+
+    const where = {};
+    if (req.query.verified === 'true') where.verified = true;
+    if (req.query.verified === 'false') where.verified = false;
+
     // Get problems with pagination
     const [problems, total] = await Promise.all([
       prisma.problem.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -160,7 +166,7 @@ router.get("/problems", async (req, res) => {
           }
         }
       }),
-      prisma.problem.count()
+      prisma.problem.count({ where })
     ]);
     
     // If no problems in database, return mock data
@@ -237,6 +243,71 @@ router.get("/problems/:id", async (req, res) => {
   } catch (error) {
     console.error("Error fetching problem:", error);
     res.status(500).json({ message: "Failed to fetch problem" });
+  }
+});
+
+// PATCH mark a problem as verified (wing member, wing master, or admin only)
+router.patch("/problem/:id/verify", verifierAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { verificationNotes } = req.body;
+
+    const problem = await prisma.problem.findUnique({ where: { problemId: id } });
+    if (!problem) {
+      return res.status(404).json({ message: "Problem not found" });
+    }
+
+    const updated = await prisma.problem.update({
+      where: { id: problem.id },
+      data: {
+        verified: true,
+        verifiedBy: req.user.email,
+        verifiedAt: new Date(),
+        verificationNotes: verificationNotes || null
+      },
+      include: {
+        collaborators: true,
+        upvotedBy: true,
+        comments: { include: { replies: true, likedBy: true } }
+      }
+    });
+
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("Error verifying problem:", error);
+    res.status(500).json({ message: "Verification failed" });
+  }
+});
+
+// PATCH clear a problem's verified status (wing member, wing master, or admin only)
+router.patch("/problem/:id/unverify", verifierAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const problem = await prisma.problem.findUnique({ where: { problemId: id } });
+    if (!problem) {
+      return res.status(404).json({ message: "Problem not found" });
+    }
+
+    const updated = await prisma.problem.update({
+      where: { id: problem.id },
+      data: {
+        verified: false,
+        verifiedBy: null,
+        verifiedAt: null,
+        verificationNotes: null
+      },
+      include: {
+        collaborators: true,
+        upvotedBy: true,
+        comments: { include: { replies: true, likedBy: true } }
+      }
+    });
+
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("Error unverifying problem:", error);
+    res.status(500).json({ message: "Unverification failed" });
   }
 });
 
