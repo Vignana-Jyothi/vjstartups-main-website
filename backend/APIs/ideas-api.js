@@ -446,6 +446,26 @@ router.put('/idea/:ideaId', upload.array('teamImages'), async (req, res) => {
     // Store previous stage for notification
     const previousStage = idea.stage;
 
+    // Advancing a stage requires a completed validation questionnaire for that
+    // exact transition - the frontend's "Skip Validation" option only skips the
+    // UI prompt, so this has to be enforced here or it's not enforced at all.
+    const requestedStage = req.body.stage ? parseInt(req.body.stage) : idea.stage;
+    if (requestedStage > idea.stage) {
+      const completedValidation = await prisma.questionnaireResponse.findFirst({
+        where: {
+          ideaId: idea.ideaId,
+          stageFrom: idea.stage,
+          stageTo: requestedStage,
+          status: 'COMPLETED'
+        }
+      });
+      if (!completedValidation) {
+        return res.status(400).json({
+          message: `Cannot advance from stage ${idea.stage} to ${requestedStage} without a completed validation questionnaire for this transition.`
+        });
+      }
+    }
+
     // Parse team if provided
     let teamMembers = null;
     if (req.body.team) {
