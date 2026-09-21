@@ -1,13 +1,31 @@
 const prisma = require('../config/prisma');
+const { tryInternalProxyAuth, InternalProxyAuthError } = require('./internalProxyAuth');
 
 /**
  * Admin authentication middleware.
- * Expects: Authorization: Bearer <adminToken>
- * The adminToken is a UUID generated at login time and stored on the
- * OrganizationMemberProfile linked to this user (Django/Plane-owned table -
- * see public_auth.py on the Plane side for why user identity lives there now).
+ * Expects either:
+ *   - X-Internal-Token + X-Acting-Admin-Email (Django's admin proxy,
+ *     forwarding the real acting admin's identity - see internalProxyAuth.js)
+ *   - Authorization: Bearer <adminToken>, a UUID generated at login time and
+ *     stored on the OrganizationMemberProfile linked to this user
+ *     (Django/Plane-owned table - see public_auth.py on the Plane side for
+ *     why user identity lives there now)
  */
 const adminAuth = async (req, res, next) => {
+  try {
+    const viaProxy = await tryInternalProxyAuth(req, ['ADMIN']);
+    if (viaProxy) {
+      req.adminUser = { ...viaProxy.user, adminProfile: viaProxy.profile };
+      return next();
+    }
+  } catch (err) {
+    if (err instanceof InternalProxyAuthError) {
+      return res.status(err.status).json({ success: false, message: err.message });
+    }
+    console.error('Admin auth middleware error:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+
   const authHeader = req.headers['authorization'];
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

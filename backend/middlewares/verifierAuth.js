@@ -1,16 +1,35 @@
 const prisma = require('../config/prisma');
+const { tryInternalProxyAuth, InternalProxyAuthError } = require('./internalProxyAuth');
 
 /**
  * Verifier authentication middleware.
- * Expects: Authorization: Bearer <adminToken>
- * Same Bearer-token model as adminAuth.js, but accepts WING_MEMBER and
- * WING_MASTER in addition to ADMIN, since problem verification is a
- * talent-wing responsibility, not an admin-only one. Sets req.user
- * (not req.adminUser) since callers only need to know who verified it.
+ * Expects either:
+ *   - X-Internal-Token + X-Acting-Admin-Email (Django's admin proxy,
+ *     forwarding the real acting admin's identity - see internalProxyAuth.js)
+ *   - Authorization: Bearer <adminToken>, same Bearer-token model as
+ *     adminAuth.js, but accepts WING_MEMBER and WING_MASTER in addition to
+ *     ADMIN, since problem verification is a talent-wing responsibility, not
+ *     an admin-only one.
+ * Sets req.user (not req.adminUser) since callers only need to know who
+ * verified it.
  */
 const ALLOWED_ROLES = ['WING_MEMBER', 'WING_MASTER', 'ADMIN'];
 
 const verifierAuth = async (req, res, next) => {
+  try {
+    const viaProxy = await tryInternalProxyAuth(req, ALLOWED_ROLES);
+    if (viaProxy) {
+      req.user = { ...viaProxy.user, adminProfile: viaProxy.profile };
+      return next();
+    }
+  } catch (err) {
+    if (err instanceof InternalProxyAuthError) {
+      return res.status(err.status).json({ success: false, message: err.message });
+    }
+    console.error('Verifier auth middleware error:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+
   const authHeader = req.headers['authorization'];
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
