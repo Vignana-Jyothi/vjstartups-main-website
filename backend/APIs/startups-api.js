@@ -326,6 +326,29 @@ router.post('/', userAuth, upload.fields([
             include: STARTUP_INCLUDE
         });
 
+        // Prisma just wrote this Startup directly into Django's vj_startups
+        // table, so Django's own post_save signal (which normally provisions
+        // the Plane project - see signals.py) never fired for it. Ask Django
+        // to do it explicitly instead. Best-effort: the startup itself is
+        // already saved and returned to the user regardless of whether this
+        // succeeds - see InternalProvisionStartupEndpoint on the Plane side
+        // for why a retry later is safe (it's idempotent).
+        try {
+            const provisionResponse = await fetch(`${process.env.PLANE_API_URL}/api/vj-startups/internal/provision-startup/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Internal-Token': process.env.PLANE_INTERNAL_TOKEN,
+                },
+                body: JSON.stringify({ startup_id: savedStartup.id }),
+            });
+            if (!provisionResponse.ok) {
+                console.error('Startup provisioning failed:', provisionResponse.status, await provisionResponse.text());
+            }
+        } catch (provisionError) {
+            console.error('Startup provisioning request failed:', provisionError);
+        }
+
         res.status(201).json(toClientShape(startupWithRelations));
     } catch (error) {
         console.error('Error creating startup:', error);
