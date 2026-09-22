@@ -75,7 +75,7 @@ const ProblemDetail = () => {
       setDeleting(true);
       await axios.delete(
         `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${problem.problemId}`,
-        { data: { email: user?.email } }
+        { headers: { Authorization: `Bearer ${user?.sessionToken}` } }
       );
       
       toast({

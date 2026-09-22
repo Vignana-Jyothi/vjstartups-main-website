@@ -84,7 +84,7 @@ export default function StartupDetail() {
 
     try {
       setDeleting(true);
-      await deleteStartup(id, user?.email);
+      await deleteStartup(id, user?.sessionToken);
       
       toast({
         title: "Startup Deleted",

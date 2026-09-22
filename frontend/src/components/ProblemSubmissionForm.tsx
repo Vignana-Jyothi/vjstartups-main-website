@@ -146,7 +146,7 @@ const ProblemSubmissionForm = ({
         // Update
         response = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${initialData.problemId}`,
-          { method: "PUT", body: formData }
+          { method: "PUT", body: formData, headers: { Authorization: `Bearer ${user.sessionToken}` } }
         );
       } else {
         // New problem

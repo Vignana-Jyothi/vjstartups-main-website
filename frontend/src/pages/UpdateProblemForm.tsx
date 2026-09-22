@@ -167,8 +167,9 @@ const UpdateProblemForm = () => {
       if (selectedImage) formData.append("image", selectedImage);
 
       const response = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${id}/${user.email}`,
-        formData
+        `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${id}`,
+        formData,
+        { headers: { Authorization: `Bearer ${user.sessionToken}` } }
       );
 
       toast({ title: "Problem updated successfully!" });

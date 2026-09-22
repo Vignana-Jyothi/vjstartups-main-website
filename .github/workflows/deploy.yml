@@ -25,7 +25,15 @@ jobs:
           PORT=${{ secrets.PORT || 6220 }}
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           ADMIN_EMAILS=${{ secrets.ADMIN_EMAILS }}
+          PLANE_API_URL=${{ vars.PLANE_API_URL || 'https://vjos.vjstartup.com' }}
+          PLANE_INTERNAL_TOKEN=${{ secrets.PLANE_INTERNAL_TOKEN }}
+          CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
           EOF
+          if [ -z "${{ secrets.PLANE_INTERNAL_TOKEN }}" ]; then
+            echo "::warning::PLANE_INTERNAL_TOKEN secret is not set - the internal auth bridge to Plane (Google login user creation, admin proxy, startup project provisioning) will not work. It must exactly match PUBLIC_SITE_INTERNAL_TOKEN in Plane's own deploy secrets."
+          fi
 
       - name: Create .env file for frontend
         run: |

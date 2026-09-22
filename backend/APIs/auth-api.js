@@ -1,8 +1,8 @@
 const express = require('express');
 const { OAuth2Client } = require('google-auth-library');
-const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
-const prisma = require('../config/prisma');
+
+const TOKEN_ROLES = ['ADMIN', 'WING_MEMBER', 'WING_MASTER'];
 
 router.post('/google', async (req, res) => {
   const { token } = req.body;
@@ -28,48 +28,47 @@ router.post('/google', async (req, res) => {
       .split(',')
       .map(e => e.trim().toLowerCase())
       .filter(Boolean);
-
     const shouldBeAdmin = adminEmails.includes(normalizedEmail);
 
-    // Generate a fresh adminToken if this user is (or will be) an admin
-    const adminToken = shouldBeAdmin ? uuidv4() : null;
-    const adminTokenCreatedAt = shouldBeAdmin ? new Date() : null;
+    // User creation/lookup happens in Django now, not here - see
+    // public_auth.py for why (it owns the users table, needs to fire its own
+    // onboarding signals, and has ~30 bookkeeping columns Prisma shouldn't
+    // touch directly). We've already verified the Google ID token above, so
+    // this internal call is trusted purely by the shared secret, not a user
+    // session - it must never be reachable from a browser.
+    const planeResponse = await fetch(`${process.env.PLANE_API_URL}/api/vj-startups/public-auth/upsert-user/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Internal-Token': process.env.PLANE_INTERNAL_TOKEN,
+      },
+      body: JSON.stringify({
+        email: normalizedEmail,
+        first_name: payload.given_name || '',
+        last_name: payload.family_name || '',
+        picture: payload.picture || '',
+        should_be_admin: shouldBeAdmin,
+      }),
+    });
 
-    // Build update object
-    const updateData = {
-      name: payload.name,
-      picture: payload.picture,
-      updatedAt: new Date(),
-    };
-
-    if (shouldBeAdmin) {
-      updateData.role = 'ADMIN';
-      updateData.adminToken = adminToken;
-      updateData.adminTokenCreatedAt = adminTokenCreatedAt;
+    if (!planeResponse.ok) {
+      const errBody = await planeResponse.text();
+      console.error('Plane user-upsert failed:', planeResponse.status, errBody);
+      return res.status(502).json({ success: false, message: 'Failed to reach the identity service' });
     }
 
-    // Save to DB using upsert and get back the full document including id
-    const dbUser = await prisma.user.upsert({
-      where: { email: normalizedEmail },
-      update: updateData,
-      create: {
-        email: normalizedEmail,
-        name: payload.name,
-        picture: payload.picture,
-        role: shouldBeAdmin ? 'ADMIN' : 'STUDENT',
-        adminToken,
-        adminTokenCreatedAt,
-      },
-    });
+    const dbUser = await planeResponse.json();
 
     const user = {
       id: dbUser.id,
-      name: dbUser.name,
+      name: [dbUser.first_name, dbUser.last_name].filter(Boolean).join(' ') || normalizedEmail,
       email: dbUser.email,
-      picture: dbUser.picture,
-      role: dbUser.role.toLowerCase(),
-      // Only include adminToken if this user is an admin
-      ...(dbUser.role === 'ADMIN' && { adminToken: dbUser.adminToken }),
+      picture: dbUser.avatar,
+      role: dbUser.public_role.toLowerCase(),
+      sessionToken: dbUser.public_session_token,
+      // WING_MEMBER/WING_MASTER also get an adminToken since problem/idea
+      // verification and posting announcements are gated on it too, not just ADMIN.
+      ...(TOKEN_ROLES.includes(dbUser.public_role) && { adminToken: dbUser.public_admin_token }),
     };
 
     return res.json({ success: true, user });

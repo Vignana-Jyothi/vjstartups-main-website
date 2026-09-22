@@ -106,10 +106,10 @@ const enrichAvatarWithUserPicture = async (notifications) => {
       where: {
         email: { in: needsAvatarEmails }
       },
-      select: { email: true, picture: true }
+      select: { email: true, avatar: true }
     });
 
-    const pictureMap = new Map(userPictures.map((u) => [String(u.email).toLowerCase(), u.picture]));
+    const pictureMap = new Map(userPictures.map((u) => [String(u.email).toLowerCase(), u.avatar]));
 
     // Update notifications with user pictures
     return notifications.map((notif) => {
@@ -248,11 +248,11 @@ router.get('/stage-notifications/stats', async (req, res) => {
 
     const contributorProfiles = await prisma.user.findMany({
       where: { email: { in: contributorEmails } },
-      select: { email: true, picture: true }
+      select: { email: true, avatar: true }
     });
 
     const contributorPictureMap = new Map(
-      contributorProfiles.map((profile) => [String(profile.email).toLowerCase(), profile.picture])
+      contributorProfiles.map((profile) => [String(profile.email).toLowerCase(), profile.avatar])
     );
 
     res.json({
@@ -307,11 +307,11 @@ router.get('/stage-notifications/leaderboard', async (req, res) => {
 
     const leaderboardProfiles = await prisma.user.findMany({
       where: { email: { in: leaderboardEmails } },
-      select: { email: true, picture: true }
+      select: { email: true, avatar: true }
     });
 
     const leaderboardPictureMap = new Map(
-      leaderboardProfiles.map((profile) => [String(profile.email).toLowerCase(), profile.picture])
+      leaderboardProfiles.map((profile) => [String(profile.email).toLowerCase(), profile.avatar])
     );
 
     const rankedLeaderboard = leaderboardRaw.map((entry, index) => ({
@@ -356,32 +356,18 @@ router.post('/stage-notifications', async (req, res) => {
     if (userEmail) {
       const normalizedEmail = String(userEmail).toLowerCase();
 
-      // Upsert user data if provided
-      if (userName || userAvatar) {
-        await prisma.user.upsert({
-          where: { email: normalizedEmail },
-          update: {
-            ...(userName ? { name: userName } : {}),
-            ...(userAvatar ? { picture: userAvatar } : {}),
-            updatedAt: new Date()
-          },
-          create: {
-            email: normalizedEmail,
-            name: userName || null,
-            picture: userAvatar || null
-          }
-        });
-      }
-
-      // Get user avatar if not provided
+      // User creation/updates go through Django now (see auth-api.js and
+      // public_auth.py on the Plane side) - it already keeps name/avatar in
+      // sync on every login, so there's nothing to upsert here any more.
+      // Just fall back to whatever's on record if the caller didn't send one.
       if (!resolvedUserAvatar) {
         const existingUser = await prisma.user.findUnique({
           where: { email: normalizedEmail },
-          select: { picture: true }
+          select: { avatar: true }
         });
 
-        if (existingUser?.picture) {
-          resolvedUserAvatar = existingUser.picture;
+        if (existingUser?.avatar) {
+          resolvedUserAvatar = existingUser.avatar;
         }
       }
     }

@@ -53,8 +53,10 @@ app.use('/notification-api', require('./APIs/notifications-api'));
 // Admin routes (all protected by adminAuth middleware inside)
 app.use('/admin-api', require('./APIs/admin-api'));
 
-// Tasks/Projects routes (public reads, write requires userId in body)
-app.use('/tasks-api', require('./APIs/tasks-api'));
+// tasks-api.js (kanban board) is unmounted: confirmed zero frontend usage,
+// and its Project/Task models named their tables "projects"/"project_members"
+// /"tasks", which now belong to Plane's own native project management
+// system after the Postgres merge - every route in that file 500s.
 
 app.use('/announcements-api', require('./APIs/announcements-api'));
 

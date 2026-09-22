@@ -466,10 +466,6 @@ const StartupForm: React.FC = () => {
         if (ideaId) formDataToSend.append('ideaId', ideaId);
       }
 
-      if (isEditMode && user?.email) {
-        formDataToSend.append('requestingUserEmail', user.email);
-      }
-
       // Determine API endpoint and method
       const url = isEditMode 
         ? `${import.meta.env.VITE_API_BASE_URL}/startup-api/${editId}`
@@ -480,6 +476,7 @@ const StartupForm: React.FC = () => {
       const response = await axios[method](url, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          ...(isEditMode && user?.sessionToken ? { Authorization: `Bearer ${user.sessionToken}` } : {}),
         },
       });
       
