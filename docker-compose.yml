@@ -18,7 +18,14 @@ services:
     ports:
       - "6220:6220"
     environment:
-      - DATABASE_URL=postgresql://plane:plane@host.docker.internal:5434/vj
+      # Must point at the SAME database Plane's own Django stack uses (the
+      # "plane" db exposed on host port 5434 by Plane's own docker-compose -
+      # see deploy-plane.yml). Previously pointed at "vj", a separate,
+      # unrelated database left over from before backend 2's tables were
+      # merged into Plane's own Postgres (see docs/vj-startups/production_db_merge_runbook.md) -
+      # every cross-service feature (admin proxy, startup provisioning,
+      # shared users table) silently had nothing to read/write against.
+      - DATABASE_URL=postgresql://plane:plane@host.docker.internal:5434/plane
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: always
