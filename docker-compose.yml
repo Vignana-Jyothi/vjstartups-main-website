@@ -17,6 +17,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - "6220:6220"
+    # Everything deploy.yml writes to backend/.env (PLANE_INTERNAL_TOKEN,
+    # GOOGLE_CLIENT_ID, ADMIN_EMAILS, CLOUDINARY_*, PLANE_API_URL) was never
+    # actually reaching the container - there was no env_file here, so it
+    # relied entirely on the Dockerfile's `COPY . .` baking .env into the
+    # image at build time, which is both fragile (depends on build-cache
+    # behavior) and bad practice (secrets end up in image layers/history).
+    # Matches Plane's own docker-compose.yml pattern for its api service.
+    env_file:
+      - ./backend/.env
     environment:
       # Must point at the SAME database Plane's own Django stack uses (the
       # "plane" db exposed on host port 5434 by Plane's own docker-compose -
