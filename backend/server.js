@@ -60,6 +60,13 @@ app.use('/admin-api', require('./APIs/admin-api'));
 
 app.use('/announcements-api', require('./APIs/announcements-api'));
 
+// TEMPORARY - for diagnosing the admin proxy's persistent 401. Echoes back
+// exactly what this server received, no auth involved, to rule in/out
+// whether a custom header is even reaching Express. Remove once resolved.
+app.get('/debug-echo-headers', (req, res) => {
+  res.json({ headers: req.headers });
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 6220;
