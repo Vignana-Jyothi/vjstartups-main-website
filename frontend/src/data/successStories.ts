@@ -72,7 +72,7 @@ export const successStories: SuccessStory[] = [
         name: 'Veda Nampally',
         branch: 'Computer Science - CSBS',
         year: '2nd',
-        imageUrl: '/success-stories/veda_nampally.png',
+        imageUrl: '/success-stories/veda_nampally.webp',
         socialLinks: [
           {
             platform: 'linkedin',
@@ -138,7 +138,7 @@ export const successStories: SuccessStory[] = [
     gallery: [
       {
         type: 'image',
-        url: '/success-stories/veda_team.png',
+        url: '/success-stories/veda_team.webp',
         caption: 'Veda with the kids during dance training session'
       },      
       {
