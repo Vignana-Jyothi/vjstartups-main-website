@@ -3,6 +3,7 @@ import { BrandMark } from "@/components/site/SiteChrome";
 import "@/components/design-system/page-hero.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "./UserContext";
+import { GOOGLE_CLIENT_ID } from "@/config/google";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -73,7 +74,7 @@ const Login = () => {
 // The Google Identity script is ~100 KB and only this page needs it, so the provider lives
 // here instead of wrapping the whole app.
 const LoginPage = () => (
-  <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT ?? ""}>
+  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
     <Login />
   </GoogleOAuthProvider>
 );
