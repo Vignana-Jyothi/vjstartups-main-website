@@ -12,6 +12,9 @@ import {
   STAGE_FILTER_OPTIONS,
 } from "@/utils/startupFormatters";
 import { useUser } from "@/pages/UserContext";
+import { CardCover } from "@/components/design-system/CardCover";
+import { FUNDED_VENTURES } from "@/data/ventures";
+import { counters } from "@/data/mockData";
 
 const Startups = () => {
   const { user } = useUser();
@@ -116,10 +119,33 @@ const Startups = () => {
       );
     }
     if (startups.length === 0) {
+      // No profiles on the platform yet: show the funded portfolio the homepage names instead of
+      // telling visitors there are no startups.
       return (
-        <div className="lx-empty">
-          <strong>No startups yet.</strong>
-          <Link to={submitTo} className="lx-textbtn">Showcase the first venture ↗</Link>
+        <div className="lx-block">
+          <div className="lx-sec-head">
+            <span>Funded ventures / {FUNDED_VENTURES.length}</span>
+            <h2>Already moving</h2>
+          </div>
+          <div className="lx-grid">
+            {FUNDED_VENTURES.map((venture) => (
+              <article key={venture.name} className="lx-card">
+                <div className="lx-card-media">
+                  <CardCover title={venture.name} />
+                  <span className="lx-card-kicker">{venture.sector}</span>
+                </div>
+                <div className="lx-card-body">
+                  <h3 className="lx-card-title">{venture.name}</h3>
+                  <p className="lx-card-text">{venture.description}</p>
+                  <div className="lx-card-meta"><span>Funded venture</span></div>
+                </div>
+              </article>
+            ))}
+          </div>
+          <p className="st-note">
+            Full profiles for these ventures aren't on the platform yet.{" "}
+            <Link to={submitTo} className="lx-textbtn">Add your startup ↗</Link>
+          </p>
         </div>
       );
     }
@@ -148,11 +174,18 @@ const Startups = () => {
         eyebrow="Startup portfolio"
         title="Startups"
         description="From campus ideas to funded companies."
-        stats={[
-          { value: String(startups.length), label: "Total startups" },
-          { value: String(eligibleCount), label: "Eligible by stage" },
-          { value: String(filteredStartups.length), label: "Visible with filters" },
-        ]}
+        stats={
+          !loading && !error && startups.length === 0
+            ? [
+                { value: String(counters.funded), label: "Funded startups" },
+                { value: String(FUNDED_VENTURES.length), label: "Featured below" },
+              ]
+            : [
+                { value: String(startups.length), label: "Total startups" },
+                { value: String(eligibleCount), label: "Eligible by stage" },
+                { value: String(filteredStartups.length), label: "Visible with filters" },
+              ]
+        }
         primaryAction={{ label: "Submit a startup", to: submitTo, icon: Plus }}
         secondaryAction={{ label: "Explore problems", to: "/problems", variant: "outline" }}
         layout="stack"
@@ -165,7 +198,7 @@ const Startups = () => {
       />
 
       <section className="lx-section">
-        <div className="lx-toolbar">
+        <div className="lx-toolbar" hidden={!loading && !error && startups.length === 0}>
           <div className="lx-toolbar-row">
             <label className="lx-search">
               <Search size={18} aria-hidden="true" />

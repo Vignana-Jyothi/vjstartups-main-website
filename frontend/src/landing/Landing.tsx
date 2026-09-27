@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Lenis from "lenis";
 import { useUser } from "@/pages/UserContext";
 import { counters } from "@/data/mockData";
+import { FUNDED_VENTURES } from "@/data/ventures";
 import { Arrow, Magnetic, SiteFooter, SiteNav } from "@/components/site/SiteChrome";
 import { onMeasure, pageMetrics, progressOf, useSectionFrame } from "./frame";
 import { useNetworkScene } from "./network/useNetworkScene";
@@ -56,11 +57,7 @@ const HUBS = [
   ["StartupHub", "SCALE", "Take evidence, make it traction, and keep going.", IMG.founders, "/startups"],
 ] as const;
 
-const VENTURES = [
-  ["01", "Clean Energy", "ATLAST Hydrogen Solutions", "Hydrogen fuel-cell technology transforming automotive and energy applications.", IMG.energy],
-  ["02", "HealthTech", "Salcit AI Health", "AI-powered cough analysis for respiratory screening and remote monitoring.", IMG.health],
-  ["03", "Industrial IoT", "Alltronics IoT Solutions", "Smart IoT and AI-enabled electronic testing, EV battery monitoring, and industrial automation.", IMG.iot],
-] as const;
+const VENTURES = FUNDED_VENTURES.map((v, i) => [String(i + 1).padStart(2, "0"), v.sector, v.name, v.description, IMG[v.photo]] as const);
 
 function Reveal({ children, className="" }: { children: ReactNode; className?: string }) { return <div data-reveal className={className}>{children}</div>; }
 

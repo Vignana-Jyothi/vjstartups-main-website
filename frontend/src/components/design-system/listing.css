@@ -202,3 +202,5 @@
   .cg-day li>a,.cg-day li>div{grid-template-columns:40px minmax(0,1fr) auto}
   .cg-stage{grid-column:2;grid-row:2}
 }
+.st-note{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:32px 0 0;color:hsl(var(--muted-foreground));font-size:14px}
+.lx-toolbar[hidden]{display:none}
