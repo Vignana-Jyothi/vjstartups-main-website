@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { Link } from "react-router-dom";
 import Lenis from "lenis";
 import { useUser } from "@/pages/UserContext";
@@ -6,9 +6,7 @@ import { counters } from "@/data/mockData";
 import { FUNDED_VENTURES } from "@/data/ventures";
 import { Arrow, Magnetic, SiteFooter, SiteNav } from "@/components/site/SiteChrome";
 import { onMeasure, pageMetrics, progressOf, useSectionFrame } from "./frame";
-import { useNetworkScene } from "./network/useNetworkScene";
 import { loadNetworkData, type NetItem } from "./network/data";
-import type { NetPick } from "./network/scene";
 import "./landing.css";
 import "./network/network.css";
 
@@ -622,24 +620,16 @@ const FORCE_PINS:[("upperLine"|"upperRibbon"|"lowerLine"|"lowerRibbon"),number][
   ["upperRibbon",.3],  // 06 Capital
   ["upperLine",.52],   // 07 Campus
 ];
-const NET_KIND_LABEL={problem:"Problem",idea:"Idea",venture:"Funded venture"} as const;
 
 function Network() {
   const sectionRef=useRef<HTMLElement>(null);
   const stickyRef=useRef<HTMLDivElement>(null);
-  const canvasRef=useRef<HTMLCanvasElement>(null);
-  const tipRef=useRef<HTMLDivElement>(null);
   const headRef=useRef<HTMLDivElement>(null);
   const mapRef=useRef<HTMLDivElement>(null);
   const upperRef=useRef<SVGGElement>(null);
   const lowerRef=useRef<SVGGElement>(null);
   const panelRef=useRef<HTMLDivElement>(null);
   const nodes=useRef<Array<HTMLSpanElement|null>>([]);
-  const net=useNetworkScene({section:sectionRef,sticky:stickyRef,canvas:canvasRef,map:mapRef},API_BASE,VENTURE_NAMES);
-  const [stage,setStage]=useState(0);
-  const [hover,setHover]=useState<NetPick|null>(null);
-  const hoverRef=useRef<NetPick|null>(null);
-  hoverRef.current=hover;
 
   // Each force is pinned to a point on a weave strand (its connector line drops onto the curve),
   // appears when the drawing reaches it, and travels with its strand when the weave parts.
@@ -675,11 +665,9 @@ function Network() {
 
   useSectionFrame(sectionRef,frame=>{
       const p=progressOf(frame);
-      const scene=net.scene.current;
-      // Enter: the weave draws itself. With data the points then gather onto it (.16-.74);
-      // either way it finally parts to reveal the panel.
+      // Enter: the weave draws itself, then parts to reveal the panel.
       const draw=band(p,.02,.3);
-      const open=scene?band(p,.78,.96):band(p,.38,.9);
+      const open=band(p,.38,.9);
       const eased=1-Math.pow(1-open,3);
       const map=mapRef.current;
       map?.style.setProperty("--weave-draw",String(draw));
@@ -700,21 +688,14 @@ function Network() {
         const dx=pin.x-pin.cx,dy=pin.y-pin.cy;
         const x=pin.cx+dx*Math.cos(angle)-dy*Math.sin(angle);
         const y=pin.cy+dx*Math.sin(angle)+dy*Math.cos(angle)+(pin.side>0?-205:215)*eased;
-        const left=Math.min(Math.max(x*sx-pin.w/2,0),(map?.clientWidth??0)-pin.w);
+        // The map now runs edge to edge, so keep each label a little inside the screen.
+        const inset=16;
+        const left=Math.min(Math.max(x*sx-pin.w/2,inset),(map?.clientWidth??0)-pin.w-inset);
         node.style.transform=`translate3d(${left}px,${y*sy-26-pin.h}px,0)`;
-        node.style.opacity=String(Math.min(Math.max((draw-pin.t)*7,0),1)*(1-eased*.35));
+        // Labels step aside as the panel arrives, so it lands on a clear field.
+        node.style.opacity=String(Math.min(Math.max((draw-pin.t)*7,0),1)*(1-eased*.85));
       });
 
-      if(scene){
-        scene.update(p,frame.now,eased,1-open*.25);
-        scene.render();
-        setStage(scene.t2>.5?2:scene.t1>.5?1:0);
-        const h=hoverRef.current;
-        if(h&&tipRef.current){
-          const s=scene.project(h.index);
-          tipRef.current.style.transform=`translate3d(${s.x+net.geometry.current.canvasLeft}px,${s.y}px,0)`;
-        }
-      }
   });
 
   useEffect(()=>{
@@ -731,36 +712,10 @@ function Network() {
     return()=>window.removeEventListener("resize",clear);
   },[]);
 
-  const pick=(e:ReactPointerEvent<HTMLDivElement>)=>{
-    const scene=net.scene.current, sticky=stickyRef.current;
-    if(!scene||!sticky)return;
-    const r=sticky.getBoundingClientRect();
-    scene.setPointer((e.clientX-r.left)/r.width*2-1,(e.clientY-r.top)/r.height*2-1);
-    if(tipRef.current?.contains(e.target as Node))return; // keep the card while reading it
-    const found=scene.pick(e.clientX-r.left-net.geometry.current.canvasLeft,e.clientY-r.top,e.pointerType==="touch"?36:24);
-    if((found?.index??-1)!==(hoverRef.current?.index??-1)){
-      scene.setHover(found?.index??null);
-      setHover(found);
-    }
-  };
-  const clearHover=()=>{net.scene.current?.setHover(null);setHover(null)};
-  const stageText=[
-    net.problems?`01 / ${net.problems} REAL PROBLEMS, POSTED BY STUDENTS`:"01 / PROBLEMS, POSTED BY STUDENTS",
-    net.ideas?`02 / ${net.ideas} IDEAS ANSWERING THEM`:"02 / IDEAS ANSWERING THEM",
-    "03 / ONE WEAVE, WITH THE FUNDED VENTURES ON ITS THREAD",
-  ][stage];
 
   return (
-    <section className={`network-v16 dark${net.active?" has-scene":""}`} data-tone="ink" id="network" ref={sectionRef}>
-      <div className="network-v16-sticky" ref={stickyRef} onPointerMove={pick} onPointerDown={pick} onPointerLeave={clearHover}>
-        <canvas className="network-v16-canvas" ref={canvasRef} aria-hidden="true"/>
-        {hover&&(
-          <div className={`net-tip is-${hover.item.kind}${hover.x>(stickyRef.current?.clientWidth??0)*.62?" is-left":""}`} ref={tipRef}>
-            {hover.item.href?.startsWith("#")
-              ?<a href={hover.item.href} className="net-tip-link"><span className="net-tip-hit"/><span className="net-tip-card"><small>{NET_KIND_LABEL[hover.item.kind]}</small><b>{hover.item.title}</b><em>See it in Proof ↗</em></span></a>
-              :<Link to={hover.item.href!} className="net-tip-link"><span className="net-tip-hit"/><span className="net-tip-card"><small>{NET_KIND_LABEL[hover.item.kind]}</small><b>{hover.item.title}</b><em>Open ↗</em></span></Link>}
-          </div>
-        )}
+    <section className="network-v16 dark" data-tone="ink" id="network" ref={sectionRef}>
+      <div className="network-v16-sticky" ref={stickyRef}>
         <div className="network-v16-head" data-reveal ref={headRef}>
           <span className="chapter-label">07 / THE NETWORK</span>
           <h2>ONE BUILDER.<br/><i>MANY FORCES.</i></h2>
@@ -825,11 +780,6 @@ function Network() {
             </div>
           </div>
 
-          {/* Only the live scene has something to caption; the drawn weave's panel already says it. */}
-          {net.active&&<div className="network-v16-caption">
-            <span>{stageText}</span>
-            <span>{net.problems?"EVERY POINT IS REAL — POINT AT ONE TO READ IT":"SCROLL — WATCH IT FIND ITS SHAPE"}</span>
-          </div>}
         </div>
 
         <div className="network-v16-bottom">
@@ -865,7 +815,7 @@ function useJourneyActivity(){
 // The platform's own record: what students actually posted, newest first, with real dates.
 // Built from the same cached request as the network scene, and only once the section nears.
 type RecordRow={key:string;date:string;kind:"problem"|"idea"|"unlock";label:string;text:string;href:string|null};
-type PlatformRecord={rows:RecordRow[];problems:number;ideas:number;peak:{label:string;count:number}|null};
+type PlatformRecord={rows:RecordRow[]};
 
 function usePlatformRecord(ref:RefObject<HTMLElement>){
   const [record,setRecord]=useState<PlatformRecord|null|false>(null);
@@ -883,11 +833,7 @@ function usePlatformRecord(ref:RefObject<HTMLElement>){
           key:`${i.kind}-${i.href}`,date:i.createdAt!,kind:i.kind as "problem"|"idea",
           label:i.kind==="problem"?"Problem posted":"Idea posted",text:i.title,href:i.href,
         }));
-        const months=new Map<string,number>();
-        dated.filter(i=>i.kind==="problem").forEach(i=>{const m=i.createdAt!.slice(0,7);months.set(m,(months.get(m)??0)+1);});
-        const top=[...months.entries()].sort((a,b)=>b[1]-a[1])[0];
-        const peak=top?{label:new Date(`${top[0]}-01T00:00:00`).toLocaleDateString("en-IN",{month:"long",year:"numeric"}),count:top[1]}:null;
-        setRecord({rows,problems:data.problems,ideas:data.ideas,peak});
+        setRecord({rows});
       });
     },{rootMargin:"150% 0px"});
     io.observe(el);
@@ -915,11 +861,8 @@ function Community() {
         return row.href?<Link className="feed-row" to={row.href} key={row.key}>{body}</Link>:<div className="feed-row" key={row.key}>{body}</div>;
       }):<div className="feed-row feed-empty"><span>—</span><i/><div><b>{record===false?"COULDN'T REACH THE PLATFORM":"LOADING"}</b><span>{record===false?<>Browse the <Link to="/problems"><em>problems</em></Link> directly.</>:"Reading the latest posts…"}</span></div><small>00</small></div>}
     </div>
-    <div className="community-count" data-reveal>
-      <strong>{record?record.problems:"—"}</strong>
-      <span>PROBLEMS POSTED<br/>BY STUDENTS</span>
-      {record&&<p className="community-note">{record.peak&&<>Busiest month: {record.peak.label}, with {record.peak.count}.<br/></>}{record.ideas} {record.ideas===1?"idea is":"ideas are"} answering them.</p>}
-      <Link className="community-link" to="/problems">Read the problems <Arrow/></Link>
+    <div className="community-foot" data-reveal>
+      <Link className="community-link" to="/problems">Read every problem <Arrow/></Link>
     </div>
   </section>;
 }

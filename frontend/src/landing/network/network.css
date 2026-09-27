@@ -1,10 +1,11 @@
-/* 07 / The network: live scene layer. Everything here only applies once the scene is running
-   (.has-scene); without WebGL, with reduced motion, or before it loads, the drawn weave stays. */
+/* 07 / The network: the V18 weave, drawn as the section arrives and parting to reveal the panel. */
 .vj-landing .network-v16{--net-pad:7vw}
-.vj-landing .network-v16-canvas{position:absolute;top:0;left:calc(var(--net-pad)*-1);z-index:5;display:block;width:calc(100% + var(--net-pad)*2);height:100%;opacity:0;pointer-events:none;transition:opacity 1.6s ease}
-.vj-landing .network-v16.has-scene .network-v16-canvas{opacity:1}
-.vj-landing .network-v16.has-scene .network-v16-sticky{overflow:visible}
-.vj-landing .network-v16.has-scene .network-v16-map{z-index:6}
+
+/* The weave runs edge to edge and dissolves into both sides instead of stopping inside a
+   1240px frame, which read as a box on wide screens. */
+.vj-landing .network-v16 .network-v16-map{left:calc(var(--net-pad) * -1);right:calc(var(--net-pad) * -1);max-width:none}
+.vj-landing .network-v16 .network-v16-svg{-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.vj-landing .network-v16 .network-v16-glow{width:86%}
 /* V18's vertical centre axis ran down through the stats row; the drawn weave carries the section now. */
 .vj-landing .network-v16 .network-v16-map:after{display:none}
 
@@ -19,28 +20,8 @@
 /* "Keep going" peaks while the weave opens and is gone before the panel lands on it. */
 .vj-landing .network-v16 .network-v16-opening{opacity:calc((.18 + var(--network-open) * .82) * (1 - var(--network-open)) * var(--weave-draw,1))}
 
-.vj-landing .network-v16.has-scene .network-v16-caption{color:rgba(255,255,255,.55)}
-.vj-landing .network-v16.has-scene .network-v16-caption span:first-child{color:var(--lime)}
-
-/* Hover card for a real problem, idea or venture. */
-.vj-landing .net-tip{position:absolute;left:0;top:0;z-index:20;will-change:transform}
-.vj-landing .net-tip-link{position:absolute;left:0;top:0;display:block;color:#fff;text-decoration:none}
-.vj-landing .net-tip-hit{position:absolute;left:-16px;top:-16px;width:32px;height:32px;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.55)}
-.vj-landing .net-tip.is-idea .net-tip-hit{box-shadow:0 0 0 1px var(--lime)}
-.vj-landing .net-tip.is-venture .net-tip-hit{box-shadow:0 0 0 1px var(--violet,#9c88ff)}
-.vj-landing .net-tip-card{position:absolute;left:24px;top:-18px;display:grid;gap:6px;width:max-content;max-width:280px;padding:12px 14px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(8,8,8,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 18px 40px rgba(0,0,0,.4);animation:net-tip-in .25s cubic-bezier(.2,.8,.2,1)}
-.vj-landing .net-tip.is-left .net-tip-card{left:auto;right:24px}
-.vj-landing .net-tip-card small{color:var(--pink);font:9px var(--mono);letter-spacing:.14em;text-transform:uppercase}
-.vj-landing .net-tip.is-idea .net-tip-card small{color:var(--lime)}
-.vj-landing .net-tip.is-venture .net-tip-card small{color:var(--violet,#9c88ff)}
-.vj-landing .net-tip-card b{font:800 16px/1.2 var(--sans);letter-spacing:-.03em}
-.vj-landing .net-tip-card em{color:rgba(255,255,255,.6);font:9px var(--mono);font-style:normal;letter-spacing:.12em;text-transform:uppercase}
-.vj-landing .net-tip-link:hover .net-tip-card em,.vj-landing .net-tip-link:focus-visible .net-tip-card em{color:var(--lime)}
-@keyframes net-tip-in{from{opacity:0;transform:translate3d(-6px,4px,0)}to{opacity:1;transform:none}}
-
 @media(max-width:700px){
   .vj-landing .network-v16{--net-pad:18px}
-  .vj-landing .net-tip-card{max-width:200px}
 }
 
 /* A little more presence for the strands on ordinary laptop displays (they carry the section). */
