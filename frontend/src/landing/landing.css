@@ -581,7 +581,7 @@ html.lenis{scroll-behavior:auto}
   .vj-landing .network-v16{height:280vh;padding:0 18px}
   .vj-landing .network-v16-sticky{min-height:670px;padding:100px 0 25px}
   .vj-landing .network-v16-head{grid-template-columns:1fr;gap:15px}
-  .vj-landing .network-v16-head p{grid-column:auto}
+  .vj-landing .network-v16-head :is(h2,p){grid-column:auto}
   .vj-landing .network-v16-map{top:185px;bottom:28px}
   .vj-landing .network-v16-glow{width:96%;height:44%}
   .vj-landing .network-v16-ghost{font-size:28vw}
