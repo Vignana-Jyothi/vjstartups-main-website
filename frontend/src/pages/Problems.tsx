@@ -147,8 +147,11 @@ const Problems = () => {
       );
     }
 
-    // Apply sorting
+    // Apply sorting. Placeholder submissions ("dsa", one-word tests) still appear, but after
+    // the real problems, so the page never opens on a junk card.
     const sorted = filtered.sort((a, b) => {
+      const readable = Number(isReadableTitle(b.title || "")) - Number(isReadableTitle(a.title || ""));
+      if (readable !== 0) return readable;
       switch (sortBy) {
         case "upvotes":
           return b.upvotes - a.upvotes;
