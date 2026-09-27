@@ -15,6 +15,8 @@ export type NetItem = {
   readable: boolean;
   /** For problems: index of the idea that answers it. For ideas: their problem's index. */
   link: number | null;
+  /** ISO timestamp the record was posted, when the API provides one. */
+  createdAt?: string;
 };
 
 export type NetData = { items: NetItem[]; problems: number; ideas: number };
@@ -31,8 +33,8 @@ const getJson = async (url: string) => {
   return res.json();
 };
 
-type RawProblem = { problemId?: string | number; title?: string; upvotedBy?: unknown };
-type RawIdea = { ideaId?: string; title?: string; relatedProblemId?: string | number | null };
+type RawProblem = { problemId?: string | number; title?: string; upvotedBy?: unknown; createdAt?: string };
+type RawIdea = { ideaId?: string; title?: string; relatedProblemId?: string | number | null; createdAt?: string };
 
 /**
  * `ventures`: the funded ventures from the landing's Proof section (06). The live API has no
@@ -67,6 +69,7 @@ async function fetchNetworkData(apiBase: string, ventures: readonly string[]): P
     href: `/problems/${p.problemId}`,
     readable: isReadable(String(p.title)),
     link: null,
+    createdAt: p.createdAt,
   }));
   const problemIndex = new Map(problems.slice(0, 900).map((p, i) => [String(p.problemId), i]));
 
@@ -79,6 +82,7 @@ async function fetchNetworkData(apiBase: string, ventures: readonly string[]): P
       href: `/ideas/${getIdeaNavigationSlug({ title: String(idea.title), ideaId: String(idea.ideaId) })}`,
       readable: isReadable(String(idea.title)),
       link: parent ?? null,
+      createdAt: idea.createdAt,
     });
     if (parent != null && items[parent].link == null) items[parent].link = index;
   });

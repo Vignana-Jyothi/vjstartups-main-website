@@ -865,10 +865,66 @@ function useJourneyActivity(){
   return data;
 }
 
+// The platform's own record: what students actually posted, newest first, with real dates.
+// Built from the same cached request as the network scene, and only once the section nears.
+type RecordRow={key:string;date:string;kind:"problem"|"idea"|"unlock";label:string;text:string;href:string|null};
+type PlatformRecord={rows:RecordRow[];problems:number;ideas:number;peak:{label:string;count:number}|null};
+
+function usePlatformRecord(ref:RefObject<HTMLElement>){
+  const [record,setRecord]=useState<PlatformRecord|null|false>(null);
+  useEffect(()=>{
+    const el=ref.current;if(!el)return;
+    let cancelled=false;
+    const io=new IntersectionObserver(([entry])=>{
+      if(!entry.isIntersecting)return;
+      io.disconnect();
+      loadNetworkData(API_BASE,VENTURE_NAMES).then(data=>{
+        if(cancelled)return;
+        if(!data){setRecord(false);return;}
+        const dated=data.items.filter(i=>i.kind!=="venture"&&i.createdAt&&i.href);
+        const rows:RecordRow[]=dated.filter(i=>i.readable).map(i=>({
+          key:`${i.kind}-${i.href}`,date:i.createdAt!,kind:i.kind as "problem"|"idea",
+          label:i.kind==="problem"?"Problem posted":"Idea posted",text:i.title,href:i.href,
+        }));
+        const months=new Map<string,number>();
+        dated.filter(i=>i.kind==="problem").forEach(i=>{const m=i.createdAt!.slice(0,7);months.set(m,(months.get(m)??0)+1);});
+        const top=[...months.entries()].sort((a,b)=>b[1]-a[1])[0];
+        const peak=top?{label:new Date(`${top[0]}-01T00:00:00`).toLocaleDateString("en-IN",{month:"long",year:"numeric"}),count:top[1]}:null;
+        setRecord({rows,problems:data.problems,ideas:data.ideas,peak});
+      });
+    },{rootMargin:"150% 0px"});
+    io.observe(el);
+    return()=>{cancelled=true;io.disconnect()};
+  },[ref]);
+  return record;
+}
+
+const recordDate=(iso:string)=>new Date(iso).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+
 function Community() {
+  const ref=useRef<HTMLElement>(null);
   const activity=useJourneyActivity();
-  const feed=activity?.recent.slice(0,4)??[];
-  return <section className="community light" data-tone="paper" id="community"><Reveal className="community-head"><span className="chapter-label dark">08 / IN MOTION</span><h2>THE WORK IS<br/><i>STILL MOVING.</i></h2><p>Startup building isn't a before-and-after story. The interesting part is the work between the milestones.</p></Reveal><div className="feed" data-reveal>{feed.length?feed.map((n,i)=><div className="feed-row" key={n.userName+n.stageName+n.completedAt}><span>{since(n.completedAt)}</span><i/><div><b>{n.userName.toUpperCase()}</b><span>completed <em>“{n.stageName}”</em></span></div><small>0{i+1}</small></div>):<div className="feed-row feed-empty"><span>—</span><i/><div><b>{activity?"NO UNLOCKS YET":"LOADING"}</b><span>{activity?<>Be the first to <Link to="/journey"><em>unlock a stage</em></Link></>:"Reading the journey…"}</span></div><small>00</small></div>}</div><div className="community-count" data-reveal><strong>{activity?.total??"—"}</strong><span>ENTREPRENEURS<br/>ON THE JOURNEY</span><Link className="community-link" to="/leaderboard">See who&apos;s leading <Arrow/></Link></div></section>;
+  const record=usePlatformRecord(ref);
+  const unlocks:RecordRow[]=(activity?.recent??[]).map(n=>({
+    key:`unlock-${n.userName}-${n.stageName}-${n.completedAt}`,date:String(n.completedAt),kind:"unlock",
+    label:"Stage unlocked",text:`${n.userName.split(" ")[0]} reached ${n.stageName}`,href:"/journey",
+  }));
+  const rows=[...unlocks,...(record?record.rows:[])].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+  return <section className="community light" data-tone="paper" id="community" ref={ref}>
+    <Reveal className="community-head"><span className="chapter-label dark">08 / IN MOTION</span><h2>THE WORK IS<br/><i>STILL MOVING.</i></h2><p>Not a highlights reel: the latest things students actually posted on the platform, newest first.</p></Reveal>
+    <div className="feed" data-reveal>
+      {rows.length?rows.map((row,i)=>{
+        const body=<><span>{recordDate(row.date)}</span><i className={`is-${row.kind}`}/><div><b>{row.label.toUpperCase()}</b><span>{row.kind==="unlock"?row.text:<em>“{row.text}”</em>}</span></div><small>{String(i+1).padStart(2,"0")}</small></>;
+        return row.href?<Link className="feed-row" to={row.href} key={row.key}>{body}</Link>:<div className="feed-row" key={row.key}>{body}</div>;
+      }):<div className="feed-row feed-empty"><span>—</span><i/><div><b>{record===false?"COULDN'T REACH THE PLATFORM":"LOADING"}</b><span>{record===false?<>Browse the <Link to="/problems"><em>problems</em></Link> directly.</>:"Reading the latest posts…"}</span></div><small>00</small></div>}
+    </div>
+    <div className="community-count" data-reveal>
+      <strong>{record?record.problems:"—"}</strong>
+      <span>PROBLEMS POSTED<br/>BY STUDENTS</span>
+      {record&&<p className="community-note">{record.peak&&<>Busiest month: {record.peak.label}, with {record.peak.count}.<br/></>}{record.ideas} {record.ideas===1?"idea is":"ideas are"} answering them.</p>}
+      <Link className="community-link" to="/problems">Read the problems <Arrow/></Link>
+    </div>
+  </section>;
 }
 
 function FAQ() {
