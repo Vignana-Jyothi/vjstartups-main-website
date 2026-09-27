@@ -4,8 +4,8 @@ import { PageHero } from "@/components/design-system/PageHero";
 import "@/components/design-system/listing.css";
 
 interface LeaderboardEntry {
+  id: string;
   rank: number;
-  email: string;
   name: string;
   avatar?: string;
   lastActivityAt: string;
@@ -49,7 +49,7 @@ const Leaderboard = () => {
         // Map Django OrganizationMemberProfile array to LeaderboardEntry interface
         const mappedEntries: LeaderboardEntry[] = (data || []).map((profile: any, index: number) => ({
           rank: index + 1,
-          email: profile.user?.email || '',
+          id: String(profile.id ?? index),
           name: `${profile.user?.first_name || ''} ${profile.user?.last_name || ''}`.trim() || profile.user?.username || 'Member',
           avatar: profile.user?.avatar,
           lastActivityAt: profile.updated_at || new Date().toISOString(),
@@ -92,7 +92,7 @@ const Leaderboard = () => {
         ) : (
           <ol className="lb">
             {entries.map((entry) => (
-              <li key={entry.email} className={`lb-row${entry.rank <= 3 ? " is-top" : ""}`}>
+              <li key={entry.id} className={`lb-row${entry.rank <= 3 ? " is-top" : ""}`}>
                 <span className="lb-rank">{String(entry.rank).padStart(2, "0")}</span>
                 {entry.avatar ? (
                   <img className="lb-avatar" src={entry.avatar} alt="" />
