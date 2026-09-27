@@ -38,7 +38,15 @@ type RawIdea = { ideaId?: string; title?: string; relatedProblemId?: string | nu
  * `ventures`: the funded ventures from the landing's Proof section (06). The live API has no
  * startup records yet, so those are the startup nodes, and they open that section.
  */
-export async function loadNetworkData(apiBase: string, ventures: readonly string[]): Promise<NetData | null> {
+// The network scene and the work collage both read these records; one request serves both.
+const cache = new Map<string, Promise<NetData | null>>();
+export function loadNetworkData(apiBase: string, ventures: readonly string[]): Promise<NetData | null> {
+  const key = `${apiBase}|${ventures.join(",")}`;
+  if (!cache.has(key)) cache.set(key, fetchNetworkData(apiBase, ventures).catch(() => null));
+  return cache.get(key)!;
+}
+
+async function fetchNetworkData(apiBase: string, ventures: readonly string[]): Promise<NetData | null> {
   const [problemsRes, ideasRes] = await Promise.allSettled([
     getJson(`${apiBase}/problem-api/problems?limit=1000`),
     getJson(`${apiBase}/idea-api/ideas`),

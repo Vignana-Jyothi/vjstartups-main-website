@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from "react";
 import { Link } from "react-router-dom";
 import Lenis from "lenis";
 import { useUser } from "@/pages/UserContext";
@@ -6,6 +6,7 @@ import { counters } from "@/data/mockData";
 import { Arrow, Magnetic, SiteFooter, SiteNav } from "@/components/site/SiteChrome";
 import { onMeasure, pageMetrics, progressOf, useSectionFrame } from "./frame";
 import { useNetworkScene } from "./network/useNetworkScene";
+import { loadNetworkData, type NetItem } from "./network/data";
 import type { NetPick } from "./network/scene";
 import "./landing.css";
 import "./network/network.css";
@@ -572,8 +573,34 @@ function Hubs() {
   const [active,setActive]=useState(0);return <section className="hubs light" data-tone="paper"><Reveal className="hubs-head"><span className="chapter-label dark">04 / ENTRY POINTS</span><h2>THREE DOORS.<br/><i>ONE SYSTEM.</i></h2><p>Different starts. Same underlying journey from problem to proof.</p></Reveal><div className="hub-layout" data-reveal><div className="hub-list">{HUBS.map((h,i)=><button key={h[0]} className={i===active?"active":""} onMouseEnter={()=>setActive(i)} onClick={()=>setActive(i)}><span>0{i+1}</span><div><small>{h[1]}</small><b>{h[0]}</b></div><Arrow/></button>)}</div><div className="hub-view">{HUBS.map((h,i)=><img key={h[0]} src={h[3]} alt="" className={i===active?"active":""} loading="lazy" decoding="async"/>)}<div><span>{HUBS[active][1]}</span><h3>{HUBS[active][2]}</h3><Link className="hub-enter" to={HUBS[active][4]}>Enter {HUBS[active][0]} <Arrow/></Link></div></div></div></section>;
 }
 
+// The messy middle, shown with the platform's own work: problems students posted and ideas
+// answering them, from the live API. The stock photos only stand in when there is no data.
+const WORK_SLOTS=[["wp-a",52,IMG.prototype],["wp-b",-36,IMG.research],["wp-c",25,IMG.pitch],["wp-d",-49,IMG.founders]] as const;
+
+function useRealWork(ref:RefObject<HTMLElement>){
+  const [work,setWork]=useState<NetItem[]|null>(null);
+  useEffect(()=>{
+    const el=ref.current;if(!el)return;
+    let cancelled=false;
+    const io=new IntersectionObserver(([entry])=>{
+      if(!entry.isIntersecting)return;
+      io.disconnect();
+      loadNetworkData(API_BASE,VENTURE_NAMES).then(data=>{
+        if(cancelled||!data)return;
+        const pick=(kind:NetItem["kind"])=>data.items.filter(i=>i.kind===kind&&i.readable&&i.href&&i.title.length<=90).slice(0,2);
+        const problems=pick("problem"),ideas=pick("idea");
+        if(problems.length<2||ideas.length<2)return;
+        setWork([problems[0],ideas[0],problems[1],ideas[1]]);
+      });
+    },{rootMargin:"150% 0px"});
+    io.observe(el);
+    return()=>{cancelled=true;io.disconnect()};
+  },[ref]);
+  return work;
+}
+
 function WorkField() {
-  const ref=useRef<HTMLDivElement>(null);useEffect(()=>{const el=ref.current;if(!el)return;const ns=Array.from(el.querySelectorAll<HTMLElement>("[data-depth]"));const move=(e:PointerEvent)=>{const r=el.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;ns.forEach(n=>{const d=Number(n.dataset.depth||0);n.style.transform=`translate3d(${x*d}px,${y*d}px,0) rotate(${x*d*.03}deg)`})};const leave=()=>ns.forEach(n=>n.style.transform="translate3d(0,0,0)");el.addEventListener("pointermove",move);el.addEventListener("pointerleave",leave);return()=>{el.removeEventListener("pointermove",move);el.removeEventListener("pointerleave",leave)}},[]);return <section className="work-field light" data-tone="paper" ref={ref}><div className="work-top"><span>05 / THE WORK</span><span>THE MESSY MIDDLE</span></div><div className="work-word">BUILD</div><div className="work-pic wp-a" data-depth="52"><img src={IMG.prototype} alt="" loading="lazy" decoding="async"/></div><div className="work-pic wp-b" data-depth="-36"><img src={IMG.research} alt="" loading="lazy" decoding="async"/></div><div className="work-pic wp-c" data-depth="25"><img src={IMG.pitch} alt="" loading="lazy" decoding="async"/></div><div className="work-pic wp-d" data-depth="-49"><img src={IMG.founders} alt="" loading="lazy" decoding="async"/></div><span className="work-note wn-a" data-depth="25">question → evidence</span><span className="work-note wn-b" data-depth="-18">prototype / 04</span><span className="work-note wn-c" data-depth="33">iteration / 07</span><div className="work-rule"/><div className="work-caption"><span>THE THING THAT LOOKS LIKE A STARTUP<br/>IS USUALLY A COLLECTION OF ITERATIONS.</span><span>VJ / WORK LOG</span></div></section>;
+  const ref=useRef<HTMLDivElement>(null);const work=useRealWork(ref);useEffect(()=>{const el=ref.current;if(!el)return;const ns=Array.from(el.querySelectorAll<HTMLElement>("[data-depth]"));const move=(e:PointerEvent)=>{const r=el.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;ns.forEach(n=>{const d=Number(n.dataset.depth||0);n.style.transform=`translate3d(${x*d}px,${y*d}px,0) rotate(${x*d*.03}deg)`})};const leave=()=>ns.forEach(n=>n.style.transform="translate3d(0,0,0)");el.addEventListener("pointermove",move);el.addEventListener("pointerleave",leave);return()=>{el.removeEventListener("pointermove",move);el.removeEventListener("pointerleave",leave)}},[]);return <section className="work-field light" data-tone="paper" ref={ref}><div className="work-top"><span>05 / THE WORK</span><span>THE MESSY MIDDLE</span></div><div className="work-word">BUILD</div>{WORK_SLOTS.map(([slot,depth,img],i)=>{const w=work?.[i];return <div key={slot} className={`work-pic ${slot}${w?" is-card":""}`} data-depth={depth}>{w?<Link to={w.href!} className={`work-card is-${w.kind}`}><span>{w.kind==="problem"?"Problem":"Idea"}<small>{w.kind==="problem"?" / posted by a student":" / answering a problem"}</small></span><b>{w.title}</b><em>Open ↗</em></Link>:<img src={img} alt="" loading="lazy" decoding="async"/>}</div>})}<span className="work-note wn-a" data-depth="25">question → evidence</span><span className="work-note wn-b" data-depth="-18">prototype / 04</span><span className="work-note wn-c" data-depth="33">iteration / 07</span><div className="work-rule"/><div className="work-caption"><span>THE THING THAT LOOKS LIKE A STARTUP<br/>IS USUALLY A COLLECTION OF ITERATIONS.</span><span>{work?"VJ / WORK LOG / LIVE FROM THE PLATFORM":"VJ / WORK LOG"}</span></div></section>;
 }
 
 function Ventures() {

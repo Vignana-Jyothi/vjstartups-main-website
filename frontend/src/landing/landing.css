@@ -696,3 +696,21 @@ html.lenis{scroll-behavior:auto}
    the chapter rail and anchor jumps stay exact. */
 .vj-landing .journey,.vj-landing .sphere{content-visibility:auto}
 .vj-landing .community,.vj-landing .recognition,.vj-landing .faq,.vj-landing .contact-v13{content-visibility:auto;contain-intrinsic-size:auto 900px}
+
+/* Work collage cards: real problems and ideas from the platform in the photo slots. */
+.vj-landing .work-pic.is-card{overflow:visible;box-shadow:none}
+.vj-landing .work-card{display:grid;grid-template-rows:auto 1fr auto;gap:14px;height:100%;padding:clamp(14px,1.4vw,22px);border-radius:4px;background:#fffdf7;color:#080808;text-decoration:none;box-shadow:0 24px 65px rgba(0,0,0,.18);transition:box-shadow .3s,transform .3s}
+.vj-landing .work-card:hover{box-shadow:0 30px 80px rgba(0,0,0,.28)}
+.vj-landing .work-card span{display:flex;align-items:center;gap:8px;font:8px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:rgba(0,0,0,.5)}
+.vj-landing .work-card span:before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--pink)}
+.vj-landing .work-card.is-idea span:before{background:#7fae1b}
+.vj-landing .work-card b{align-self:center;display:-webkit-box;overflow:hidden;font-size:clamp(15px,1.45vw,23px);font-weight:800;line-height:1.08;letter-spacing:-.04em;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow-wrap:break-word;hyphens:auto}
+.vj-landing .work-card em{font:8px var(--mono);font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,0,0,.45)}
+.vj-landing .work-card:hover em{color:#080808}
+.vj-landing .work-card:focus-visible{outline:2px solid #080808;outline-offset:4px}
+.vj-landing .work-card small{font:inherit;white-space:pre}
+@media(max-width:700px){
+  .vj-landing .work-card{gap:8px;padding:12px}
+  .vj-landing .work-card small{display:none}
+  .vj-landing .work-card b{font-size:13px;-webkit-line-clamp:5}
+}
