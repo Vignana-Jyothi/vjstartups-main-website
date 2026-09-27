@@ -19,18 +19,25 @@ const deviceWidth = typeof window === "undefined" ? 1800 : Math.ceil((window.inn
 const unsplash = (id: string, max: number) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${Math.min(max, deviceWidth)}&q=80`;
 
+// Real photos replace the stock ones slot by slot: a file named after a slot in
+// src/assets/photos (e.g. hero.jpg) is used instead. That folder's README is the shot list.
+const LOCAL_PHOTOS = import.meta.glob("../assets/photos/*.{jpg,jpeg,png,webp,avif}", { eager: true, query: "?url", import: "default" }) as Record<string, string>;
+const localPhoto = (slot: string) =>
+  Object.entries(LOCAL_PHOTOS).find(([path]) => path.split("/").pop()!.replace(/\.\w+$/, "") === slot)?.[1];
+const photo = (slot: string, stockId: string, max: number) => localPhoto(slot) ?? unsplash(stockId, max);
+
 const IMG = {
-  hero: unsplash("photo-1556761175-b413da4baf72", 2200),
-  people: unsplash("photo-1523240795612-9a054b0db644", 1800),
-  pitch: unsplash("photo-1551836022-d5d88e9218df", 1800),
-  research: unsplash("photo-1531482615713-2afd69097998", 1800),
-  prototype: unsplash("photo-1581092921461-eab62e97a780", 1800),
-  founders: unsplash("photo-1556761175-5973dc0f32e7", 1800),
-  room: unsplash("photo-1517245386807-bb43f82c33c4", 1800),
-  campus: unsplash("photo-1562774053-701939374585", 1800),
-  energy: unsplash("photo-1473341304170-971dccb5ac1e", 1600),
-  health: unsplash("photo-1576091160399-112ba8d25d1d", 1600),
-  iot: unsplash("photo-1518770660439-4636190af475", 1600),
+  hero: photo("hero", "photo-1556761175-b413da4baf72", 2200),
+  people: photo("people", "photo-1523240795612-9a054b0db644", 1800),
+  pitch: photo("pitch", "photo-1551836022-d5d88e9218df", 1800),
+  research: photo("research", "photo-1531482615713-2afd69097998", 1800),
+  prototype: photo("prototype", "photo-1581092921461-eab62e97a780", 1800),
+  founders: photo("founders", "photo-1556761175-5973dc0f32e7", 1800),
+  room: photo("room", "photo-1517245386807-bb43f82c33c4", 1800),
+  campus: photo("campus", "photo-1562774053-701939374585", 1800),
+  energy: photo("atlast", "photo-1473341304170-971dccb5ac1e", 1600),
+  health: photo("salcit", "photo-1576091160399-112ba8d25d1d", 1600),
+  iot: photo("alltronics", "photo-1518770660439-4636190af475", 1600),
 };
 
 const STAGES = [
