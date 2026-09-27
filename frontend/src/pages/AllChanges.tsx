@@ -104,6 +104,7 @@ const AllChanges = () => {
   return (
     <div className="page-shell lx" style={{ "--lx-accent": "var(--lime)" } as CSSProperties}>
       <PageHero
+        kind="tool"
         eyebrow="Idea activity"
         title="Progress of Ideas"
         description="The complete history of idea stage unlocks across the platform."

@@ -700,6 +700,7 @@ const VirtualStartupJourney: React.FC = () => {
   return (
     <div className="page-shell lx dt jh" style={{ '--lx-accent': TIER_ACCENT[currentStage.tier] } as React.CSSProperties}>
       <PageHero
+        kind="tool"
         eyebrow={firstName ? `Virtual startup journey / ${firstName}` : 'Virtual startup journey'}
         title="Virtual Startup Journey"
         description={personalizedMsg.subtitle}

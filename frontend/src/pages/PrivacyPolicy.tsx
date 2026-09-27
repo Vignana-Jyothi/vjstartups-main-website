@@ -6,6 +6,7 @@ const PrivacyPolicy = () => {
   return (
     <div className="page-shell legal">
       <PageHero
+        kind="tool"
         eyebrow="Legal"
         title="Privacy Policy"
         description="Last updated March 6, 2026. How VJ Startups collects, uses and protects information when you use the platform."

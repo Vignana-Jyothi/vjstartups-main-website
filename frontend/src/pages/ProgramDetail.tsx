@@ -96,6 +96,7 @@ const ProgramDetail = () => {
   return (
     <div className="page-shell lx dt" style={accent}>
       <PageHero
+        kind="document"
         eyebrow={`Program / ${PROGRAM_CATEGORIES[program.category]}`}
         title={program.title}
         description={program.subtitle}

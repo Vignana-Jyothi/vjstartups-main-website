@@ -236,6 +236,7 @@ const ProblemDetail = () => {
   return (
     <div className="page-shell lx dt" style={{ "--lx-accent": "var(--pink)" } as CSSProperties}>
       <PageHero
+        kind="document"
         eyebrow="Problem"
         title={problem.title}
         description={problem.briefparagraph || problem.description || ""}

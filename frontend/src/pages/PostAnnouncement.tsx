@@ -23,6 +23,7 @@ const PostAnnouncement = () => {
     return (
       <div className="page-shell lx">
         <PageHero
+        kind="tool"
           eyebrow="Admin portal"
           title="Post Announcement"
           description="Share important news and updates with the VJ Startups community."
@@ -94,6 +95,7 @@ const PostAnnouncement = () => {
   return (
     <div className="page-shell lx">
       <PageHero
+        kind="tool"
         eyebrow="Admin portal"
         title="Post Announcement"
         description="Share important news and updates with the VJ Startups community."

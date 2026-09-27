@@ -6,6 +6,7 @@ const TermsOfService = () => {
   return (
     <div className="page-shell legal">
       <PageHero
+        kind="tool"
         eyebrow="Legal"
         title="Terms of Service"
         description="Last updated March 6, 2026. The terms for using VJ Startups for collaboration, startup ideation and progress tracking."

@@ -36,6 +36,13 @@ interface PageHeroProps {
   side?: ReactNode;
   /** Full-bleed band under the header, built from the page's own content. */
   signature?: ReactNode;
+  /**
+   * poster: the big uppercase statement for the main listing pages (default).
+   * document: detail pages whose title is a sentence (a problem, an idea); set readable, in
+   * sentence case, without the ghost word, so it reads as a record rather than a slogan.
+   * tool: forms and utility pages; a compact header so the work starts on the first screen.
+   */
+  kind?: "poster" | "document" | "tool";
 }
 
 function splitTitle(title: string) {
@@ -58,8 +65,9 @@ export function PageHero({
   accent: accentColor = "lime",
   side,
   signature,
+  kind = "poster",
 }: PageHeroProps) {
-  const { lead, accent } = splitTitle(title);
+  const { lead, accent } = kind === "document" ? { lead: title, accent: "" } : splitTitle(title);
 
   useEffect(() => {
     document.title = `${title} — VJ Startups`;
@@ -77,8 +85,8 @@ export function PageHero({
   };
 
   return (
-    <section className={cn("ph", `ph--${layout}`, backgroundClassName)} data-accent={accentColor}>
-      <div className="ph-ghost" aria-hidden="true">{title.split(/\s+/)[0]}</div>
+    <section className={cn("ph", `ph--${layout}`, `ph--${kind}`, backgroundClassName)} data-accent={accentColor}>
+      {kind === "poster" && <div className="ph-ghost" aria-hidden="true">{title.split(/\s+/)[0]}</div>}
 
       <div className="ph-inner">
         <div className="ph-meta">

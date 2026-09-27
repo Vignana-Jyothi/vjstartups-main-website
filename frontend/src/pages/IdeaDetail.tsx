@@ -389,6 +389,7 @@ export default function IdeaDetail() {
   return (
     <div className="page-shell lx dt" style={accent}>
       <PageHero
+        kind="document"
         eyebrow={`Idea / ${stageLabels[stage - 1]}`}
         title={idea.title}
         description={idea.description}

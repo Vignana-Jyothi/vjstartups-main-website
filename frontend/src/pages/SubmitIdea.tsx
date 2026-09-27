@@ -385,6 +385,7 @@ const SubmitIdea: React.FC = () => {
   return (
     <div className="page-shell">
       <PageHero
+        kind="tool"
         accent="lime"
         eyebrow="Idea validation"
         title={"Submit Your Idea"}

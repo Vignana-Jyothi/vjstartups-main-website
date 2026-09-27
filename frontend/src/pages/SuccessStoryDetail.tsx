@@ -45,6 +45,7 @@ const SuccessStoryDetail = () => {
   return (
     <div className="page-shell lx st" style={{ "--lx-accent": "var(--lime)" } as CSSProperties}>
       <PageHero
+        kind="document"
         eyebrow={`${program.title} / ${story.season}`}
         title={story.title}
         description={story.subtitle}

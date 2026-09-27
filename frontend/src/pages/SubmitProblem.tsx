@@ -196,6 +196,7 @@ const SubmitProblem: React.FC = () => {
   return (
     <div className="page-shell">
       <PageHero
+        kind="tool"
         accent="pink"
         eyebrow="Problem discovery"
         title={"Submit a New Problem"}

@@ -12,6 +12,7 @@ const PRINCIPLES = [
 const IdeaValidation = () => (
   <div className="page-shell lx" style={{ "--lx-accent": "var(--lime)" } as CSSProperties}>
     <PageHero
+        kind="tool"
       eyebrow="Idea assessment"
       title="Idea Assessment Center"
       description="A validation tool for startup ideas and stage transitions. Assess your idea's potential, get recommendations, and check readiness for the next stage."

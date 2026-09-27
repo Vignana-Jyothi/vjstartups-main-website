@@ -71,6 +71,7 @@ const Leaderboard = () => {
   return (
     <div className="page-shell lx">
       <PageHero
+        kind="tool"
         eyebrow="Virtual startup journey"
         title="Leaderboard"
         description="Members ranked by their reputation score on the platform."

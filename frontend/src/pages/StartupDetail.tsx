@@ -187,6 +187,7 @@ export default function StartupDetail() {
   return (
     <div className="page-shell lx dt" style={accent}>
       <PageHero
+        kind="document"
         eyebrow={`Startup / ${stageLabels[stage - 1]}`}
         title={name}
         description={startup.tagline || startup.description || ""}

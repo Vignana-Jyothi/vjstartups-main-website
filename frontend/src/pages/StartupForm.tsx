@@ -519,6 +519,7 @@ const StartupForm: React.FC = () => {
   return (
     <div className="page-shell">
       <PageHero
+        kind="tool"
         accent="violet"
         eyebrow="Startup portfolio"
         title={isEditMode ? "Update Your Startup" : "Create Your Startup"}
