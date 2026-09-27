@@ -23,7 +23,7 @@ function MemberAvatar({ member, isOpen }: { member: SheetTeamMember; isOpen: boo
   if (member.imageUrl && !failed) {
     return (
       <div className="cl-avatar">
-        <img src={member.imageUrl} alt="" loading="lazy" onError={() => setFailed(true)} />
+        <img src={member.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
       </div>
     );
   }

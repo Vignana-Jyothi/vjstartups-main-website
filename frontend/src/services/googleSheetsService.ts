@@ -68,19 +68,22 @@ function getColumnValue(
   return "";
 }
 
+// Drive no longer serves `uc?export=view` links as embeddable images (they redirect to an HTML
+// page), so every team photo was broken. The thumbnail endpoint returns the image itself.
+const driveImage = (id: string) => `https://drive.google.com/thumbnail?id=${id}&sz=w800`;
+
 function convertDriveLinkToImageUrl(url: string): string {
   const value = url.trim();
   if (!value) return "";
 
+  // A folder link is not a photo.
+  if (/drive\.google\.com\/drive\/folders\//.test(value)) return "";
+
   const fileIdMatch = value.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if (fileIdMatch?.[1]) {
-    return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
-  }
+  if (fileIdMatch?.[1]) return driveImage(fileIdMatch[1]);
 
   const idParamMatch = value.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (idParamMatch?.[1]) {
-    return `https://drive.google.com/uc?export=view&id=${idParamMatch[1]}`;
-  }
+  if (idParamMatch?.[1]) return driveImage(idParamMatch[1]);
 
   return value;
 }
