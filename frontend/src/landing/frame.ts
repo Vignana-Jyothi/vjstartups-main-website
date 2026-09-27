@@ -23,21 +23,36 @@ function measure() {
   listeners.forEach((fn) => fn());
 }
 
+// Every trigger (a section mounting, the body resizing as images load, fonts arriving) is
+// coalesced into one measure at the start of the next frame, before any scroll-linked loop
+// writes styles, so the geometry reads hit an up-to-date layout instead of forcing a new one
+// per trigger during load.
+let pendingMeasure = 0;
+function scheduleMeasure() {
+  if (pendingMeasure) return;
+  pendingMeasure = requestAnimationFrame(() => {
+    pendingMeasure = 0;
+    measure();
+  });
+}
+
 function observe() {
   if (observing) return;
   observing = true;
-  new ResizeObserver(measure).observe(document.body);
-  window.addEventListener("resize", measure);
-  document.fonts?.ready.then(measure);
+  new ResizeObserver(scheduleMeasure).observe(document.body);
+  window.addEventListener("resize", scheduleMeasure);
+  document.fonts?.ready.then(scheduleMeasure);
 }
 
 /** Cached page geometry, refreshed after any resize. Safe to read every frame. */
 export const pageMetrics = () => ({ viewport, scrollMax });
 
-/** Subscribe to geometry refreshes. */
+/** Subscribe to geometry refreshes. Listeners run inside the measure pass, so layout reads
+ *  there are cheap; don't write styles from them. */
 export function onMeasure(fn: () => void) {
   observe();
   listeners.add(fn);
+  scheduleMeasure();
   return () => listeners.delete(fn);
 }
 
@@ -63,7 +78,7 @@ export function useSectionFrame(ref: RefObject<HTMLElement>, frame: (s: SectionF
     const geo: Geo = { top: 0, height: 0 };
     tracked.set(el, geo);
     observe();
-    measure();
+    scheduleMeasure();
 
     let visible = false;
     let raf = 0;

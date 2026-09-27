@@ -689,3 +689,10 @@ html.lenis{scroll-behavior:auto}
   .vj-landing .journey-stage *,.vj-landing .journey-stage .jw>span{animation:none!important}
   .vj-landing .journey-image img{transition:none}
 }
+
+/* Sections well below the first screen skip layout and paint until they approach the viewport:
+   laying out the whole ~20,000px page at once cost ~1.2s on a throttled phone. Only sections
+   with a fixed height, or that sit after the last chapter anchor, so scroll-linked geometry,
+   the chapter rail and anchor jumps stay exact. */
+.vj-landing .journey,.vj-landing .sphere{content-visibility:auto}
+.vj-landing .community,.vj-landing .recognition,.vj-landing .faq,.vj-landing .contact-v13{content-visibility:auto;contain-intrinsic-size:auto 900px}

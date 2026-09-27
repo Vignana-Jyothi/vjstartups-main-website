@@ -80,6 +80,21 @@ function Cursor() {
 function SmoothScroll() {
   useEffect(()=>{
     if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+    // Phones keep native scrolling: JS-driven touch scroll janks on mid-range devices, and
+    // Lenis's setup restyles the whole page (~0.5s on a throttled phone). Anchors still glide.
+    if(window.matchMedia("(hover: none), (pointer: coarse)").matches){
+      const glide=(e:MouseEvent)=>{
+        const anchor=(e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"]');
+        const id=anchor?.getAttribute("href");
+        const target=id&&id!=="#"?document.querySelector<HTMLElement>(id):null;
+        if(!target)return;
+        e.preventDefault();
+        window.scrollTo({top:target.getBoundingClientRect().top+window.scrollY-72,behavior:"smooth"});
+        history.replaceState(null,"",id);
+      };
+      document.addEventListener("click",glide);
+      return()=>document.removeEventListener("click",glide);
+    }
     // Lenis measures the page on creation and on every resize; creating it during load cost
     // ~350ms of forced layout while images and fonts were still arriving. Start it once the
     // page is idle, or on the first scroll input, whichever comes first.
@@ -883,7 +898,6 @@ function PageField(){
     };
     let raf=0,applied="",appliedMid="",appliedTop="";
     const schedule=()=>{if(!raf)raf=requestAnimationFrame(tick)};
-    const remeasure=()=>{measure();schedule()};
     const tick=()=>{
       raf=0;
       if(marks.length&&ref.current){
@@ -907,12 +921,10 @@ function PageField(){
         if(topTone!==appliedTop){root?.setAttribute("data-top",topTone);appliedTop=topTone;}
       }
     };
-    remeasure();
-    document.fonts?.ready.then(remeasure);
-    const ro=new ResizeObserver(remeasure);
-    ro.observe(document.body);
+    // Section tops are read in the shared measure pass (frame.ts), not on every body resize.
+    const off=onMeasure(()=>{measure();schedule()});
     window.addEventListener("scroll",schedule,{passive:true});
-    return()=>{ro.disconnect();window.removeEventListener("scroll",schedule);cancelAnimationFrame(raf)};
+    return()=>{off();window.removeEventListener("scroll",schedule);cancelAnimationFrame(raf)};
   },[]);
   return <div className="page-field" ref={ref} aria-hidden="true"/>;
 }
