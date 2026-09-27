@@ -12,7 +12,7 @@
 .fm>form>.vj-card:hover{transform:none;box-shadow:none}
 .fm>form>.vj-card>:first-child{position:sticky;top:calc(var(--sc-nav-h,76px) + 24px);align-self:start;padding:0}
 .fm>form>.vj-card>:first-child h3{display:grid!important;gap:12px;justify-content:start;color:var(--white);font-size:clamp(24px,2.2vw,34px);font-weight:800;line-height:1;letter-spacing:-.05em;text-transform:uppercase}
-.fm>form>.vj-card>:first-child h3:before{content:counter(fm,decimal-leading-zero);color:var(--lx-accent);font:11px var(--mono);letter-spacing:.14em}
+.fm>form>.vj-card>:first-child h3:before{content:counter(fm,decimal-leading-zero);color:var(--lx-accent);font:12px var(--mono);letter-spacing:.14em}
 .fm>form>.vj-card>:first-child h3>svg{display:none}
 .fm>form>.vj-card>:first-child h3>div,.fm>form>.vj-card>:first-child h3>span{display:flex;align-items:center;gap:10px}
 .fm>form>.vj-card>:first-child h3>div>svg,.fm>form>.vj-card>:first-child h3>span>svg{display:none}
@@ -55,7 +55,7 @@
   .fm>form>.vj-card>:first-child{position:static}
   .fm>form>div:last-child>button{flex:1 1 auto}
 }
-.fm>form>.vj-card>:first-child h3 button{justify-self:start;width:auto;min-height:40px;padding:0 16px;border-radius:999px;font-size:13px}
+.fm>form>.vj-card>:first-child h3 button{justify-self:start;width:auto;min-height:40px;padding:0 16px;border-radius:999px;font-size:14px}
 
 /* Idea validation questionnaire (also used inside the stage-transition flow) */
 .iq{--lx-accent:var(--lime);display:grid;gap:36px}
@@ -66,7 +66,7 @@
 .iq-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0;padding:0;list-style:none;counter-reset:none}
 .iq-steps li{display:grid;gap:8px;color:hsl(var(--muted-foreground))}
 .iq-steps i{display:block;height:4px;border-radius:4px;background:rgba(247,245,239,.12);transform:skewX(-15deg);transition:background .4s}
-.iq-steps span{font:9px var(--mono);letter-spacing:.12em}
+.iq-steps span{font:11px var(--mono);letter-spacing:.12em}
 .iq-steps b{font-size:14px;font-weight:700;line-height:1.2}
 .iq-steps li.is-done i{background:color-mix(in srgb,var(--lx-accent) 55%,transparent)}
 .iq-steps li.is-on i{background:var(--lx-accent);box-shadow:0 0 14px color-mix(in srgb,var(--lx-accent) 55%,transparent)}
@@ -87,20 +87,20 @@
 .iq-result{display:grid;gap:36px}
 .iq-overall{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 24px}
 .iq-overall b{font-size:clamp(96px,14vw,220px);font-weight:800;line-height:.8;letter-spacing:-.08em}
-.iq-overall span{color:hsl(var(--muted-foreground));font:11px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.iq-overall span{color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.14em;text-transform:uppercase}
 .iq .is-high{--iq:var(--lime)}
 .iq .is-mid{--iq:var(--white)}
 .iq .is-low{--iq:#ff8f8f}
 .iq-overall b,.iq-scores dd{color:var(--iq)}
 .iq-scores{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:0}
 .iq-scores>div{display:grid;grid-template-columns:1fr auto;align-items:end;gap:10px;padding:18px;border:1px solid rgba(247,245,239,.08);border-radius:16px}
-.iq-scores dt{color:hsl(var(--muted-foreground));font:10px var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.iq-scores dt{color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.1em;text-transform:uppercase}
 .iq-scores dd{margin:0;font-size:32px;font-weight:800;line-height:1;letter-spacing:-.05em}
 .iq-scores i{grid-column:1/-1;height:4px;border-radius:4px;background:rgba(247,245,239,.1)}
 .iq-scores i b{display:block;height:100%;border-radius:inherit;background:var(--iq)}
-.iq-scores small{grid-column:1/-1;color:hsl(var(--muted-foreground));font-size:12px}
+.iq-scores small{grid-column:1/-1;color:hsl(var(--muted-foreground));font-size:14px}
 .iq-ready{display:grid;gap:12px;justify-items:start;padding:26px;border:1px solid color-mix(in srgb,var(--lx-accent) 40%,transparent);border-radius:20px;background:color-mix(in srgb,var(--lx-accent) 6%,transparent)}
-.iq-ready span{color:var(--lx-accent);font:10px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.iq-ready span{color:var(--lx-accent);font:12px var(--mono);letter-spacing:.14em;text-transform:uppercase}
 .iq-ready p{margin:0;color:rgba(247,245,239,.85);font-size:16px}
 @keyframes jh-in{from{opacity:0;transform:translateY(18px)}}
 @media(max-width:900px){

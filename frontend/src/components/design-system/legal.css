@@ -6,7 +6,7 @@
 .legal-doc>p:first-child{max-width:900px;margin:0 0 48px;color:var(--white);font-size:clamp(20px,1.9vw,27px);line-height:1.4;letter-spacing:-.01em}
 .legal-doc section{display:grid;grid-template-columns:minmax(200px,340px) minmax(0,1fr);gap:clamp(20px,4vw,64px);padding:34px 0;border-top:1px solid rgba(247,245,239,.1)}
 .legal-doc h2{display:grid;align-content:start;gap:10px;margin:0;color:var(--white);font-size:clamp(20px,1.7vw,26px);font-weight:800;line-height:1.1;letter-spacing:-.04em}
-.legal-doc h2 span{color:var(--lx-accent);font:11px var(--mono);letter-spacing:.14em}
+.legal-doc h2 span{color:var(--lx-accent);font:12px var(--mono);letter-spacing:.14em}
 .legal-doc section>p,.legal-doc ul{margin:0;color:rgba(247,245,239,.78);font-size:16px;line-height:1.7}
 .legal-doc ul{display:grid;gap:10px;padding:0;list-style:none}
 .legal-doc li{position:relative;padding-left:22px}

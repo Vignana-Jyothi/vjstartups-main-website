@@ -2,7 +2,7 @@
 .nf-code{position:absolute;right:-3vw;top:50%;color:transparent;font:800 clamp(220px,42vw,680px)/.8 var(--sans);letter-spacing:-.09em;-webkit-text-stroke:1px rgba(247,245,239,.16);transform:translate3d(calc(var(--nx)*-36px),calc(-50% + var(--ny)*-24px),0);transition:transform .6s cubic-bezier(.2,.7,.2,1);pointer-events:none;user-select:none;animation:nf-in 1.4s cubic-bezier(.2,.7,.2,1) both}
 @keyframes nf-in{from{opacity:0;-webkit-text-stroke-color:rgba(215,255,99,.6)}to{opacity:1}}
 .nf-inner{position:relative;display:grid;gap:26px;justify-items:start;max-width:880px}
-.nf-meta{display:flex;flex-wrap:wrap;gap:12px 28px;color:hsl(var(--muted-foreground));font:10px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.nf-meta{display:flex;flex-wrap:wrap;gap:12px 28px;color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.14em;text-transform:uppercase}
 .nf-meta span:first-child{color:var(--lime)}
 .nf-path{max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:none}
 .nf.lx h1{margin:0;color:var(--white);font-size:clamp(64px,10vw,168px);font-weight:800;line-height:.84;letter-spacing:-.085em;text-transform:uppercase}
