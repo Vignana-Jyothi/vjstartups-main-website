@@ -84,7 +84,7 @@
 .sc-footer-legal{display:flex;gap:18px}
 @media(max-width:700px){
   .sc-footer{padding:55px 18px 22px}
-  .sc-footer-word{gap:3vw;font-size:25vw}
+  .sc-footer-word{gap:3vw;font-size:17vw}
   .sc-footer-orbits{top:15%;width:118vw;height:86vw}
   .sc-footer-grid{grid-template-columns:1fr 1fr;gap:30px 18px;margin-top:75px}
   .sc-footer-bottom{flex-direction:column;gap:9px}

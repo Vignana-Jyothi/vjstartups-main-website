@@ -675,6 +675,7 @@ function Network() {
       const map=mapRef.current;
       map?.style.setProperty("--weave-draw",String(draw));
       map?.style.setProperty("--network-open",String(eased));
+      stickyRef.current?.style.setProperty("--network-open",String(eased));
       const upAngle=-eased*1.25,downAngle=eased*1.4;
       if(upperRef.current)upperRef.current.style.transform=`translate3d(0,${-eased*205}px,0) rotate(${upAngle}deg)`;
       if(lowerRef.current)lowerRef.current.style.transform=`translate3d(0,${eased*215}px,0) rotate(${downAngle}deg)`;
@@ -1017,8 +1018,13 @@ function PageField(){
     const tick=()=>{
       raf=0;
       if(marks.length&&ref.current){
-        const focus=window.scrollY+window.innerHeight*.5;
-        const w=window.innerHeight*.6;
+        // On tall screens (portrait tablets and phones) the flip happens lower, so the next
+        // section's opening text arrives after the colour has changed, not before.
+        const tall=window.innerWidth/window.innerHeight<1.4;
+        const focus=window.scrollY+window.innerHeight*(tall?.7:.5);
+        // The blend spans at most 320px around each section boundary. As 60% of the screen height
+        // it grew past short sections on tall phones and tablets, leaving their text on mid-grey.
+        const w=Math.min(window.innerHeight*.6,320);
         let color=TONES[marks[0].tone];
         let midTone=marks[0].tone;
         for(let i=1;i<marks.length;i++){

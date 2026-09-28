@@ -804,3 +804,61 @@ html.lenis{scroll-behavior:auto}
   .vj-landing .start-here-head h2{font-size:clamp(44px,min(5.2vw,10vh),88px)}
   .vj-landing .start-here-grid{margin-top:clamp(32px,6vh,56px)}
 }
+
+/* --- Tablets and small phones ---------------------------------------------------------------- */
+/* Tablets: the real-work cards had desktop sizes (16vw, ~120px on an iPad), so give them a
+   staggered 2x2 on the right at a size text fits. */
+@media(min-width:701px) and (max-width:1100px){
+  .vj-landing .work-pic.is-card{width:27vw;height:33vw;max-height:none}
+  .vj-landing .work-pic.is-card.wp-a{left:41%;top:15%}
+  .vj-landing .work-pic.is-card.wp-b{left:70%;top:21%}
+  .vj-landing .work-pic.is-card.wp-c{left:43%;top:51%}
+  .vj-landing .work-pic.is-card.wp-d{left:71%;top:57%}
+  .vj-landing .work-card b{font-size:17px}
+  .vj-landing .work-field:has(.is-card) .work-note{display:none}
+}
+/* Feed rows: the label stays on one line, and on narrower screens it sits above the title. */
+.vj-landing .feed-row>div b{white-space:nowrap}
+@media(max-width:1050px){
+  .vj-landing .feed-row>div{flex-direction:column;gap:3px}
+  .vj-landing .feed-row{grid-template-columns:92px 10px minmax(0,1fr) 26px}
+}
+/* Phones: the closing line and the footer wordmark were wider than the screen. */
+@media(max-width:700px){
+  .vj-landing .contact-v13-main h2{font-size:16.5vw}
+}
+/* Tall screens: every coloured section fills at least one screen, so the page's colour flips
+   across empty space instead of under text (on an iPad, short sections like the statement
+   shared the screen with their neighbour and their text sat on the other section's colour). */
+@media(max-aspect-ratio:7/5){
+  .vj-landing :is(.statement,.starting,.hubs,.ventures,.community,.recognition,.faq,.contact-v13){min-height:100svh}
+  .vj-landing .statement{display:grid;align-content:center}
+}
+
+/* Tall screens: each section paints its own colour, with a soft seam into its neighbour.
+   One full-screen colour (the PageField blend, kept on wide screens) can't serve two
+   sections at once, and on a tall screen two sections are visible together near every
+   boundary, so text sat on the other section's colour. Each seam sits in whichever
+   neighbour has empty padding at that edge; pinned scenes fill theirs edge to edge. */
+@media(max-aspect-ratio:7/5){
+  .vj-landing{--seam:160px}
+  .vj-landing .page-field{opacity:0}
+  .vj-landing main>[data-tone]{position:relative;isolation:isolate}
+  .vj-landing main>[data-tone="ink"]{background-color:#080808}
+  .vj-landing main>[data-tone="paper"]{background-color:#f0eee8}
+  .vj-landing main>[data-tone="pink"]{background-color:#ff4aa7}
+  .vj-landing :is(.statement,.starting,.ventures)::after,
+  .vj-landing :is(.hubs,.community,.recognition,.faq)::before,
+  .vj-landing .faq::after{content:"";position:absolute;left:0;right:0;height:var(--seam);z-index:-1;pointer-events:none}
+  .vj-landing :is(.statement,.starting,.ventures,.faq)::after{bottom:0}
+  .vj-landing :is(.hubs,.community,.recognition,.faq)::before{top:0}
+  .vj-landing .statement::after{background:linear-gradient(180deg,#080808,#f0eee8)}
+  .vj-landing .starting::after,.vj-landing .ventures::after{background:linear-gradient(180deg,#f0eee8,#080808)}
+  .vj-landing :is(.hubs,.community,.faq)::before{background:linear-gradient(180deg,#080808,#f0eee8)}
+  .vj-landing .recognition::before{background:linear-gradient(180deg,#f0eee8,#080808)}
+  .vj-landing .faq::after{background:linear-gradient(180deg,#f0eee8,#ff4aa7)}
+  .vj-landing .sc-footer{background:linear-gradient(180deg,#ff4aa7,#080808 var(--seam))}
+}
+@media(max-aspect-ratio:7/5) and (max-width:700px){.vj-landing{--seam:110px}}
+/* The counters row steps back as "Connection becomes momentum" arrives (it overlapped on phones). */
+.vj-landing .network-v16-bottom{opacity:calc(1 - var(--network-open,0) * .92)}
