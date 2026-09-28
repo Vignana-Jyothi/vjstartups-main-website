@@ -862,3 +862,60 @@ html.lenis{scroll-behavior:auto}
 @media(max-aspect-ratio:7/5) and (max-width:700px){.vj-landing{--seam:110px}}
 /* The counters row steps back as "Connection becomes momentum" arrives (it overlapped on phones). */
 .vj-landing .network-v16-bottom{opacity:calc(1 - var(--network-open,0) * .92)}
+
+/* Hero: the lens's small labels would scale up with it (to giant clipped mono text); they fade
+   with the headline, before the lens starts to grow. */
+.vj-landing .hero-v12-stage-no,.vj-landing .hero-v12-stage-caption{opacity:var(--fade,1)}
+
+/* Phone hero: headline in the upper part as four clear lines, the lens beneath it instead of
+   over "IF YOU" and "DIDN'T", the intro and buttons at the bottom. */
+@media(max-width:700px){
+  .vj-landing .hero-v12{height:100svh;min-height:620px}
+  .vj-landing .hero-v12-top{top:80px}
+  .vj-landing .hero-v12-copy{top:14%;height:34%}
+  .vj-landing .hero-v12-copy h1{font-size:min(15.5vw,74px);line-height:.8}
+  .vj-landing .hero-v12-kicker{display:none}
+  .vj-landing .hero-v12-what{left:0;top:0}
+  .vj-landing .hero-v12-if{right:0;left:auto;top:24%}
+  .vj-landing .hero-v12-didnt{left:0;top:48%}
+  .vj-landing .hero-v12-need{right:0;left:auto;top:72%;font-size:.86em}
+  /* Tall enough that the lens, grown 3.6x on scroll, covers the whole screen of a tall phone. */
+  .vj-landing .hero-v12-stage-wrap{top:62%;width:60vw;height:29svh}
+  .vj-landing .hero-v12-stage-caption{display:none}
+  /* The lens starts below the headline and moves to the centre as the headline fades
+     (--fade), so when it grows it covers the whole screen instead of leaving a band on top. */
+  .vj-landing .hero-v12-stage-wrap{top:calc(50% + 12% * var(--fade,1))}
+  .vj-landing .opening{height:170vh}
+  .vj-landing .hero-v12-intro{bottom:max(26px,4svh);right:18px;gap:14px}
+  .vj-landing .hero-v12-intro p{font-size:14px;line-height:1.45}
+  .vj-landing .hero-v12-intro{grid-template-columns:auto auto;justify-content:start;align-items:center}
+  .vj-landing .hero-v12-intro p{grid-column:1/-1}
+  .vj-landing .hero-v12-intro .magnetic.ghost{margin:0}
+  .vj-landing .hero-v12-bottom{display:none}
+  .vj-landing .hero-v12-ghost{opacity:.6}
+}
+
+/* Touch screens have no cursor for "the answer is in the work" to follow; the lens stands alone. */
+@media(hover:none){.vj-landing .hero-v12-reveal{display:none}}
+@media(max-width:700px){.vj-landing .hero-v12-reveal{display:none}}
+/* Tall screens: the morph's inactive words were visible as blurred ghosts (two or three at once);
+   only the active word shows, fading in blurred and sharpening as it arrives. */
+@media(max-aspect-ratio:7/5){.vj-landing .morph-v13-liquid{opacity:calc(var(--local) * .85)}}
+/* Ventures below laptop width: the three ventures as one row of tabs above the photo instead of
+   names jammed into a narrow column (tablets) or a 2x2 of small blocks (phones). */
+@media(max-width:1050px){
+  .vj-landing .venture-stage{grid-template-columns:1fr;grid-template-rows:auto auto auto;min-height:0}
+  .vj-landing .venture-menu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-right:0;border-bottom:1px solid var(--dark-line)}
+  .vj-landing .venture-menu button{min-height:88px;grid-template-columns:1fr;align-content:center;padding:14px 12px;border-bottom:0;border-right:1px solid var(--dark-line);text-align:left}
+  .vj-landing .venture-menu button:last-child{border-right:0}
+  .vj-landing .venture-menu button>span,.vj-landing .venture-menu button>svg{display:none}
+  .vj-landing .venture-menu b{font-size:15px;line-height:1.15}
+  .vj-landing .venture-image{height:min(56vw,460px)}
+  .vj-landing .venture-copy{grid-column:auto;padding:30px 0 10px}
+}
+@media(max-width:700px){
+  .vj-landing .venture-menu button{min-height:76px;padding:12px 10px}
+  .vj-landing .venture-menu b{font-size:13px}
+  .vj-landing .venture-menu small{font-size:11px;letter-spacing:.06em}
+  .vj-landing .venture-image{height:64vw}
+}

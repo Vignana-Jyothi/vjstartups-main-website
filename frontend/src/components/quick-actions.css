@@ -1,0 +1,18 @@
+/* Quick actions (the "+" in the corner, signed-in users only). */
+.qa{position:fixed;right:max(24px,env(safe-area-inset-right));bottom:max(24px,env(safe-area-inset-bottom));z-index:50;display:grid;justify-items:end;gap:12px;transition:transform .35s cubic-bezier(.2,.7,.2,1),opacity .35s}
+.qa.is-tucked{transform:translate3d(0,calc(100% + 40px),0);opacity:0;pointer-events:none}
+.qa-actions{display:grid;justify-items:end;gap:10px}
+.qa-action{display:flex;align-items:center;gap:12px;padding:0;border:0;background:none;color:#f7f5ef;font:600 14px 'Manrope',sans-serif;cursor:pointer;opacity:0;transform:translate3d(0,10px,0);pointer-events:none;transition:opacity .25s,transform .3s cubic-bezier(.2,.7,.2,1)}
+.qa.is-open .qa-action{opacity:1;transform:none;pointer-events:auto}
+.qa-action span{padding:8px 12px;border:1px solid rgba(247,245,239,.12);border-radius:999px;background:rgba(8,8,8,.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);white-space:nowrap}
+.qa-action i{display:grid;place-items:center;width:44px;height:44px;border:1px solid rgba(247,245,239,.12);border-radius:50%;background:rgba(8,8,8,.86);font-style:normal}
+.qa-action:hover span,.qa-action:focus-visible span{border-color:rgba(215,255,99,.6)}
+.qa-main{display:grid;place-items:center;width:56px;height:56px;border:0;border-radius:50%;background:#d7ff63;color:#080808;box-shadow:0 12px 32px -10px rgba(215,255,99,.55);cursor:pointer;transition:transform .3s cubic-bezier(.2,.7,.2,1)}
+.qa-main:hover{transform:scale(1.05)}
+.qa.is-open .qa-main{transform:rotate(45deg)}
+.qa-backdrop{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.45);backdrop-filter:blur(2px)}
+@media(max-width:700px){
+  .qa{right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom))}
+  .qa-main{width:48px;height:48px}
+}
+@media(prefers-reduced-motion:reduce){.qa,.qa-action,.qa-main{transition:none}}

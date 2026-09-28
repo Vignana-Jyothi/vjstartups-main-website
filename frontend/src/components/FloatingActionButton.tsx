@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus, Lightbulb, AlertCircle, MessageSquare, Users, UserCheck, ExternalLink, BookOpen, Trophy } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUser } from '../pages/UserContext';
+import './quick-actions.css';
 
 interface FABAction {
   icon: React.ElementType;
@@ -16,6 +16,21 @@ const FloatingActionButton = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
+  // Tucked away while the reader scrolls down; back on scroll up or at the end of the page.
+  const [tucked, setTucked] = useState(false);
+
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const atEnd = y + window.innerHeight >= document.documentElement.scrollHeight - 80;
+      if (Math.abs(y - last) < 6) return;
+      setTucked(y > last && y > 160 && !atEnd);
+      last = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // Hide FAB if user is not logged in
   if (!user) {
@@ -29,7 +44,7 @@ const FloatingActionButton = () => {
         icon: AlertCircle,
         label: 'Add Problem',
         action: () => {
-          navigate('/problems?action=submit');
+          navigate('/submit-problem');
           setIsOpen(false);
         },
         color: 'text-pink-400'
@@ -38,7 +53,7 @@ const FloatingActionButton = () => {
         icon: Lightbulb,
         label: 'Add Idea',
         action: () => {
-          navigate('/ideas?action=submit');
+          navigate('/submit-idea');
           setIsOpen(false);
         },
         color: 'text-lime-400'
@@ -88,59 +103,34 @@ const FloatingActionButton = () => {
   const actions = getActions();
 
   return (
-    <TooltipProvider>
-      <div className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 mb-safe mr-safe">
-        {/* Action Items */}
-        <div className={`flex flex-col-reverse items-end space-y-reverse space-y-3 mb-4 transition-all duration-300 ${
-          isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-        }`}>
+    <>
+      <div className={`qa${tucked && !isOpen ? ' is-tucked' : ''}${isOpen ? ' is-open' : ''}`}>
+        {/* Labelled actions: touch screens have no hover, so every action shows its name. */}
+        <div className="qa-actions" aria-hidden={!isOpen}>
           {actions.map((action, index) => (
-            <Tooltip key={index}>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={action.action}
-                  aria-label={action.label}
-                  className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/75 backdrop-blur-md transition-transform duration-300 hover:scale-110 hover:border-white/30 ${action.color}`}
-                  style={{
-                    animation: `bounceIn 0.5s ease-out ${index * 50}ms backwards`
-                  }}
-                >
-                  <action.icon size={20} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="left" className="border-white/10 bg-black text-white font-mono text-[10px] uppercase tracking-[0.12em]">
-                <p>{action.label}</p>
-              </TooltipContent>
-            </Tooltip>
+            <button
+              key={action.label}
+              onClick={action.action}
+              tabIndex={isOpen ? 0 : -1}
+              className="qa-action"
+              style={{ transitionDelay: isOpen ? `${index * 40}ms` : '0ms' }}
+            >
+              <span>{action.label}</span>
+              <i className={action.color}><action.icon size={18} /></i>
+            </button>
           ))}
         </div>
-
-        {/* Main FAB - Enhanced size and glow animation */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              aria-label={isOpen ? 'Close quick actions' : 'Open quick actions'}
-              aria-expanded={isOpen}
-              className={`flex h-[56px] w-[56px] items-center justify-center rounded-full bg-lime-400 text-black shadow-[0_12px_32px_-10px_rgba(215,255,99,0.55)] transition-transform duration-300 hover:scale-105 ${isOpen ? 'rotate-45' : 'rotate-0'}`}
-            >
-              <Plus size={26} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="left" className="border-white/10 bg-black text-white font-mono text-[10px] uppercase tracking-[0.12em]">
-            <p>{isOpen ? 'Close actions' : 'Quick actions'}</p>
-          </TooltipContent>
-        </Tooltip>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? 'Close quick actions' : 'Open quick actions'}
+          aria-expanded={isOpen}
+          className="qa-main"
+        >
+          <Plus size={24} />
+        </button>
       </div>
-
-      {/* Backdrop */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-    </TooltipProvider>
+      {isOpen && <div className="qa-backdrop" onClick={() => setIsOpen(false)} />}
+    </>
   );
 };
 

@@ -393,7 +393,7 @@ function Hero() {
 
       <div className="hero-v12-intro">
         <p>Start with what is broken.<br/>Follow the evidence.<br/>Build until reality says yes.</p>
-        <Magnetic href={user?"/problems":"/login"}><span>Explore problems</span><Arrow/></Magnetic>
+        <Magnetic href="/problems"><span>Explore problems</span><Arrow/></Magnetic>
         <Magnetic href="/ideas" variant="ghost"><span>View solutions</span></Magnetic>
       </div>
 
