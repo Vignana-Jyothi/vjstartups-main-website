@@ -301,6 +301,17 @@ function Hero() {
     return()=>el.removeEventListener("pointermove",move);
   },[]);
 
+  // How far the lens must grow to cover the screen: its size now follows the space the headline
+  // leaves (phones), so a fixed 3.6x could stop short and leave a band.
+  const grow=useRef(2.6);
+  useEffect(()=>{
+    const off=onMeasure(()=>{
+      const el=blobWrap.current;
+      if(el&&el.offsetWidth&&el.offsetHeight)grow.current=Math.max(2.6,Math.max(window.innerWidth/el.offsetWidth,window.innerHeight/el.offsetHeight)*1.08-1);
+    });
+    return()=>{off()};
+  },[]);
+
   useSectionFrame(outer,frame=>{
       const now=frame.now;
       const p=progressOf(frame);
@@ -331,7 +342,7 @@ function Hero() {
         sticky.current.style.setProperty("--tail",String(band(p,.5,.8)));
       }
       if(blobWrap.current){
-        blobWrap.current.style.transform=`translate(-50%,-52%) scale(${1+blobT*2.6})`;
+        blobWrap.current.style.transform=`translate(-50%,-52%) scale(${1+blobT*grow.current})`;
       }
       if(blob.current){
         const wobble=Math.sin(now*.0007)*3*(1-blobT);
@@ -609,7 +620,24 @@ function useRealWork(ref:RefObject<HTMLElement>){
 }
 
 function WorkField() {
-  const ref=useRef<HTMLDivElement>(null);const work=useRealWork(ref);useEffect(()=>{const el=ref.current;if(!el)return;const ns=Array.from(el.querySelectorAll<HTMLElement>("[data-depth]"));const move=(e:PointerEvent)=>{const r=el.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;ns.forEach(n=>{const d=Number(n.dataset.depth||0);n.style.transform=`translate3d(${x*d}px,${y*d}px,0) rotate(${x*d*.03}deg)`})};const leave=()=>ns.forEach(n=>n.style.transform="translate3d(0,0,0)");el.addEventListener("pointermove",move);el.addEventListener("pointerleave",leave);return()=>{el.removeEventListener("pointermove",move);el.removeEventListener("pointerleave",leave)}},[]);return <section className="work-field light" data-tone="paper" ref={ref}><div className="work-top"><span>05 / THE WORK</span><span>THE MESSY MIDDLE</span></div><div className="work-word">BUILD</div>{WORK_SLOTS.map(([slot,depth,img],i)=>{const w=work?.[i];return <div key={slot} className={`work-pic ${slot}${w?" is-card":""}`} data-depth={depth}>{w?<Link to={w.href!} className={`work-card is-${w.kind}`}><span>{w.kind==="problem"?"Problem":"Idea"}<small>{w.kind==="problem"?" / posted by a student":" / answering a problem"}</small></span><b>{w.title}</b><em>Open ↗</em></Link>:<img src={img} alt="" loading="lazy" decoding="async"/>}</div>})}<span className="work-note wn-a" data-depth="25">question → evidence</span><span className="work-note wn-b" data-depth="-18">prototype / 04</span><span className="work-note wn-c" data-depth="33">iteration / 07</span><div className="work-rule"/><div className="work-caption"><span>THE THING THAT LOOKS LIKE A STARTUP<br/>IS USUALLY A COLLECTION OF ITERATIONS.</span><span>{work?"VJ / WORK LOG / LIVE FROM THE PLATFORM":"VJ / WORK LOG"}</span></div></section>;
+  const ref=useRef<HTMLDivElement>(null);const work=useRealWork(ref);useEffect(()=>{
+    // The collage drifts toward the cursor through one eased loop. Setting a transform per pointer
+    // event restarted a CSS transition each time, so the cards shook instead of gliding. Mouse
+    // only: on touch, the pointer moves are the finger scrolling the page.
+    const el=ref.current;if(!el||!window.matchMedia("(hover:hover) and (pointer:fine)").matches)return;
+    const ns=Array.from(el.querySelectorAll<HTMLElement>("[data-depth]")).map(n=>({n,d:Number(n.dataset.depth||0)}));
+    const target={x:0,y:0},cur={x:0,y:0};let raf=0;
+    const loop=()=>{
+      cur.x+=(target.x-cur.x)*.09;cur.y+=(target.y-cur.y)*.09;
+      for(const {n,d} of ns)n.style.transform=`translate3d(${(cur.x*d).toFixed(2)}px,${(cur.y*d).toFixed(2)}px,0)`;
+      raf=Math.abs(target.x-cur.x)+Math.abs(target.y-cur.y)>.0005?requestAnimationFrame(loop):0;
+    };
+    const kick=()=>{if(!raf)raf=requestAnimationFrame(loop)};
+    const move=(e:PointerEvent)=>{if(e.pointerType!=="mouse")return;const r=el.getBoundingClientRect();target.x=(e.clientX-r.left)/r.width-.5;target.y=(e.clientY-r.top)/r.height-.5;kick()};
+    const leave=()=>{target.x=0;target.y=0;kick()};
+    el.addEventListener("pointermove",move,{passive:true});el.addEventListener("pointerleave",leave);
+    return()=>{el.removeEventListener("pointermove",move);el.removeEventListener("pointerleave",leave);cancelAnimationFrame(raf)};
+  },[]);return <section className="work-field light" data-tone="paper" ref={ref}><div className="work-top"><span>05 / THE WORK</span><span>THE MESSY MIDDLE</span></div><div className="work-word">BUILD</div>{WORK_SLOTS.map(([slot,depth,img],i)=>{const w=work?.[i];return <div key={slot} className={`work-pic ${slot}${w?" is-card":""}`} data-depth={depth}>{w?<Link to={w.href!} className={`work-card is-${w.kind}`}><span>{w.kind==="problem"?"Problem":"Idea"}<small>{w.kind==="problem"?" / posted by a student":" / answering a problem"}</small></span><b>{w.title}</b><em>Open ↗</em></Link>:<img src={img} alt="" loading="lazy" decoding="async"/>}</div>})}<span className="work-note wn-a" data-depth="25">question → evidence</span><span className="work-note wn-b" data-depth="-18">prototype / 04</span><span className="work-note wn-c" data-depth="33">iteration / 07</span><div className="work-rule"/><div className="work-caption"><span>THE THING THAT LOOKS LIKE A STARTUP<br/>IS USUALLY A COLLECTION OF ITERATIONS.</span><span>{work?"VJ / WORK LOG / LIVE FROM THE PLATFORM":"VJ / WORK LOG"}</span></div></section>;
 }
 
 function Ventures() {
@@ -701,7 +729,7 @@ function Network() {
         const left=Math.min(Math.max(x*sx-pin.w/2,inset),(map?.clientWidth??0)-pin.w-inset);
         node.style.transform=`translate3d(${left}px,${y*sy-26-pin.h}px,0)`;
         // Labels step aside as the panel arrives, so it lands on a clear field.
-        node.style.opacity=String(Math.min(Math.max((draw-pin.t)*7,0),1)*(1-eased*.85));
+        node.style.opacity=String(Math.min(Math.max((draw-pin.t)*7,0),1)*(1-eased*(window.innerWidth<1100?1:.85)));
       });
 
   });
@@ -1013,9 +1041,9 @@ function ActRail(){
 function PageField(){
   const ref=useRef<HTMLDivElement>(null);
   useEffect(()=>{
-    let marks:{top:number,tone:string}[]=[];
+    let marks:{el:HTMLElement,top:number,tone:string,shown:string}[]=[];
     const measure=()=>{
-      marks=Array.from(document.querySelectorAll<HTMLElement>("[data-tone]")).map(el=>({top:el.getBoundingClientRect().top+window.scrollY,tone:el.dataset.tone||"ink"}));
+      marks=Array.from(document.querySelectorAll<HTMLElement>("[data-tone]")).map(el=>({el,top:el.getBoundingClientRect().top+window.scrollY,tone:el.dataset.tone||"ink",shown:""}));
     };
     let raf=0,applied="",appliedMid="",appliedTop="";
     const schedule=()=>{if(!raf)raf=requestAnimationFrame(tick)};
@@ -1028,17 +1056,35 @@ function PageField(){
         const focus=window.scrollY+window.innerHeight*(tall?.7:.5);
         // The blend spans at most 320px around each section boundary. As 60% of the screen height
         // it grew past short sections on tall phones and tablets, leaving their text on mid-grey.
-        const w=Math.min(window.innerHeight*.6,320);
+        const w=Math.min(window.innerHeight*.6,tall?420:320);
         let color=TONES[marks[0].tone];
         let midTone=marks[0].tone;
+        let from=marks[0].tone,to=from,mix=1;
         for(let i=1;i<marks.length;i++){
           const t=ease(band(focus,marks[i].top-w/2,marks[i].top+w/2));
           if(t===0)break;
-          color=t===1?TONES[marks[i].tone]:mixHex(TONES[marks[i-1].tone],TONES[marks[i].tone],t);
+          // On tall screens the content dissolves across the whole window, so the colour itself
+          // turns in its middle stretch, while the screen is between contents: mid-grey is a blink.
+          const c=tall?ease(band(t,.3,.7)):t;
+          color=c===1?TONES[marks[i].tone]:c===0?TONES[marks[i-1].tone]:mixHex(TONES[marks[i-1].tone],TONES[marks[i].tone],c);
           if(t>=.5)midTone=marks[i].tone;
+          if(marks[i].tone!==marks[i-1].tone){from=marks[i-1].tone;to=marks[i].tone;mix=t;}
           if(t<1)break;
         }
         if(color!==applied){ref.current.style.backgroundColor=color;applied=color;}
+        // Tall screens show two sections at once near every boundary, and one screen colour can't
+        // suit both. So as the colour turns, the outgoing tone's sections dissolve in the first
+        // half of the turn and the incoming tone's arrive in the second; text never sits on the
+        // other section's colour, and there is no seam or band between them.
+        for(const m of marks){
+          let o=1;
+          if(tall){
+            if(mix<1&&from!==to)o=m.tone===from?1-band(mix,0,.4):m.tone===to?band(mix,.6,1):0;
+            else o=m.tone===to?1:0;
+          }
+          const v=o.toFixed(3);
+          if(v!==m.shown){m.el.style.opacity=o===1?"":v;m.shown=v;}
+        }
         // Which tone is on screen, for chrome that adapts to it (act rail at mid-screen, header at the top).
         const root=ref.current.parentElement;
         if(midTone!==appliedMid){root?.setAttribute("data-field",midTone);appliedMid=midTone;}

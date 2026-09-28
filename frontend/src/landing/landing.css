@@ -835,31 +835,8 @@ html.lenis{scroll-behavior:auto}
   .vj-landing .statement{display:grid;align-content:center}
 }
 
-/* Tall screens: each section paints its own colour, with a soft seam into its neighbour.
-   One full-screen colour (the PageField blend, kept on wide screens) can't serve two
-   sections at once, and on a tall screen two sections are visible together near every
-   boundary, so text sat on the other section's colour. Each seam sits in whichever
-   neighbour has empty padding at that edge; pinned scenes fill theirs edge to edge. */
-@media(max-aspect-ratio:7/5){
-  .vj-landing{--seam:160px}
-  .vj-landing .page-field{opacity:0}
-  .vj-landing main>[data-tone]{position:relative;isolation:isolate}
-  .vj-landing main>[data-tone="ink"]{background-color:#080808}
-  .vj-landing main>[data-tone="paper"]{background-color:#f0eee8}
-  .vj-landing main>[data-tone="pink"]{background-color:#ff4aa7}
-  .vj-landing :is(.statement,.starting,.ventures)::after,
-  .vj-landing :is(.hubs,.community,.recognition,.faq)::before,
-  .vj-landing .faq::after{content:"";position:absolute;left:0;right:0;height:var(--seam);z-index:-1;pointer-events:none}
-  .vj-landing :is(.statement,.starting,.ventures,.faq)::after{bottom:0}
-  .vj-landing :is(.hubs,.community,.recognition,.faq)::before{top:0}
-  .vj-landing .statement::after{background:linear-gradient(180deg,#080808,#f0eee8)}
-  .vj-landing .starting::after,.vj-landing .ventures::after{background:linear-gradient(180deg,#f0eee8,#080808)}
-  .vj-landing :is(.hubs,.community,.faq)::before{background:linear-gradient(180deg,#080808,#f0eee8)}
-  .vj-landing .recognition::before{background:linear-gradient(180deg,#f0eee8,#080808)}
-  .vj-landing .faq::after{background:linear-gradient(180deg,#f0eee8,#ff4aa7)}
-  .vj-landing .sc-footer{background:linear-gradient(180deg,#ff4aa7,#080808 var(--seam))}
-}
-@media(max-aspect-ratio:7/5) and (max-width:700px){.vj-landing{--seam:110px}}
+/* Tall screens use the same full-screen colour turn as laptops; PageField dissolves each
+   section's content across the turn so two tones never share the screen. */
 /* The counters row steps back as "Connection becomes momentum" arrives (it overlapped on phones). */
 .vj-landing .network-v16-bottom{opacity:calc(1 - var(--network-open,0) * .92)}
 
@@ -872,19 +849,19 @@ html.lenis{scroll-behavior:auto}
 @media(max-width:700px){
   .vj-landing .hero-v12{height:100svh;min-height:620px}
   .vj-landing .hero-v12-top{top:80px}
-  .vj-landing .hero-v12-copy{top:14%;height:34%}
-  .vj-landing .hero-v12-copy h1{font-size:min(15.5vw,74px);line-height:.8}
+  /* Headline: four lines in normal flow under the top label, sized by width and height, so they
+     never touch each other or the label whatever the screen's proportions. */
+  .vj-landing .hero-v12{--hfs:min(14.2vw,7.2svh,70px);--hb:calc(122px + 3.45 * var(--hfs));--it:calc(max(100svh,620px) - 172px)}
+  .vj-landing .hero-v12-copy{top:122px;height:auto;left:18px;right:18px}
+  .vj-landing .hero-v12-copy h1{position:relative;inset:auto;display:grid;font-size:var(--hfs);line-height:.86}
   .vj-landing .hero-v12-kicker{display:none}
-  .vj-landing .hero-v12-what{left:0;top:0}
-  .vj-landing .hero-v12-if{right:0;left:auto;top:24%}
-  .vj-landing .hero-v12-didnt{left:0;top:48%}
-  .vj-landing .hero-v12-need{right:0;left:auto;top:72%;font-size:.86em}
-  /* Tall enough that the lens, grown 3.6x on scroll, covers the whole screen of a tall phone. */
-  .vj-landing .hero-v12-stage-wrap{top:62%;width:60vw;height:29svh}
+  .vj-landing .hero-v12-copy .hero-v12-line{position:relative;inset:auto}
+  .vj-landing .hero-v12-if{justify-self:end}
+  .vj-landing .hero-v12-need{font-size:.84em}
+  /* The lens fills the space between the headline and the buttons, then moves to the centre as
+     the headline fades (--fade) so it can grow to cover the screen. */
+  .vj-landing .hero-v12-stage-wrap{width:min(60vw,300px);height:max(120px,min(30svh,calc(var(--it) - var(--hb) - 40px)));top:calc(50% * (1 - var(--fade,1)) + (var(--hb) + var(--it)) / 2 * var(--fade,1))}
   .vj-landing .hero-v12-stage-caption{display:none}
-  /* The lens starts below the headline and moves to the centre as the headline fades
-     (--fade), so when it grows it covers the whole screen instead of leaving a band on top. */
-  .vj-landing .hero-v12-stage-wrap{top:calc(50% + 12% * var(--fade,1))}
   .vj-landing .opening{height:170vh}
   .vj-landing .hero-v12-intro{bottom:max(26px,4svh);right:18px;gap:14px}
   .vj-landing .hero-v12-intro p{font-size:14px;line-height:1.45}
@@ -925,3 +902,20 @@ html.lenis{scroll-behavior:auto}
   .vj-landing .opening-sticky:after{content:"";position:absolute;inset:auto 0 0;z-index:8;height:38%;background:linear-gradient(transparent,#080808);opacity:var(--tail,0);pointer-events:none}
 }
 @media(max-aspect-ratio:7/5) and (min-width:701px){.vj-landing .opening{height:190vh}}
+
+/* Narrow screens: "03 / THREE LENSES" repeated the title right above it and collided with it. */
+@media(max-width:900px){.vj-landing .sphere-top{display:none}}
+
+/* Build, phones: the real-work cards in a staggered two-column grid in the page flow (they
+   overlapped each other and hid their "Open" row), with BUILD as the heading above them. */
+@media(max-width:700px){
+  .vj-landing .work-field:has(.is-card){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;height:auto;padding:96px 18px 64px}
+  .vj-landing .work-field:has(.is-card) .work-top{position:static;grid-column:1/-1}
+  .vj-landing .work-field:has(.is-card) .work-word{position:static;grid-column:1/-1;margin:6px 0 18px;font-size:31vw;line-height:.78}
+  .vj-landing .work-field:has(.is-card) .work-pic{position:static;width:auto;height:auto;min-height:clamp(170px,48vw,240px);max-width:none}
+  .vj-landing .work-field:has(.is-card) :is(.wp-b,.wp-d){margin-top:34px;margin-bottom:-34px}
+  .vj-landing .work-field:has(.is-card) .work-rule{display:none}
+  .vj-landing .work-field:has(.is-card) .work-caption{position:static;grid-column:1/-1;margin-top:56px}
+}
+/* The collage drifts with the cursor through a smoothed loop in JS, not a restarted transition. */
+.vj-landing .work-pic,.vj-landing .work-note{transition:none}
