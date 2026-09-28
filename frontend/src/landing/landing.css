@@ -756,3 +756,51 @@ html.lenis{scroll-behavior:auto}
   .vj-landing .work-card b{font-size:15px;overflow-wrap:normal;hyphens:manual}
 }
 @media(max-width:700px){.vj-landing .work-field:has(.is-card) .work-note{display:none}}
+
+/* Start here: the three things a student comes for, one screen below the hero. */
+.vj-landing .start-here{position:relative;padding:130px 7vw 120px}
+.vj-landing .start-here-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.55fr);align-items:end;gap:24px 60px}
+.vj-landing .start-here-head .chapter-label{grid-column:1/-1}
+.vj-landing .start-here-head h2{margin:0;font-size:clamp(48px,min(6.4vw,12vh),104px);line-height:.86;letter-spacing:-.08em}
+.vj-landing .start-here-head h2 i{font-style:normal;color:var(--lime)}
+.vj-landing .start-here-head p{margin:0 0 6px;color:rgba(255,255,255,.62);font-size:16px;line-height:1.5}
+.vj-landing .start-here-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(20px,2.4vw,36px);margin-top:64px}
+.vj-landing .start-col{display:flex;flex-direction:column;gap:18px;padding:26px;border:1px solid rgba(255,255,255,.1);border-radius:22px;background:rgba(255,255,255,.025)}
+.vj-landing .start-col.is-journey{border-color:color-mix(in srgb,var(--lime) 40%,transparent);background:color-mix(in srgb,var(--lime) 5%,transparent)}
+.vj-landing .start-col-label{display:flex;align-items:center;gap:10px;color:#fff;font:12px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.vj-landing .start-col-label b{color:var(--lime);font-weight:400}
+.vj-landing .start-list,.vj-landing .start-steps{display:grid;margin:0;padding:0;list-style:none}
+.vj-landing .start-list li+li,.vj-landing .start-steps li+li{border-top:1px solid rgba(255,255,255,.08)}
+.vj-landing .start-list a{display:grid;gap:5px;padding:14px 0;color:#fff;text-decoration:none;transition:padding .3s cubic-bezier(.2,.7,.2,1)}
+.vj-landing .start-list a:hover{padding-left:8px}
+.vj-landing .start-list small{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.5);font:11px var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.vj-landing .start-list small i{width:7px;height:7px;border-radius:50%;background:var(--pink)}
+.vj-landing .start-list small i.is-idea{background:var(--lime)}
+.vj-landing .start-list b{font-size:17px;font-weight:800;line-height:1.2;letter-spacing:-.03em}
+.vj-landing .start-list a:hover b{color:var(--lime)}
+.vj-landing .start-list span{color:rgba(255,255,255,.6);font-size:14px;line-height:1.4}
+.vj-landing .start-empty{padding:14px 0;color:rgba(255,255,255,.5);font-size:14px}
+.vj-landing .start-note{margin:0;color:rgba(255,255,255,.6);font-size:14px}
+.vj-landing .start-more{margin-top:auto;align-self:flex-start;padding-bottom:6px;border-bottom:1px solid currentColor;color:#fff;font-size:13px;font-weight:800;text-decoration:none}
+.vj-landing .start-more:hover{color:var(--lime)}
+.vj-landing .start-steps a{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;padding:15px 0;color:#fff;text-decoration:none}
+.vj-landing .start-steps em{padding-top:3px;color:var(--lime);font:12px var(--mono);font-style:normal;letter-spacing:.1em}
+.vj-landing .start-steps b{display:block;font-size:17px;font-weight:800;line-height:1.2;letter-spacing:-.03em}
+.vj-landing .start-steps span{display:block;margin-top:5px;color:rgba(255,255,255,.6);font-size:14px;line-height:1.45}
+.vj-landing .start-steps a:hover b{color:var(--lime)}
+.vj-landing .start-cta{margin-top:auto;align-self:flex-start;padding:14px 20px;border-radius:999px;background:var(--lime);color:#080808;font-size:14px;font-weight:800;text-decoration:none}
+@media(max-width:1050px){
+  .vj-landing .start-here-grid{grid-template-columns:1fr}
+  .vj-landing .start-here-head{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+  .vj-landing .start-here{padding:90px 18px 80px}
+  .vj-landing .start-here-head h2{font-size:clamp(40px,12vw,56px)}
+  .vj-landing .start-here-grid{margin-top:40px}
+  .vj-landing .start-col{padding:20px}
+}
+@media(min-width:701px){
+  .vj-landing .start-here{padding-top:clamp(80px,13vh,120px);padding-bottom:clamp(80px,13vh,120px)}
+  .vj-landing .start-here-head h2{font-size:clamp(44px,min(5.2vw,10vh),88px)}
+  .vj-landing .start-here-grid{margin-top:clamp(32px,6vh,56px)}
+}

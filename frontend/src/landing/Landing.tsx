@@ -4,6 +4,9 @@ import Lenis from "lenis";
 import { useUser } from "@/pages/UserContext";
 import { counters } from "@/data/mockData";
 import { FUNDED_VENTURES } from "@/data/ventures";
+import { startupPrograms, type StartupProgram } from "@/data/startupPrograms";
+import { getIdeaNavigationSlug } from "@/utils/slugUtils";
+import { isReadableTitle } from "@/utils/readableTitle";
 import { Arrow, Magnetic, SiteFooter, SiteNav } from "@/components/site/SiteChrome";
 import { onMeasure, pageMetrics, progressOf, useSectionFrame } from "./frame";
 import { loadNetworkData, type NetItem } from "./network/data";
@@ -844,6 +847,89 @@ function usePlatformRecord(ref:RefObject<HTMLElement>){
 
 const recordDate=(iso:string)=>new Date(iso).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
 
+// Start here: what a student came for, right under the hero, so nobody has to scroll through
+// the story to find it. What's happening (real posts), what support exists (programs running
+// now), and the first step. The story continues below for anyone who wants it.
+type StartPost={key:string;kind:"problem"|"idea";title:string;href:string;date:string};
+const SUPPORT_IDS=["startup-challenge-2","mentorship-program-1","innovation-internship-1","monthly-connect-4"];
+
+function useLatestPosts(){
+  const [posts,setPosts]=useState<StartPost[]|null|false>(null);
+  useEffect(()=>{
+    let live=true;
+    const get=(url:string)=>fetch(url).then(r=>r.ok?r.json():Promise.reject(r.status));
+    Promise.allSettled([get(`${API_BASE}/problem-api/problems?limit=8`),get(`${API_BASE}/idea-api/ideas`)]).then(([p,i])=>{
+      if(!live)return;
+      if(p.status!=="fulfilled"&&i.status!=="fulfilled"){setPosts(false);return;}
+      const rawP=p.status==="fulfilled"?(p.value?.problems??p.value??[]):[];
+      const rawI=i.status==="fulfilled"&&Array.isArray(i.value)?i.value:[];
+      const all:StartPost[]=[
+        ...rawP.filter((x:any)=>x?.problemId!=null&&x.title&&x.createdAt).map((x:any)=>({key:`p-${x.problemId}`,kind:"problem" as const,title:String(x.title).trim(),href:`/problems/${x.problemId}`,date:x.createdAt})),
+        ...rawI.filter((x:any)=>x?.ideaId&&x.title&&x.createdAt).map((x:any)=>({key:`i-${x.ideaId}`,kind:"idea" as const,title:String(x.title).trim(),href:`/ideas/${getIdeaNavigationSlug({title:String(x.title),ideaId:String(x.ideaId)})}`,date:x.createdAt})),
+      ].filter(x=>isReadableTitle(x.title)).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+      setPosts(all);
+    });
+    return()=>{live=false};
+  },[]);
+  return posts;
+}
+
+function StartHere(){
+  const {user}=useUser();
+  const posts=useLatestPosts();
+  const support=SUPPORT_IDS.map(id=>startupPrograms.find(p=>p.id===id)).filter((p):p is StartupProgram=>Boolean(p));
+  const running=startupPrograms.filter(p=>p.status==="active").length;
+  const mentors=startupPrograms.find(p=>p.id==="mentorship-program-1")?.mentors?.length??0;
+  const need=(to:string)=>user?to:"/login";
+  const steps:[string,string,string][]=[
+    ["Post a problem you've noticed","On campus, at home, anywhere. Problems are where ventures start.",need("/submit-problem")],
+    ["Turn it into an idea","Pick a problem, yours or someone else's, and propose a way to solve it.",need("/submit-idea")],
+    ["Walk the 7-stage journey","Tick off each stage, pass its quiz, and unlock the next one.","/journey"],
+  ];
+  return <section className="start-here dark" data-tone="ink" id="start-here">
+    <Reveal className="start-here-head">
+      <span className="chapter-label">START HERE</span>
+      <h2>WHAT&apos;S ON.<br/><i>WHERE TO BEGIN.</i></h2>
+      <p>What's happening, the support you can get, and your first step. The whole story is further down.</p>
+    </Reveal>
+    <div className="start-here-grid" data-reveal>
+      <div className="start-col">
+        <span className="start-col-label"><b>01</b>Happening now</span>
+        <ul className="start-list">
+          {posts&&posts.length?posts.map(post=><li key={post.key}><Link to={post.href}>
+            <small><i className={`is-${post.kind}`}/>{post.kind==="problem"?"Problem posted":"Idea posted"} · {recordDate(post.date)}</small>
+            <b>{post.title}</b>
+          </Link></li>):<li className="start-empty">{posts===false?"Couldn't load the latest posts.":"Loading the latest posts…"}</li>}
+        </ul>
+        <p className="start-note">{running} programs are running right now.</p>
+        <Link className="start-more" to="/problems">See every problem <Arrow/></Link>
+      </div>
+      <div className="start-col">
+        <span className="start-col-label"><b>02</b>Support you can get</span>
+        <ul className="start-list">
+          {support.map(p=><li key={p.id}><Link to={`/programs/${p.id}`}>
+            <small>{p.duration}</small>
+            <b>{p.title}</b>
+            <span>{p.id==="mentorship-program-1"&&mentors?`${mentors} faculty mentors, one-on-one, by appointment`:p.subtitle}</span>
+          </Link></li>)}
+        </ul>
+        <Link className="start-more" to="/programs">All {startupPrograms.length} programs <Arrow/></Link>
+      </div>
+      <div className="start-col is-journey">
+        <span className="start-col-label"><b>03</b>Start your journey</span>
+        <ol className="start-steps">
+          {steps.map(([title,text,to],i)=><li key={title}><Link to={to}>
+            <em>{String(i+1).padStart(2,"0")}</em>
+            <div><b>{title}</b><span>{text}</span></div>
+          </Link></li>)}
+        </ol>
+        <Magnetic href={user?"/journey":"/login"} className="start-cta">{user?"Continue your journey":"Start your journey"} <Arrow/></Magnetic>
+      </div>
+    </div>
+  </section>;
+}
+
+
 function Community() {
   const ref=useRef<HTMLElement>(null);
   const activity=useJourneyActivity();
@@ -980,7 +1066,7 @@ export default function Landing(){
     schedule();
     return()=>{stop();window.removeEventListener("scroll",schedule);cancelAnimationFrame(raf)};
   },[]);
-  return <div className="vj-landing"><Intro/><Cursor/><SmoothScroll/><PageField/><ActRail/><div className="global-progress"><span ref={progressRef}/></div><a href="#main" className="skip-link">Skip to content</a><SiteNav overlay brandHref="#top"/><main id="main" tabIndex={-1}><Hero/><section className="statement dark" data-tone="ink"><Reveal><span className="chapter-label">00 / THE PREMISE</span><h2>DON&apos;T START<br/><span>WITH THE IDEA.</span></h2><p>Start with the thing that keeps breaking.</p></Reveal></section><Morph/><Starting/><Journey/><Sphere/><Hubs/><WorkField/><Ventures/><Network/><Community/><section className="recognition dark" data-tone="ink"><Reveal><span className="chapter-label">08A / SIGNALS</span><h2>PROOF IS A<br/><i>MILESTONE.</i></h2><p>Recognition and funding are signals along the journey, not the destination.</p></Reveal><div className="recognition-list"><div><span>2024</span><b>Best Innovation Award</b><small>National Startup Competition</small></div><div><span>₹2.8Cr</span><b>Total funding raised</b><small>Across the current funded portfolio</small></div><div><span>{String(counters.funded).padStart(2,"0")}</span><b>Funded startups</b><small>Ventures that moved beyond the idea stage</small></div></div></section><FAQ/><section className="contact-v13 dark" data-tone="pink" id="contact">
+  return <div className="vj-landing"><Intro/><Cursor/><SmoothScroll/><PageField/><ActRail/><div className="global-progress"><span ref={progressRef}/></div><a href="#main" className="skip-link">Skip to content</a><SiteNav overlay brandHref="#top"/><main id="main" tabIndex={-1}><Hero/><StartHere/><section className="statement dark" data-tone="ink"><Reveal><span className="chapter-label">00 / THE PREMISE</span><h2>DON&apos;T START<br/><span>WITH THE IDEA.</span></h2><p>Start with the thing that keeps breaking.</p></Reveal></section><Morph/><Starting/><Journey/><Sphere/><Hubs/><WorkField/><Ventures/><Network/><Community/><section className="recognition dark" data-tone="ink"><Reveal><span className="chapter-label">08A / SIGNALS</span><h2>PROOF IS A<br/><i>MILESTONE.</i></h2><p>Recognition and funding are signals along the journey, not the destination.</p></Reveal><div className="recognition-list"><div><span>2024</span><b>Best Innovation Award</b><small>National Startup Competition</small></div><div><span>₹2.8Cr</span><b>Total funding raised</b><small>Across the current funded portfolio</small></div><div><span>{String(counters.funded).padStart(2,"0")}</span><b>Funded startups</b><small>Ventures that moved beyond the idea stage</small></div></div></section><FAQ/><section className="contact-v13 dark" data-tone="pink" id="contact">
   <div className="contact-v13-back" aria-hidden="true">
     <span>QUESTION</span><span>BUILD</span><span>PROVE</span><span>IMPACT</span>
   </div>
