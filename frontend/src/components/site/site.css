@@ -98,3 +98,11 @@
   .sc-pill{white-space:nowrap}
   .sc-menu{display:grid;gap:5px}
 }
+/* Touch screens: small text controls keep their look but get a finger-sized hit area. */
+@media(pointer:coarse){
+  .sc-menu{padding:18px 11px;margin:-18px -11px}
+  .lx-textbtn,.ph-back{position:relative}
+  .lx-textbtn:after,.ph-back:after{content:"";position:absolute;inset:-14px -8px}
+  .sc-footer .sc-footer-grid>div:not(.sc-footer-brand){gap:2px}
+  .sc-footer .sc-footer-grid a{padding:7px 10px}
+}

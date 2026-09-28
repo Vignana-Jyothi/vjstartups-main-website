@@ -340,7 +340,7 @@ const handleUpvote = async (problemId: string) => {
                     {showAllTags ? "Show top 20" : "Show all tags"}
                   </button>
                 </div>
-                <div className="lx-tags">
+                <div className={`lx-tags${showAllTags ? " is-all" : ""}`}>
                   {(showAllTags ? tagsWithCounts : tagsWithCounts.slice(0, 20)).map(([tag, count]) => (
                     <button
                       key={tag}

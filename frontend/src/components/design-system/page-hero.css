@@ -147,3 +147,11 @@
   .ph .ph-title{overflow-wrap:break-word}
   .ph--stack .ph-title{font-size:16vw}
 }
+/* Phones: centred stats sit side by side (three across, or two by two) instead of one per row. */
+@media(max-width:700px){
+  .ph--center .ph-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 0;margin-top:32px}
+  .ph--center .ph-stats:has(>div:nth-child(3):last-child){grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ph--center .ph-stats>div{padding:16px 6px 0}
+  .ph--center .ph-stats dt{flex-wrap:wrap;gap:4px 8px;font-size:11px;letter-spacing:.1em;line-height:1.35}
+  .ph--center .ph-stats dd{font-size:30px}
+}

@@ -304,7 +304,7 @@ const Ideas = () => {
                     </button>
                   )}
                 </div>
-                <div className="lx-tags">
+                <div className={`lx-tags${showAllTags ? " is-all" : ""}`}>
                   {tagsWithCounts.slice(0, showAllTags ? tagsWithCounts.length : 20).map(([tag, count]) => (
                     <span key={tag} className="lx-tag is-static">{tag}<small>{count}</small></span>
                   ))}
