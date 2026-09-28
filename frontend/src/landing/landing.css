@@ -919,3 +919,9 @@ html.lenis{scroll-behavior:auto}
   .vj-landing .venture-menu small{font-size:11px;letter-spacing:.06em}
   .vj-landing .venture-image{height:64vw}
 }
+/* Tall screens: the opening releases with the photo still showing, so its lower edge melts into
+   the dark section that follows instead of ending on a hard line. */
+@media(max-aspect-ratio:7/5){
+  .vj-landing .opening-sticky:after{content:"";position:absolute;inset:auto 0 0;z-index:8;height:38%;background:linear-gradient(transparent,#080808);opacity:var(--tail,0);pointer-events:none}
+}
+@media(max-aspect-ratio:7/5) and (min-width:701px){.vj-landing .opening{height:190vh}}

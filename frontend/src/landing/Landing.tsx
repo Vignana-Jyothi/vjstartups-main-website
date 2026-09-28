@@ -313,8 +313,11 @@ function Hero() {
       const textOut=band(p,.16,.38);
       const blobT=band(p,.30,.82);
       const bgT=band(p,.32,.88);
+      // Phones and portrait tablets: the photo stays under the numbers and both leave with the
+      // scroll, so the pin never releases onto an empty black screen.
+      const tall=window.innerWidth/window.innerHeight<1.4;
       const ribbonIn=band(p,.55,.70);
-      const ribbonOut=band(p,.84,.97);
+      const ribbonOut=tall?0:band(p,.84,.97);
       const ribbonOpacity=Math.max(0,ribbonIn-ribbonOut);
 
       // Lets the overlay header switch to dark ink while the hero is still white.
@@ -325,6 +328,7 @@ function Hero() {
         sticky.current.style.setProperty("--fade",String(1-textOut));
         sticky.current.style.setProperty("--fadeY",`${-textOut*46}px`);
         sticky.current.style.background=mixHex("#ffffff","#080808",bgT);
+        sticky.current.style.setProperty("--tail",String(band(p,.5,.8)));
       }
       if(blobWrap.current){
         blobWrap.current.style.transform=`translate(-50%,-52%) scale(${1+blobT*2.6})`;
@@ -335,10 +339,10 @@ function Hero() {
         blob.current.style.borderRadius=`${r}%`;
       }
       if(blobImg.current){
-        blobImg.current.style.filter=`saturate(${(.52*(1-blobT)).toFixed(3)}) contrast(1.04) brightness(${(1-blobT*.82).toFixed(3)})`;
+        blobImg.current.style.filter=`saturate(${(.52*(1-blobT)).toFixed(3)}) contrast(1.04) brightness(${(1-blobT*(tall?.45:.82)).toFixed(3)})`;
       }
       if(cover.current){
-        cover.current.style.opacity=String(Math.min(1,blobT*1.1));
+        cover.current.style.opacity=String(tall?blobT*.5:Math.min(1,blobT*1.1));
       }
       if(ribbon.current){
         ribbon.current.style.opacity=String(ribbonOpacity);
