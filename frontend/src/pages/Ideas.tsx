@@ -1,5 +1,5 @@
 import { useState, useEffect, type CSSProperties } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Search, Plus } from "lucide-react";
 import IdeaCard from "@/components/IdeaCardCompact";
 import { PageHero } from "@/components/design-system/PageHero";
@@ -20,15 +20,12 @@ const Ideas = () => {
   const [relatedProblem, setRelatedProblem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useUser();
+  const navigate = useNavigate();
   
   // Fetch ideas from backend
   useEffect(() => {
+    // Ideas are public to read; signing in is only needed to post or upvote.
     const fetchIdeas = async () => {
-      if (!user?.email) {
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
       try {
         let endpoint = `${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas`;
@@ -74,7 +71,7 @@ const Ideas = () => {
         // Mark which ideas the current user has already liked and attach problem info
         const updatedIdeas = res.data.map((i: any) => ({
           ...i,
-          likedByUser: i.upvotedBy.includes(user.email),
+          likedByUser: Boolean(user?.email && (i.upvotedBy || []).includes(user.email)),
           relatedProblemId: i.relatedProblemId,
           relatedProblemTitle: i.relatedProblemId && problemMap[i.relatedProblemId]
             ? problemMap[i.relatedProblemId].title
@@ -147,7 +144,10 @@ const Ideas = () => {
   
   // Handle upvoting an idea
   const handleUpvote = async (ideaId: string) => {
-    if (!user?.email) return;
+    if (!user?.email) {
+      navigate("/login");
+      return;
+    }
 
     try {
       const res = await axios.post(
@@ -251,7 +251,7 @@ const Ideas = () => {
       />
 
       <section className="lx-section">
-        {user && (
+        {(
           <div className="lx-toolbar">
             <div className="lx-toolbar-row">
               <label className="lx-search">
@@ -314,20 +314,13 @@ const Ideas = () => {
           </div>
         )}
 
-        {!user ? (
-          <div className="lx-gate">
-            <span>Members only</span>
-            <h2>Sign in to see <em>the ideas.</em></h2>
-            <p>Log in to explore student ideas, follow how they move through the stages, and submit your own.</p>
-            <Link to="/login" className="lx-cta">Login to continue ↗</Link>
-          </div>
-        ) : loading ? (
+        {loading ? (
           <div className="lx-loading">Loading ideas</div>
         ) : filteredIdeas.length === 0 ? (
           <div className="lx-empty">
             <strong>{problemFilter ? "No ideas for this problem yet." : ideas.length ? "No matches." : "No ideas yet."}</strong>
             {problemFilter || !ideas.length ? (
-              <Link to="/submit-idea" className="lx-textbtn">Submit the first idea ↗</Link>
+              <Link to={user ? "/submit-idea" : "/login"} className="lx-textbtn">Submit the first idea ↗</Link>
             ) : (
               <button className="lx-textbtn" onClick={clearFilters}>Clear filters</button>
             )}
@@ -339,6 +332,15 @@ const Ideas = () => {
                 <IdeaCard idea={idea} onUpvote={handleUpvote} onStageUpdate={handleStageUpdate} />
               </div>
             ))}
+          </div>
+        )}
+
+        {!user && (
+          <div className="lx-gate">
+            <span>Join in</span>
+            <h2>Have a way <em>to solve one?</em></h2>
+            <p>Sign in with your college Google account to post your idea, back the ones you believe in and follow how they move through the stages.</p>
+            <Link to="/login" className="lx-cta">Sign in to post ↗</Link>
           </div>
         )}
       </section>

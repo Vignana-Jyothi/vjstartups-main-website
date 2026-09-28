@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Search, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import UpvoteButton from "@/components/UpvoteButton";
 import { PageHero } from "@/components/design-system/PageHero";
@@ -29,13 +29,14 @@ const Problems = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
+  const navigate = useNavigate();
 
   const itemsPerPage = 12; // Works well: mobile=12 rows, tablet=6 rows, desktop=4 rows
 
   // Fetch all problems at once
+  // Problems are public (every problem page already is); signing in is only needed to post,
+  // upvote or comment.
   const fetchAllProblems = async () => {
-    if (!user?.email) return;
-
     setIsLoading(true);
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/problem-api/problems?limit=1000`);
@@ -44,7 +45,7 @@ const Problems = () => {
       // Mark which problems the current user has already liked
       const updatedProblems = problemsData.map((p: any) => ({
         ...p,
-        likedByUser: p.upvotedBy.includes(user.email)
+        likedByUser: Boolean(user?.email && (p.upvotedBy || []).includes(user.email))
       }));
       
       setAllProblems(updatedProblems);
@@ -218,7 +219,10 @@ const Problems = () => {
   };
 
 const handleUpvote = async (problemId: string) => {
-  if (!user?.email) return;
+  if (!user?.email) {
+    navigate("/login");
+    return;
+  }
 
   try {
     const res = await axios.post(
@@ -292,7 +296,7 @@ const handleUpvote = async (problemId: string) => {
       />
 
       <section className="lx-section">
-        {user && (
+        {(
           <div className="lx-toolbar">
             <div className="lx-toolbar-row">
               <label className="lx-search">
@@ -309,9 +313,11 @@ const handleUpvote = async (problemId: string) => {
                 <option value="upvotes">Most upvoted</option>
                 <option value="comments">Most discussed</option>
               </select>
-              <button className={`lx-toggle${showMyProblems ? " is-on" : ""}`} onClick={() => setShowMyProblems(!showMyProblems)} aria-pressed={showMyProblems}>
-                My problems
-              </button>
+              {user && (
+                <button className={`lx-toggle${showMyProblems ? " is-on" : ""}`} onClick={() => setShowMyProblems(!showMyProblems)} aria-pressed={showMyProblems}>
+                  My problems
+                </button>
+              )}
             </div>
 
             {(searchTerm || selectedTags.length > 0 || showMyProblems) && (
@@ -427,15 +433,7 @@ const handleUpvote = async (problemId: string) => {
 
         {isLoading && <div className="lx-loading">Loading problems</div>}
 
-        {!user ? (
-          <div className="lx-gate">
-            <span>Members only</span>
-            <h2>Sign in to see <em>the problems.</em></h2>
-            <p>Log in to explore community problems, upvote the ones that matter, and submit your own challenges.</p>
-            <Link to="/login" className="lx-cta">Login to continue ↗</Link>
-          </div>
-        ) : (
-          !isLoading && filteredProblems.length === 0 && (
+        {!isLoading && filteredProblems.length === 0 && (
             <div className="lx-empty">
               <strong>{allProblems.length ? "No matches." : "No problems yet."}</strong>
               {allProblems.length ? (
@@ -444,7 +442,15 @@ const handleUpvote = async (problemId: string) => {
                 <Link to="/submit-problem" className="lx-textbtn">Be the first to submit one ↗</Link>
               )}
             </div>
-          )
+        )}
+
+        {!user && (
+          <div className="lx-gate">
+            <span>Join in</span>
+            <h2>Seen a problem <em>worth solving?</em></h2>
+            <p>Sign in with your college Google account to post your own, upvote the ones that matter and join the discussion.</p>
+            <Link to="/login" className="lx-cta">Sign in to post ↗</Link>
+          </div>
         )}
       </section>
     </div>
