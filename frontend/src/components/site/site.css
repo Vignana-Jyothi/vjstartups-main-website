@@ -89,3 +89,12 @@
   .sc-footer-grid{grid-template-columns:1fr 1fr;gap:30px 18px;margin-top:75px}
   .sc-footer-bottom{flex-direction:column;gap:9px}
 }
+/* Tablets: the full link row, sign-in and "Start building" no longer fit (the button broke
+   onto two lines), so the links move into the menu and the main button stays. */
+@media(min-width:701px) and (max-width:900px){
+  .sc-nav-inner{grid-template-columns:1fr auto auto;gap:20px}
+  .sc-links{display:none}
+  .sc-right>:not(.sc-pill){display:none}
+  .sc-pill{white-space:nowrap}
+  .sc-menu{display:grid;gap:5px}
+}

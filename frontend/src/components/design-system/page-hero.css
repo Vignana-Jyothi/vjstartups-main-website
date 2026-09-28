@@ -141,3 +141,9 @@
 .ph{border-bottom:0}
 .ph-ghost{-webkit-mask-image:linear-gradient(180deg,#000 35%,transparent 88%);mask-image:linear-gradient(180deg,#000 35%,transparent 88%)}
 .auth .auth-statement h1{font-size:clamp(56px,min(10vw,19vh),168px)}
+/* Phones: the stack header's 84px minimum was wider than a 360px screen for words like
+   "STARTUPS", which then broke mid-word. */
+@media(max-width:700px){
+  .ph .ph-title{overflow-wrap:break-word}
+  .ph--stack .ph-title{font-size:16vw}
+}

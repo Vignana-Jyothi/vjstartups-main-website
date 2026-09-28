@@ -71,3 +71,8 @@
   .pg-row-name{grid-column:1/-1}
 }
 @media(prefers-reduced-motion:reduce){.pg-row:before{transition:none}}
+/* Tablets: the category label moves above its rows so program names get the full width. */
+@media(min-width:761px) and (max-width:1024px){
+  .pg-group{grid-template-columns:1fr;gap:0}
+  .pg-group-label{position:static;grid-auto-flow:column;justify-content:start;gap:12px;padding:24px 0 4px}
+}
