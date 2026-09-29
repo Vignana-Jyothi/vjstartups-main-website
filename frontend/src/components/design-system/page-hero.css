@@ -155,3 +155,10 @@
   .ph--center .ph-stats dt{flex-wrap:wrap;gap:4px 8px;font-size:11px;letter-spacing:.1em;line-height:1.35}
   .ph--center .ph-stats dd{font-size:30px}
 }
+/* No seam under the header: it takes the page's own colour, and its corner glow fades out
+   before the header ends instead of being clipped by it (that clipped edge read as a hard cut). */
+.ph{background:transparent}
+.ph:before{-webkit-mask-image:linear-gradient(180deg,#000 35%,transparent 92%);mask-image:linear-gradient(180deg,#000 35%,transparent 92%)}
+/* The ghost word hangs below the header's bottom edge, which clipped it flat; it is fully faded
+   before that edge now. */
+.ph-ghost{-webkit-mask-image:linear-gradient(180deg,#000 12%,transparent 56%);mask-image:linear-gradient(180deg,#000 12%,transparent 56%)}
