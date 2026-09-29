@@ -1,0 +1,9 @@
+# Installed and built fresh inside the image.
+node_modules
+dist
+npm-debug.log*
+# frontend/.env IS needed: Vite reads it at build time (the deploy writes it). Its values are
+# public by nature (they end up in the browser bundle), unlike the backend's.
+.env.local
+.env.*.local
+.claude

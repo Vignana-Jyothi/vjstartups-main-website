@@ -1,0 +1,14 @@
+# Secrets are passed to the container at run time (docker-compose env_file/environment), never
+# baked into image layers.
+.env
+.env.*
+!.env.example
+# Installed fresh inside the image.
+node_modules
+npm-debug.log*
+# Runtime and local-only files.
+uploads
+tests
+.claude
+*.md
+!README.md
