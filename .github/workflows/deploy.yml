@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ github.ref == 'refs/heads/main' && 'gamma' || 'dev-ai' }}
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'vj-production' || 'vj-development' }}
-      url: ${{ github.ref == 'refs/heads/main' && 'https://vjstartup.com' || 'https://dev-vj.vjstartup.com' }}
+      url: ${{ github.ref == 'refs/heads/main' && 'https://www.vjstartup.com' || 'https://dev-vj.vjstartup.com' }}
 
     steps:
       - name: Checkout Code
@@ -21,8 +21,10 @@ jobs:
 
       - name: Create .env file for backend
         run: |
+          # No DATABASE_URL here: docker-compose.yml sets the database connection
+          # itself (from the PLANE_DATABASE_URL secret, see the next step) and
+          # would override anything written to this file.
           cat << 'EOF' > backend/.env
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
           PORT=${{ secrets.PORT || 6220 }}
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           ADMIN_EMAILS=${{ secrets.ADMIN_EMAILS }}
@@ -34,6 +36,32 @@ jobs:
           EOF
           if [ -z "${{ secrets.PLANE_INTERNAL_TOKEN }}" ]; then
             echo "::warning::PLANE_INTERNAL_TOKEN secret is not set - the internal auth bridge to Plane (Google login user creation, admin proxy, startup project provisioning) will not work. It must exactly match PUBLIC_SITE_INTERNAL_TOKEN in Plane's own deploy secrets."
+          fi
+
+          # Optional settings - only written when the repository variable is set,
+          # so the application defaults apply otherwise (backend/config/appConfig.js).
+          if [ -n "${INSTITUTIONAL_EMAIL_DOMAINS}" ]; then
+            echo "INSTITUTIONAL_EMAIL_DOMAINS=${INSTITUTIONAL_EMAIL_DOMAINS}" >> backend/.env
+          fi
+          if [ -n "${CORS_ORIGINS}" ]; then
+            echo "CORS_ORIGINS=${CORS_ORIGINS}" >> backend/.env
+          fi
+        env:
+          INSTITUTIONAL_EMAIL_DOMAINS: ${{ vars.INSTITUTIONAL_EMAIL_DOMAINS }}
+          CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+
+      - name: Set the database connection for docker compose
+        env:
+          PLANE_DATABASE_URL: ${{ secrets.PLANE_DATABASE_URL }}
+        run: |
+          # docker-compose.yml reads PLANE_DATABASE_URL from a .env file beside it
+          # (gitignored). Unset means "use the built-in default", so remove any
+          # stale file rather than leave an old value behind.
+          if [ -n "$PLANE_DATABASE_URL" ]; then
+            printf "PLANE_DATABASE_URL='%s'\n" "$PLANE_DATABASE_URL" > .env
+          else
+            rm -f .env
+            echo "::warning::PLANE_DATABASE_URL secret is not set - using the built-in default connection from docker-compose.yml. Set it when Plane's database credentials change."
           fi
 
       - name: Create .env file for frontend
