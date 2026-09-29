@@ -26,7 +26,6 @@ app.use('/uploads', express.static('uploads'));
   try {
     await prisma.$connect();
     console.log('✅ PostgreSQL Connected via Prisma');
-    await require('./config/ensureSchema').ensureSchema();
   } catch (err) {
     console.error('❌ DB Connection Failed:', err);
     process.exit(1);
