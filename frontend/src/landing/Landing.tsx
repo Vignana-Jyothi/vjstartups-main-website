@@ -2,7 +2,7 @@ import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNo
 import { Link } from "react-router-dom";
 import Lenis from "lenis";
 import { useUser } from "@/pages/UserContext";
-import { counters } from "@/data/mockData";
+import { useSiteStats } from "@/data/siteStats";
 import { FUNDED_VENTURES } from "@/data/ventures";
 import { startupPrograms, type StartupProgram } from "@/data/startupPrograms";
 import { successStories } from "@/data/successStories";
@@ -280,6 +280,19 @@ function useLatestAnnouncement(){
 function Hero() {
   const { user }=useUser();
   const news=useLatestAnnouncement();
+  const stats=useSiteStats();
+  // Counted from the database (never typed in); zero or unknown figures are left out.
+  const ribbonRows:[number|undefined,string,string][]=[
+    [stats?.problems,"PROBLEM POSTED","PROBLEMS POSTED"],
+    [stats?.ideas,"IDEA","IDEAS"],
+    [stats?.builders,"BUILDER","BUILDERS"],
+    [stats?.startups,"STARTUP","STARTUPS"],
+    [FUNDED_VENTURES.length,"FUNDED VENTURE","FUNDED VENTURES"],
+  ];
+  const ribbonStats=ribbonRows
+    .filter((row):row is [number,string,string]=>typeof row[0]==="number"&&row[0]>0)
+    .slice(0,4)
+    .map(([n,one,many])=>[n,n===1?one:many] as const);
   const outer=useRef<HTMLElement>(null);
   const sticky=useRef<HTMLDivElement>(null);
   const reveal=useRef<HTMLDivElement>(null);
@@ -424,10 +437,7 @@ function Hero() {
       </div>
 
       <div className="opening-ribbon" ref={ribbon} aria-hidden="true">
-        <span>{counters.startups}</span><small>STARTUPS</small>
-        <span>{counters.students}</span><small>FUTURE BUILDERS</small>
-        <span>{counters.funded}</span><small>FUNDED</small>
-        <span>15</span><small>RESEARCH PARTNERS</small>
+        {ribbonStats.map(([value,label])=><Fragment key={label}><span>{value}</span><small>{label}</small></Fragment>)}
       </div>
       </div>
     </section>
@@ -1186,7 +1196,7 @@ export default function Landing(){
     schedule();
     return()=>{stop();window.removeEventListener("scroll",schedule);cancelAnimationFrame(raf)};
   },[]);
-  return <div className="vj-landing"><Intro/><Cursor/><SmoothScroll/><PageField/><ActRail/><div className="global-progress"><span ref={progressRef}/></div><a href="#main" className="skip-link">Skip to content</a><SiteNav overlay brandHref="#top"/><main id="main" tabIndex={-1}><Hero/><StartHere/><section className="statement dark" data-tone="ink"><Reveal><span className="chapter-label">00 / THE PREMISE</span><h2>DON&apos;T START<br/><span>WITH THE IDEA.</span></h2><p>Start with the thing that keeps breaking.</p></Reveal></section><Morph/><Starting/><Journey/><Sphere/><Hubs/><WorkField/><OneStudent/><Ventures/><Network/><Community/><section className="recognition dark" data-tone="ink"><Reveal><span className="chapter-label">11 / SIGNALS</span><h2>PROOF IS A<br/><i>MILESTONE.</i></h2><p>Recognition and funding are signals along the journey, not the destination.</p></Reveal><div className="recognition-list"><div><span>2024</span><b>Best Innovation Award</b><small>National Startup Competition</small></div><div><span>₹2.8Cr</span><b>Total funding raised</b><small>Across the current funded portfolio</small></div><div><span>{String(counters.funded).padStart(2,"0")}</span><b>Funded startups</b><small>Ventures that moved beyond the idea stage</small></div></div></section><FAQ/><section className="contact-v13 dark" data-tone="pink" id="contact">
+  return <div className="vj-landing"><Intro/><Cursor/><SmoothScroll/><PageField/><ActRail/><div className="global-progress"><span ref={progressRef}/></div><a href="#main" className="skip-link">Skip to content</a><SiteNav overlay brandHref="#top"/><main id="main" tabIndex={-1}><Hero/><StartHere/><section className="statement dark" data-tone="ink"><Reveal><span className="chapter-label">00 / THE PREMISE</span><h2>DON&apos;T START<br/><span>WITH THE IDEA.</span></h2><p>Start with the thing that keeps breaking.</p></Reveal></section><Morph/><Starting/><Journey/><Sphere/><Hubs/><WorkField/><OneStudent/><Ventures/><Network/><Community/><section className="recognition dark" data-tone="ink"><Reveal><span className="chapter-label">11 / SIGNALS</span><h2>PROOF IS A<br/><i>MILESTONE.</i></h2><p>Recognition and funding are signals along the journey, not the destination.</p></Reveal><div className="recognition-list"><div><span>2024</span><b>Best Innovation Award</b><small>National Startup Competition</small></div><div><span>₹2.8Cr</span><b>Total funding raised</b><small>Across the current funded portfolio</small></div><div><span>{String(FUNDED_VENTURES.length).padStart(2,"0")}</span><b>Funded startups</b><small>Ventures that moved beyond the idea stage</small></div></div></section><FAQ/><section className="contact-v13 dark" data-tone="pink" id="contact">
   <div className="contact-v13-back" aria-hidden="true">
     <span>QUESTION</span><span>BUILD</span><span>PROVE</span><span>IMPACT</span>
   </div>

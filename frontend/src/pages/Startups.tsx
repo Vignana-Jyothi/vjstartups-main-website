@@ -14,7 +14,6 @@ import {
 import { useUser } from "@/pages/UserContext";
 import { CardCover } from "@/components/design-system/CardCover";
 import { FUNDED_VENTURES } from "@/data/ventures";
-import { counters } from "@/data/mockData";
 
 const Startups = () => {
   const { user } = useUser();
@@ -177,8 +176,7 @@ const Startups = () => {
         stats={
           !loading && !error && startups.length === 0
             ? [
-                { value: String(counters.funded), label: "Funded startups" },
-                { value: String(FUNDED_VENTURES.length), label: "Featured below" },
+                { value: String(FUNDED_VENTURES.length), label: "Funded ventures" },
               ]
             : [
                 { value: String(startups.length), label: "Total startups" },

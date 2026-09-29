@@ -13,9 +13,3 @@ export const stageLabels = [
   "Scaling",
   "Maturity & Exit Options"
 ];
-
-export const counters = {
-  startups: 36,
-  students: 88, 
-  funded: 9
-};
