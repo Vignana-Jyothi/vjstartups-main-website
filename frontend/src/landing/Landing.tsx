@@ -384,7 +384,7 @@ function Hero() {
         <div className="hero-v12-stage opening-blob" ref={blob} aria-hidden="true">
           <img src={IMG.hero} alt="" ref={blobImg} {...{fetchpriority:"high"}}/>
           <div className="opening-cover" ref={cover}/>
-          <div className="hero-v12-stage-no">VJ / 00</div>
+          
           <div className="hero-v12-stage-caption">A POSSIBILITY BECOMING A THING</div>
         </div>
       </div>
@@ -412,7 +412,7 @@ function Hero() {
         <Magnetic href="/ideas" variant="ghost"><span>View solutions</span></Magnetic>
       </div>
 
-      <div className="hero-v12-side hero-side-left">00 — QUESTION</div>
+      
 
       <div className="hero-v12-bottom">
         <span>A STUDENT STARTUP COMMUNITY AT VNRVJIET</span>
@@ -453,7 +453,7 @@ function Morph() {
         <div className="morph-v13-ripple r1"/><div className="morph-v13-ripple r2"/><div className="morph-v13-ripple r3"/>
         {wordsList.map((word,i)=><div className="morph-v13-word" key={word} ref={n=>{words.current[i]=n}}><span className="morph-v13-liquid">{word}</span><span className="morph-v13-clean">{word}</span></div>)}
       </div>
-      <div className="morph-v13-bottom"><span>THE PROBLEM COMES FIRST. THE IDEA FOLLOWS.</span><span>VJ / 01</span></div>
+      <div className="morph-v13-bottom"><span>THE PROBLEM COMES FIRST. THE IDEA FOLLOWS.</span></div>
     </div>
   </section>;
 }
@@ -465,7 +465,7 @@ function Starting() {
     ["I HAVE A PROTOTYPE","Put it in the world.","Use the journey to validate the product, collect evidence, and iterate.","Enter the journey","/journey"],
     ["I HAVE TRACTION","Make it repeatable.","StartupHub is where evidence becomes systems, networks, and growth.","Explore StartupHub","/startups"],
   ];
-  return <section className="starting light" data-tone="paper" id="start"><Reveal className="starting-head"><span className="chapter-label dark">01A / ORIENTATION</span><h2>WHERE ARE<br/><i>YOU NOW?</i></h2><p>Don't follow a template. Start from the truth of what you already have.</p></Reveal><div className="starting-panel" data-reveal><div className="starting-tabs">{items.map(([label],i)=><button key={label} className={i===active?"active":""} onClick={()=>setActive(i)}><small>0{i+1}</small>{label}</button>)}</div><div className="starting-response"><span className="response-no">0{active+1}</span><span className="kicker dark">YOUR NEXT MOVE</span><h3>{items[active][1]}</h3><p>{items[active][2]}</p><Magnetic href={items[active][4]}><span>{items[active][3]}</span><Arrow/></Magnetic></div></div></section>;
+  return <section className="starting light" data-tone="paper" id="start"><Reveal className="starting-head"><span className="chapter-label dark">02 / ORIENTATION</span><h2>WHERE ARE<br/><i>YOU NOW?</i></h2><p>Don't follow a template. Start from the truth of what you already have.</p></Reveal><div className="starting-panel" data-reveal><div className="starting-tabs">{items.map(([label],i)=><button key={label} className={i===active?"active":""} onClick={()=>setActive(i)}><small>0{i+1}</small>{label}</button>)}</div><div className="starting-response"><span className="response-no">0{active+1}</span><span className="kicker dark">YOUR NEXT MOVE</span><h3>{items[active][1]}</h3><p>{items[active][2]}</p><Magnetic href={items[active][4]}><span>{items[active][3]}</span><Arrow/></Magnetic></div></div></section>;
 }
 
 function Journey() {
@@ -486,7 +486,7 @@ function Journey() {
   const s=STAGES[index];
   return <section className="journey" data-tone="ink" id="journey" ref={ref} style={{"--dir":dir} as CSSProperties}>
     <div className="journey-sticky">
-      <div className="journey-top"><span>02 / THE JOURNEY</span><span>07 STAGES</span></div>
+      <div className="journey-top"><span>03 / THE JOURNEY</span><span>07 STAGES</span></div>
       <div className="journey-copy">
         <div className="journey-count" aria-hidden="true"><span style={{transform:`translate3d(0,${(-index/STAGES.length)*100}%,0)`}}>{STAGES.map(x=><b key={x[0]}>{x[0]}</b>)}</span></div>
         <div className="journey-stage" key={index}>
@@ -555,7 +555,7 @@ function Sphere() {
   });
   return <section className="sphere" data-tone="ink" ref={ref}>
     <div className="sphere-sticky">
-      <div className="sphere-top"><span>03 / THREE LENSES</span><span>ASKED OF EVERY VENTURE</span></div>
+      <div className="sphere-top"><span>04 / THREE LENSES</span><span>ASKED OF EVERY VENTURE</span></div>
       <div className="sphere-background" ref={bg}>
         <svg viewBox="0 0 1000 700" preserveAspectRatio="none" aria-hidden="true">
           <defs>
@@ -584,12 +584,12 @@ function Sphere() {
           </div>
         )}
       </div>
-      <div className="sphere-bottom"><span>PROBLEM → BUILD → IMPACT</span><span>VJ / 03</span></div>
+      <div className="sphere-bottom"><span>PROBLEM → BUILD → IMPACT</span></div>
     </div>
   </section>;
 }
 function Hubs() {
-  const [active,setActive]=useState(0);return <section className="hubs light" data-tone="paper"><Reveal className="hubs-head"><span className="chapter-label dark">04 / ENTRY POINTS</span><h2>THREE DOORS.<br/><i>ONE SYSTEM.</i></h2><p>Different starts. Same underlying journey from problem to proof.</p></Reveal><div className="hub-layout" data-reveal><div className="hub-list">{HUBS.map((h,i)=><button key={h[0]} className={i===active?"active":""} onMouseEnter={()=>setActive(i)} onClick={()=>setActive(i)}><span>0{i+1}</span><div><small>{h[1]}</small><b>{h[0]}</b></div><Arrow/></button>)}</div><div className="hub-view">{HUBS.map((h,i)=><img key={h[0]} src={h[3]} alt="" className={i===active?"active":""} loading="lazy" decoding="async"/>)}<div><span>{HUBS[active][1]}</span><h3>{HUBS[active][2]}</h3><Link className="hub-enter" to={HUBS[active][4]}>Enter {HUBS[active][0]} <Arrow/></Link></div></div></div></section>;
+  const [active,setActive]=useState(0);return <section className="hubs light" data-tone="paper"><Reveal className="hubs-head"><span className="chapter-label dark">05 / ENTRY POINTS</span><h2>THREE DOORS.<br/><i>ONE SYSTEM.</i></h2><p>Different starts. Same underlying journey from problem to proof.</p></Reveal><div className="hub-layout" data-reveal><div className="hub-list">{HUBS.map((h,i)=><button key={h[0]} className={i===active?"active":""} onMouseEnter={()=>setActive(i)} onClick={()=>setActive(i)}><span>0{i+1}</span><div><small>{h[1]}</small><b>{h[0]}</b></div><Arrow/></button>)}</div><div className="hub-view">{HUBS.map((h,i)=><img key={h[0]} src={h[3]} alt="" className={i===active?"active":""} loading="lazy" decoding="async"/>)}<div><span>{HUBS[active][1]}</span><h3>{HUBS[active][2]}</h3><Link className="hub-enter" to={HUBS[active][4]}>Enter {HUBS[active][0]} <Arrow/></Link></div></div></div></section>;
 }
 
 // The messy middle, shown with the platform's own work: problems students posted and ideas
@@ -636,11 +636,11 @@ function WorkField() {
     const leave=()=>{target.x=0;target.y=0;kick()};
     el.addEventListener("pointermove",move,{passive:true});el.addEventListener("pointerleave",leave);
     return()=>{el.removeEventListener("pointermove",move);el.removeEventListener("pointerleave",leave);cancelAnimationFrame(raf)};
-  },[]);return <section className="work-field light" data-tone="paper" ref={ref}><div className="work-top"><span>05 / THE WORK</span><span>{work?"POSTED BY STUDENTS":"WORK IN PROGRESS"}</span></div><div className="work-word">BUILD</div>{WORK_SLOTS.map(([slot,depth,img],i)=>{const w=work?.[i];return <div key={slot} className={`work-pic ${slot}${w?" is-card":""}`} data-depth={depth}>{w?<Link to={w.href!} className={`work-card is-${w.kind}`}><span>{w.kind==="problem"?"Problem":"Idea"}<small>{w.kind==="problem"?" / posted by a student":" / answering a problem"}</small></span><b>{w.title}</b><em>Open ↗</em></Link>:<img src={img} alt="" loading="lazy" decoding="async"/>}</div>})}<span className="work-note wn-a" data-depth="25">question → evidence</span><span className="work-note wn-b" data-depth="-18">prototype / 04</span><span className="work-note wn-c" data-depth="33">iteration / 07</span><div className="work-rule"/><div className="work-caption"><span>THE THING THAT LOOKS LIKE A STARTUP<br/>IS USUALLY A COLLECTION OF ITERATIONS.</span><span>{work?"VJ / WORK LOG / LIVE FROM THE PLATFORM":"VJ / WORK LOG"}</span></div></section>;
+  },[]);return <section className="work-field light" data-tone="paper" ref={ref}><div className="work-top"><span>06 / THE WORK</span><span>{work?"POSTED BY STUDENTS":"WORK IN PROGRESS"}</span></div><div className="work-word">BUILD</div>{WORK_SLOTS.map(([slot,depth,img],i)=>{const w=work?.[i];return <div key={slot} className={`work-pic ${slot}${w?" is-card":""}`} data-depth={depth}>{w?<Link to={w.href!} className={`work-card is-${w.kind}`}><span>{w.kind==="problem"?"Problem":"Idea"}<small>{w.kind==="problem"?" / posted by a student":" / answering a problem"}</small></span><b>{w.title}</b><em>Open ↗</em></Link>:<img src={img} alt="" loading="lazy" decoding="async"/>}</div>})}<span className="work-note wn-a" data-depth="25">question → evidence</span><span className="work-note wn-b" data-depth="-18">prototype / 04</span><span className="work-note wn-c" data-depth="33">iteration / 07</span><div className="work-rule"/><div className="work-caption"><span>THE THING THAT LOOKS LIKE A STARTUP<br/>IS USUALLY A COLLECTION OF ITERATIONS.</span><span>{work?"VJ / WORK LOG / LIVE FROM THE PLATFORM":"VJ / WORK LOG"}</span></div></section>;
 }
 
 function Ventures() {
-  const [active,setActive]=useState(0), v=VENTURES[active];return <section className="ventures light" data-tone="paper" id="ventures"><Reveal className="ventures-head"><span className="chapter-label dark">06 / PROOF</span><h2>IDEAS THAT<br/><i>MOVED.</i></h2><p>Selected ventures and technologies already moving through the ecosystem.</p></Reveal><div className="venture-stage" data-reveal><div className="venture-menu">{VENTURES.map((x,i)=><button key={x[0]} className={i===active?"active":""} onClick={()=>setActive(i)}><span>{x[0]}</span><div><small>{x[1]}</small><b>{x[2]}</b></div><Arrow/></button>)}</div><div className="venture-image"><img src={v[4]} alt="" key={v[0]} loading="lazy" decoding="async"/><div><span>{v[1]}</span><span>{v[0]} / 03</span></div></div><div className="venture-copy"><span className="kicker dark">{v[1]}</span><h3>{v[2]}</h3><p>{v[3]}</p><Link to="/startups">Explore the build <Arrow/></Link></div></div></section>;
+  const [active,setActive]=useState(0), v=VENTURES[active];return <section className="ventures light" data-tone="paper" id="ventures"><Reveal className="ventures-head"><span className="chapter-label dark">07 / PROOF</span><h2>IDEAS THAT<br/><i>MOVED.</i></h2><p>Selected ventures and technologies already moving through the ecosystem.</p></Reveal><div className="venture-stage" data-reveal><div className="venture-menu">{VENTURES.map((x,i)=><button key={x[0]} className={i===active?"active":""} onClick={()=>setActive(i)}><span>{x[0]}</span><div><small>{x[1]}</small><b>{x[2]}</b></div><Arrow/></button>)}</div><div className="venture-image"><img src={v[4]} alt="" key={v[0]} loading="lazy" decoding="async"/><div><span>{v[1]}</span><span>{v[0]} / 03</span></div></div><div className="venture-copy"><span className="kicker dark">{v[1]}</span><h3>{v[2]}</h3><p>{v[3]}</p><Link to="/startups">Explore the build <Arrow/></Link></div></div></section>;
 }
 
 const VENTURE_NAMES=VENTURES.map(v=>v[2]);
@@ -752,7 +752,7 @@ function Network() {
     <section className="network-v16 dark" data-tone="ink" id="network" ref={sectionRef}>
       <div className="network-v16-sticky" ref={stickyRef}>
         <div className="network-v16-head" data-reveal ref={headRef}>
-          <span className="chapter-label">07 / THE NETWORK</span>
+          <span className="chapter-label">08 / THE NETWORK</span>
           <h2>ONE BUILDER.<br/><i>MANY FORCES.</i></h2>
           <p>The right people, knowledge, access and momentum turn a single build into a living ecosystem.</p>
         </div>
@@ -968,7 +968,7 @@ function Community() {
   }));
   const rows=[...unlocks,...(record?record.rows:[])].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
   return <section className="community light" data-tone="paper" id="community" ref={ref}>
-    <Reveal className="community-head"><span className="chapter-label dark">08 / IN MOTION</span><h2>THE WORK IS<br/><i>STILL MOVING.</i></h2><p>Not a highlights reel: the latest things students actually posted on the platform, newest first.</p></Reveal>
+    <Reveal className="community-head"><span className="chapter-label dark">09 / IN MOTION</span><h2>THE WORK IS<br/><i>STILL MOVING.</i></h2><p>Not a highlights reel: the latest things students actually posted on the platform, newest first.</p></Reveal>
     <div className="feed" data-reveal>
       {rows.length?rows.map((row,i)=>{
         const body=<><span>{recordDate(row.date)}</span><i className={`is-${row.kind}`}/><div><b>{row.label.toUpperCase()}</b><span>{row.kind==="unlock"?row.text:<em>“{row.text}”</em>}</span></div><small>{String(i+1).padStart(2,"0")}</small></>;
@@ -982,7 +982,7 @@ function Community() {
 }
 
 function FAQ() {
-  const [open,setOpen]=useState<number|null>(null), items=[["What is VJ Startups?","A campus startup platform helping college entrepreneurs turn real-world challenges into innovations through a structured journey."],["Who can join?","Students and emerging builders can discover problems, develop ideas, connect with peers, and progress through the startup journey."],["What is the Virtual Startup Journey?","A seven-stage system covering Problem Discovery, Idea & Concept, Research & Feasibility, User Validation, Prototype Development, MVP & Launch, and Growth & Scaling."],["How do the Hubs work?","ProblemHub focuses on discovery, IdeaHub on solution development, and StartupHub on building and scaling ventures."],["Does the ecosystem include mentors and partners?","Yes. The public platform describes entrepreneurship partners, research partners, industry mentors, and a broader network around founders."]];return <section className="faq light" data-tone="paper" id="faq"><Reveal className="faq-head"><span className="chapter-label dark">09 / QUESTIONS</span><h2>GOOD QUESTIONS<br/><i>CHANGE THINGS.</i></h2><p>Start with the answer that gets you back to building.</p></Reveal><div className="faq-list" data-reveal>{items.map(([q,a],i)=><div className={`faq-item ${open===i?"open":""}`} key={q}><button onClick={()=>setOpen(open===i?null:i)}><span>0{i+1}</span><b>{q}</b><i>{open===i?"−":"+"}</i></button><div><p>{a}</p></div></div>)}</div></section>;
+  const [open,setOpen]=useState<number|null>(null), items=[["What is VJ Startups?","A campus startup platform helping college entrepreneurs turn real-world challenges into innovations through a structured journey."],["Who can join?","Students and emerging builders can discover problems, develop ideas, connect with peers, and progress through the startup journey."],["What is the Virtual Startup Journey?","A seven-stage system covering Problem Discovery, Idea & Concept, Research & Feasibility, User Validation, Prototype Development, MVP & Launch, and Growth & Scaling."],["How do the Hubs work?","ProblemHub focuses on discovery, IdeaHub on solution development, and StartupHub on building and scaling ventures."],["Does the ecosystem include mentors and partners?","Yes. The public platform describes entrepreneurship partners, research partners, industry mentors, and a broader network around founders."]];return <section className="faq light" data-tone="paper" id="faq"><Reveal className="faq-head"><span className="chapter-label dark">11 / QUESTIONS</span><h2>GOOD QUESTIONS<br/><i>CHANGE THINGS.</i></h2><p>Start with the answer that gets you back to building.</p></Reveal><div className="faq-list" data-reveal>{items.map(([q,a],i)=><div className={`faq-item ${open===i?"open":""}`} key={q}><button onClick={()=>setOpen(open===i?null:i)}><span>0{i+1}</span><b>{q}</b><i>{open===i?"−":"+"}</i></button><div><p>{a}</p></div></div>)}</div></section>;
 }
 
 const TONES:Record<string,string>={ink:"#080808",paper:"#f0eee8",pink:"#ff4aa7"};
@@ -1117,12 +1117,12 @@ export default function Landing(){
     schedule();
     return()=>{stop();window.removeEventListener("scroll",schedule);cancelAnimationFrame(raf)};
   },[]);
-  return <div className="vj-landing"><Intro/><Cursor/><SmoothScroll/><PageField/><ActRail/><div className="global-progress"><span ref={progressRef}/></div><a href="#main" className="skip-link">Skip to content</a><SiteNav overlay brandHref="#top"/><main id="main" tabIndex={-1}><Hero/><StartHere/><section className="statement dark" data-tone="ink"><Reveal><span className="chapter-label">00 / THE PREMISE</span><h2>DON&apos;T START<br/><span>WITH THE IDEA.</span></h2><p>Start with the thing that keeps breaking.</p></Reveal></section><Morph/><Starting/><Journey/><Sphere/><Hubs/><WorkField/><Ventures/><Network/><Community/><section className="recognition dark" data-tone="ink"><Reveal><span className="chapter-label">08A / SIGNALS</span><h2>PROOF IS A<br/><i>MILESTONE.</i></h2><p>Recognition and funding are signals along the journey, not the destination.</p></Reveal><div className="recognition-list"><div><span>2024</span><b>Best Innovation Award</b><small>National Startup Competition</small></div><div><span>₹2.8Cr</span><b>Total funding raised</b><small>Across the current funded portfolio</small></div><div><span>{String(counters.funded).padStart(2,"0")}</span><b>Funded startups</b><small>Ventures that moved beyond the idea stage</small></div></div></section><FAQ/><section className="contact-v13 dark" data-tone="pink" id="contact">
+  return <div className="vj-landing"><Intro/><Cursor/><SmoothScroll/><PageField/><ActRail/><div className="global-progress"><span ref={progressRef}/></div><a href="#main" className="skip-link">Skip to content</a><SiteNav overlay brandHref="#top"/><main id="main" tabIndex={-1}><Hero/><StartHere/><section className="statement dark" data-tone="ink"><Reveal><span className="chapter-label">00 / THE PREMISE</span><h2>DON&apos;T START<br/><span>WITH THE IDEA.</span></h2><p>Start with the thing that keeps breaking.</p></Reveal></section><Morph/><Starting/><Journey/><Sphere/><Hubs/><WorkField/><Ventures/><Network/><Community/><section className="recognition dark" data-tone="ink"><Reveal><span className="chapter-label">10 / SIGNALS</span><h2>PROOF IS A<br/><i>MILESTONE.</i></h2><p>Recognition and funding are signals along the journey, not the destination.</p></Reveal><div className="recognition-list"><div><span>2024</span><b>Best Innovation Award</b><small>National Startup Competition</small></div><div><span>₹2.8Cr</span><b>Total funding raised</b><small>Across the current funded portfolio</small></div><div><span>{String(counters.funded).padStart(2,"0")}</span><b>Funded startups</b><small>Ventures that moved beyond the idea stage</small></div></div></section><FAQ/><section className="contact-v13 dark" data-tone="pink" id="contact">
   <div className="contact-v13-back" aria-hidden="true">
     <span>QUESTION</span><span>BUILD</span><span>PROVE</span><span>IMPACT</span>
   </div>
   <Reveal className="contact-v13-main">
-    <span className="chapter-label">10 / YOUR TURN</span>
+    <span className="chapter-label">12 / YOUR TURN</span>
     <h2>
       <span className="contact-line">WHAT <i>WILL</i></span>
       <span className="contact-line accent">YOU <i>BUILD?</i></span>
