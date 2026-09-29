@@ -1,5 +1,9 @@
+-- Safe to run more than once: the deploy workflow applies this file on every deploy (the
+-- production database has no Prisma migration history), so each statement skips work that's
+-- already been done.
+
 -- CreateTable
-CREATE TABLE "success_stories" (
+CREATE TABLE IF NOT EXISTS "success_stories" (
     "id" TEXT NOT NULL,
     "programId" TEXT NOT NULL,
     "season" TEXT NOT NULL,
@@ -25,10 +29,10 @@ CREATE TABLE "success_stories" (
 );
 
 -- CreateIndex
-CREATE INDEX "success_stories_programId_idx" ON "success_stories"("programId");
+CREATE INDEX IF NOT EXISTS "success_stories_programId_idx" ON "success_stories"("programId");
 
 -- CreateIndex
-CREATE INDEX "success_stories_isPublished_idx" ON "success_stories"("isPublished");
+CREATE INDEX IF NOT EXISTS "success_stories_isPublished_idx" ON "success_stories"("isPublished");
 
 
 -- The first story on record, moved here from the frontend's data file (same id, so its links keep working).
