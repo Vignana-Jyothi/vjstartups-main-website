@@ -80,6 +80,25 @@ jobs:
           docker compose down
           docker compose up -d --build
 
+      # The backend exits when it cannot reach its database, so a wrong or unreachable
+      # DATABASE_URL shows up as a restart loop, not a clear error. Check the network path
+      # first, in a one-off container (unaffected by that loop) with exactly the same
+      # DATABASE_URL and host mapping, and say why it failed. Only host and port are printed.
+      - name: Check the database is reachable
+        run: |
+          set +e
+          out=$(docker compose run --rm --no-deps -T backend node scripts/check-db.js 2>&1)
+          rc=$?
+          set -e
+          printf '%s\n' "$out" | grep -E '^(host=|database port|NOT )' || printf '%s\n' "$out" | tail -n 5
+          if [ "$rc" -ne 0 ]; then
+            host=$(printf '%s\n' "$out" | sed -n 's/^host=\([^ ]*\).*/\1/p')
+            echo "::error::The backend cannot reach its database (see the line above). This machine's own addresses and route follow, to compare with the database host's."
+            echo "this machine: $(hostname) $(hostname -I 2>/dev/null)"
+            if [ -n "$host" ]; then ip route get "$host" 2>&1 || true; fi
+            exit "$rc"
+          fi
+
       # The site's own tables get no Prisma migration history on this database, so changes that
       # add tables ship as SQL that is safe to re-run and are applied here, inside the backend
       # container (which already points at the shared Plane database). Existing rows are never
