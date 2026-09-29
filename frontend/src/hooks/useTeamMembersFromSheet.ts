@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchTeamMembersFromGoogleSheet } from "@/services/googleSheetsService";
+import { CLUB_TEAM } from "@/data/clubTeam";
 import { SheetTeamMember, TeamDirectoryGroup } from "@/types/sheetTeamMember";
+import { extractSpreadsheetId } from "@/utils/spreadsheetUtils";
 import {
   filterGroupsByWing,
   getAvailableWings,
@@ -8,6 +10,13 @@ import {
 } from "@/utils/teamMemberTransforms";
 
 const REFRESH_INTERVAL_MS = 30_000;
+
+// The team comes from the bundled 2026-27 list (data/clubTeam.ts). Setting VITE_TEAM_SHEET_ID
+// to a Google Sheet (id or link) switches the page to that sheet, re-read every 30s, so the club
+// can edit it live. That sheet must be viewable by link, which exposes every column to anyone,
+// so it must not hold emails or phone numbers. The older VITE_GOOGLE_SPREADSHEET_ID still points
+// at the 2025 sheet and is deliberately not used here.
+const TEAM_SHEET = import.meta.env.VITE_TEAM_SHEET_ID?.trim();
 
 interface UseTeamMembersFromSheetOptions {
   selectedWing?: string;
@@ -27,8 +36,8 @@ export function useTeamMembersFromSheet(
   options: UseTeamMembersFromSheetOptions = {}
 ): UseTeamMembersFromSheetResult {
   const { selectedWing = "all" } = options;
-  const [members, setMembers] = useState<SheetTeamMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [members, setMembers] = useState<SheetTeamMember[]>(() => (TEAM_SHEET ? [] : CLUB_TEAM));
+  const [isLoading, setIsLoading] = useState(Boolean(TEAM_SHEET));
   const [error, setError] = useState<string | null>(null);
   const isInitialLoad = useRef(true);
 
@@ -38,7 +47,12 @@ export function useTeamMembersFromSheet(
         setIsLoading(true);
       }
 
-      const data = await fetchTeamMembersFromGoogleSheet();
+      if (!TEAM_SHEET) {
+        setMembers(CLUB_TEAM);
+        setError(null);
+        return;
+      }
+      const data = await fetchTeamMembersFromGoogleSheet(extractSpreadsheetId(TEAM_SHEET));
       setMembers(data);
       setError(null);
     } catch (loadError) {
@@ -58,6 +72,7 @@ export function useTeamMembersFromSheet(
   }, []);
 
   useEffect(() => {
+    if (!TEAM_SHEET) return;
     loadMembers();
 
     const intervalId = window.setInterval(() => {
