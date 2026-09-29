@@ -67,6 +67,48 @@ app.get('/debug-echo-headers', (req, res) => {
   res.json({ headers: req.headers });
 });
 
+// TEMPORARY - explains an admin-proxy 403 ("not an active user with one of
+// [ADMIN]") by reporting exactly what THIS server's database holds for the
+// acting email. Gated by the same shared secret as the admin proxy. Reports
+// the DB host/name (never credentials) so a wrong-database deployment is
+// visible too. Remove once the 403 is resolved.
+app.get('/debug-actor', async (req, res) => {
+  const expectedToken = process.env.PLANE_INTERNAL_TOKEN;
+  if (!expectedToken || req.headers['x-internal-token'] !== expectedToken) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const actingEmail = (req.headers['x-acting-admin-email'] || '').trim().toLowerCase();
+  try {
+    let database = null;
+    try {
+      const u = new URL(process.env.DATABASE_URL);
+      database = { host: u.hostname, port: u.port, name: u.pathname.replace(/^\//, '') };
+    } catch (_) {
+      database = 'DATABASE_URL missing or unparsable';
+    }
+
+    const matchingUsers = await prisma.user.findMany({
+      where: { email: { equals: actingEmail, mode: 'insensitive' } },
+      select: { email: true, isActive: true, vjProfile: { select: { publicRole: true, deletedAt: true } } },
+    });
+
+    const adminProfileCount = await prisma.organizationMemberProfile.count({
+      where: { publicRole: 'ADMIN', deletedAt: null },
+    });
+
+    res.json({
+      actingEmailReceived: actingEmail,
+      database,
+      matchingUsers,
+      exactLowercaseMatch: matchingUsers.some((m) => m.email === actingEmail),
+      activeAdminProfilesInThisDatabase: adminProfileCount,
+    });
+  } catch (err) {
+    res.status(500).json({ error: `${err.name}: ${err.message}` });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 6220;
