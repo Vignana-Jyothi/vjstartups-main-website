@@ -49,6 +49,11 @@ test('CORS: the live and dev sites are allowed by default', () => {
   assert.ok(origins.includes('https://dev-vj.vjstartup.com'));
 });
 
+test('CORS: no origin on the unowned plural vjstartups.com domain is trusted by default', () => {
+  const dev = corsOrigins({});
+  assert.ok(dev.every((o) => !/\/\/([a-z0-9-]+\.)*vjstartups\.com$/.test(o)), dev.join(', '));
+});
+
 test('CORS_ORIGINS replaces the defaults entirely', () => {
   const origins = corsOrigins({ CORS_ORIGINS: 'https://a.example, https://b.example ,', NODE_ENV: 'production' });
   assert.deepEqual(origins, ['https://a.example', 'https://b.example']);
