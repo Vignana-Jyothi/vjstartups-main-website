@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHero } from "@/components/design-system/PageHero";
+import { API_BASE } from "@/config/api";
 import "@/components/design-system/listing.css";
 
 interface LeaderboardEntry {
@@ -38,11 +39,9 @@ const Leaderboard = () => {
   useEffect(() => {
     // Read through the site's backend, which fetches the VJOS leaderboard server-to-server (the
     // browser can't read VJOS directly) and returns only members who have earned points.
-    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6220';
-
     const fetchLeaderboard = async () => {
       try {
-        const response = await fetch(`${apiBase}/leaderboard-api/members`);
+        const response = await fetch(`${API_BASE}/leaderboard-api/members`);
         if (!response.ok) {
           throw new Error('Failed to fetch leaderboard');
         }

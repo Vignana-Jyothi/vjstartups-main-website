@@ -14,6 +14,7 @@ import { ArrowLeft, Rocket, Users, DollarSign, Target, Upload, X, Plus, Image, F
 import { useUser } from '@/pages/UserContext';
 import { useToast } from '@/hooks/use-toast';
 import { QuestionHelp } from '@/components/QuestionHelp';
+import { API_BASE } from "@/config/api";
 
 interface StartupFormData {
   startupName: string;
@@ -154,7 +155,7 @@ const StartupForm: React.FC = () => {
 
         // Otherwise, fetch questionnaire responses from API
         const responseData = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/questionnaire-api/responses/idea/${ideaId}`
+          `${API_BASE}/questionnaire-api/responses/idea/${ideaId}`
         );
 
         if (responseData.data && responseData.data.length > 0) {
@@ -198,7 +199,7 @@ const StartupForm: React.FC = () => {
       }
 
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/startup-api/${editId}`);
+        const response = await axios.get(`${API_BASE}/startup-api/${editId}`);
         const startup = response.data;
 
         const ownerEmail = typeof startup.createdBy === 'string'
@@ -470,8 +471,8 @@ const StartupForm: React.FC = () => {
 
       // Determine API endpoint and method
       const url = isEditMode 
-        ? `${import.meta.env.VITE_API_BASE_URL}/startup-api/${editId}`
-        : `${import.meta.env.VITE_API_BASE_URL}/startup-api`;
+        ? `${API_BASE}/startup-api/${editId}`
+        : `${API_BASE}/startup-api`;
       
       const method = isEditMode ? 'put' : 'post';
 

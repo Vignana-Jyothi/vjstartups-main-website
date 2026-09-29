@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "../pages/UserContext";
 import { QuestionHelp } from "@/components/QuestionHelp";
 import axios from "axios";
+import { API_BASE } from "@/config/api";
 
 interface UpdateProblemData {
   title: string;
@@ -50,7 +51,7 @@ const UpdateProblemForm = () => {
       if (!id) return;
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${id}`
+          `${API_BASE}/problem-api/problems/${id}`
         );
         const data = res.data;
         // Populate form
@@ -167,7 +168,7 @@ const UpdateProblemForm = () => {
       if (selectedImage) formData.append("image", selectedImage);
 
       const response = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${id}`,
+        `${API_BASE}/problem-api/problems/${id}`,
         formData,
         { headers: { Authorization: `Bearer ${user.sessionToken}` } }
       );

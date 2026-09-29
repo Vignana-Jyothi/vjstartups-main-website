@@ -4,6 +4,7 @@ import "@/components/design-system/page-hero.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "./UserContext";
 import { GOOGLE_CLIENT_ID } from "@/config/google";
+import { API_BASE } from "@/config/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,9 +14,7 @@ const Login = () => {
     if (!credentialResponse.credential) return;
 
     try {
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_AUTH_URL || "http://localhost:6220";
-
-      const res = await fetch(`${backendUrl}/auth/google`, {
+      const res = await fetch(`${API_BASE}/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: credentialResponse.credential }),

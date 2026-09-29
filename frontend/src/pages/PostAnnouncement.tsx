@@ -8,6 +8,7 @@ import { useUser } from './UserContext';
 import '@/components/design-system/listing.css';
 import '@/components/design-system/forms.css';
 import { toast } from '@/components/ui/use-toast';
+import { API_BASE } from "@/config/api";
 
 const PostAnnouncement = () => {
   const { user } = useUser();
@@ -55,8 +56,7 @@ const PostAnnouncement = () => {
     setIsSubmitting(true);
 
     try {
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6220';
-      const response = await fetch(`${backendUrl}/announcements-api/`, {
+      const response = await fetch(`${API_BASE}/announcements-api/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

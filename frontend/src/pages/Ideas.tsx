@@ -8,6 +8,7 @@ import { BigCount } from "@/components/design-system/HeroSignatures";
 import "@/components/design-system/listing.css";
 import axios from "axios";
 import { useUser } from "./UserContext";
+import { API_BASE } from "@/config/api";
 
 const Ideas = () => {
   const [searchParams] = useSearchParams();
@@ -29,11 +30,11 @@ const Ideas = () => {
     const fetchIdeas = async () => {
       setLoading(true);
       try {
-        let endpoint = `${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas`;
+        let endpoint = `${API_BASE}/idea-api/ideas`;
         
         // If filtering by problem, use the problem-specific endpoint
         if (problemFilter) {
-          endpoint = `${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas/problem/${problemFilter}`;
+          endpoint = `${API_BASE}/idea-api/ideas/problem/${problemFilter}`;
         }
         
         const res = await axios.get(endpoint);
@@ -54,7 +55,7 @@ const Ideas = () => {
           const results = await Promise.all(
             uniqueProblemIds.map((pid) =>
               axios
-                .get(`${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${pid}`)
+                .get(`${API_BASE}/problem-api/problems/${pid}`)
                 .then((r) => ({ id: pid, data: r.data }))
                 .catch((err) => {
                   console.error(`Failed to fetch problem ${pid}:`, err);
@@ -100,7 +101,7 @@ const Ideas = () => {
       
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${problemFilter}`
+          `${API_BASE}/problem-api/problems/${problemFilter}`
         );
         setRelatedProblem(res.data);
       } catch (err) {
@@ -152,7 +153,7 @@ const Ideas = () => {
 
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/idea-api/idea/${ideaId}/upvote`,
+        `${API_BASE}/idea-api/idea/${ideaId}/upvote`,
         { email: user.email }
       );
 

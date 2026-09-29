@@ -12,10 +12,9 @@ import { Arrow, Magnetic, SiteFooter, SiteNav } from "@/components/site/SiteChro
 import { LogoMark } from "@/components/site/LogoMark";
 import { onMeasure, pageMetrics, progressOf, useSectionFrame } from "./frame";
 import { loadNetworkData, type NetItem } from "./network/data";
+import { API_BASE } from "@/config/api";
 import "./landing.css";
 import "./network/network.css";
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:6220";
 
 // Stock placeholders until the club's own photos arrive. Sized to the device (a phone was
 // downloading 2200px, q92 originals: ~3 MB for the page) and served as AVIF/WebP by auto=format.

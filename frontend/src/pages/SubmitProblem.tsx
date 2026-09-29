@@ -12,6 +12,7 @@ import { ArrowLeft, AlertTriangle, Target, Users, TrendingUp, BarChart3, Lightbu
 import { useUser } from '@/pages/UserContext';
 import { useToast } from '@/hooks/use-toast';
 import { QuestionHelp } from '@/components/QuestionHelp';
+import { API_BASE } from "@/config/api";
 
 interface ProblemFormData {
   title: string;
@@ -171,7 +172,7 @@ const SubmitProblem: React.FC = () => {
       if (selectedImage) submitData.append("image", selectedImage);
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem`,
+        `${API_BASE}/problem-api/problem`,
         submitData
       );
       

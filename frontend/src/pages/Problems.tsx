@@ -9,7 +9,8 @@ import { TitleMarquee } from "@/components/design-system/HeroSignatures";
 import { isReadableTitle } from "@/utils/readableTitle";
 import "@/components/design-system/listing.css";
 import axios from "axios";
-import { useUser } from "../pages/UserContext"; 
+import { useUser } from "../pages/UserContext";
+import { API_BASE } from "@/config/api";
 
 interface PaginationInfo {
   currentPage: number;
@@ -40,7 +41,7 @@ const Problems = () => {
   const fetchAllProblems = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/problem-api/problems?limit=1000`);
+      const res = await axios.get(`${API_BASE}/problem-api/problems?limit=1000`);
       const problemsData = res.data.problems || res.data; // Handle both old and new API response
       
       // Mark which problems the current user has already liked
@@ -227,7 +228,7 @@ const handleUpvote = async (problemId: string) => {
 
   try {
     const res = await axios.post(
-      `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem/${problemId}/upvote`,
+      `${API_BASE}/problem-api/problem/${problemId}/upvote`,
       { email: user.email }
     );
 
