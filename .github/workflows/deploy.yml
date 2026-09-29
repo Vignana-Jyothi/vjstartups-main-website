@@ -56,8 +56,23 @@ jobs:
       # add tables ship as SQL that is safe to re-run and are applied here, inside the backend
       # container (which already points at the shared Plane database). Existing rows are never
       # overwritten.
+      #
+      # This uses scripts/apply-sql.js (the Prisma client) rather than `npx prisma db execute`:
+      # the CLI plus its schema engine on top of the running server was being killed with exit
+      # 137 on the production host. If it still fails, the container state and its recent logs
+      # (emails masked - this repo's logs are public) are printed so the cause is visible.
       - name: Apply site database changes
         run: |
-          docker compose exec -T backend npx prisma db execute \
-            --file prisma/migrations/20260929000000_add_success_stories/migration.sql \
-            --schema prisma/schema.prisma
+          set +e
+          docker compose exec -T backend node scripts/apply-sql.js \
+            prisma/migrations/20260929000000_add_success_stories/migration.sql
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::Applying the site database changes failed (exit $rc). Container state and recent logs follow."
+            docker compose ps backend || true
+            docker compose logs --tail 40 backend 2>&1 \
+              | sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/<email>/g' || true
+            free -m || true
+            exit "$rc"
+          fi
