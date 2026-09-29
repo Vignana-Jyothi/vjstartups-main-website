@@ -5,9 +5,9 @@ import { useState, type CSSProperties } from "react";
 const BREAK_BEFORE = new Set(["a", "an", "and", "or", "in", "of", "for", "on", "at", "to", "with", "from", "during", "that", "which", "due", "by", "into", "through", "across", "via", "using", "&"]);
 
 /** A short, complete phrase from the title: the name before a colon if there is one; the whole
- *  title if it is short (six words, or seven within 48 characters); otherwise the longest opening of up to five words that ends
- *  just before a connecting word. */
-function coverPhrase(title: string) {
+ *  title if it is short (six words, or seven within 48 characters); otherwise the longest
+ *  opening of up to five words that ends just before a connecting word. */
+export function coverPhrase(title: string) {
   const clean = title.trim().replace(/^[\s"'“‘]+|[\s"'”’.!?]+$/g, "");
   const lead = clean.split(/\s*[:|–—]\s+|\s+-\s+/)[0].replace(/[\s"'”’]+$/, "");
   const source = lead && lead.length >= 3 && lead !== clean ? lead : clean;
