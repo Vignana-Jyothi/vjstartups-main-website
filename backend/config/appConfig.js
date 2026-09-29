@@ -10,16 +10,15 @@
 
 const DEFAULT_INSTITUTIONAL_EMAIL_DOMAINS = 'vnrvjiet.in';
 
-// The sites that legitimately call this API from a browser.
+// The sites that legitimately call this API from a browser. Only hosts we control belong here:
+// CORS is sent with credentials, so an origin on a domain nobody owns (or that someone else
+// could register) would be trusted. The plural "vjstartups.com" names that used to be listed
+// have no DNS records and were removed; use CORS_ORIGINS to add anything else.
 const DEFAULT_ORIGINS = [
   'https://www.vjstartup.com',
   'https://vjstartup.com',
   'https://hub.vjstartup.com',
   'https://dev-vj.vjstartup.com',
-  'https://vjstartups.com',
-  'https://www.vjstartups.com',
-  'https://admin.vjstartups.com',
-  'https://plane.vjstartups.com',
 ];
 
 // Local development servers - dropped when NODE_ENV=production.
