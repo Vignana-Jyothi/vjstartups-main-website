@@ -981,3 +981,14 @@ html.lenis{scroll-behavior:auto}
   .vj-landing .tale-days b{font-size:16px}
 }
 .vj-landing .tale-amount small{margin-right:-.06em}
+/* Signals: the figure is the point of each row, so it leads in display type; the title and
+   description read at body size instead of 12px captions. */
+.vj-landing .recognition-list>div{grid-template-columns:minmax(150px,.78fr) minmax(0,1fr);align-items:baseline;column-gap:clamp(20px,2.4vw,40px);row-gap:8px;padding:clamp(24px,3.4vh,34px) 0}
+.vj-landing .recognition-list span{grid-row:span 2;color:var(--lime);font:800 clamp(44px,min(4.6vw,8vh),76px)/.9 var(--sans);letter-spacing:-.06em;white-space:nowrap}
+.vj-landing .recognition-list b{font-size:clamp(20px,1.6vw,26px);line-height:1.15;letter-spacing:-.035em}
+.vj-landing .recognition-list small{color:rgba(255,255,255,.55);font-size:15px;line-height:1.45}
+@media(max-width:700px){
+  .vj-landing .recognition-list>div{grid-template-columns:1fr;row-gap:6px}
+  .vj-landing .recognition-list span{grid-row:auto;margin-bottom:6px;font-size:52px}
+  .vj-landing .recognition-list small{grid-column:1}
+}
