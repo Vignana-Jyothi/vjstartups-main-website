@@ -384,8 +384,6 @@ function Hero() {
         <div className="hero-v12-stage opening-blob" ref={blob} aria-hidden="true">
           <img src={IMG.hero} alt="" ref={blobImg} {...{fetchpriority:"high"}}/>
           <div className="opening-cover" ref={cover}/>
-          
-          <div className="hero-v12-stage-caption">A POSSIBILITY BECOMING A THING</div>
         </div>
       </div>
 

@@ -919,3 +919,10 @@ html.lenis{scroll-behavior:auto}
 }
 /* The collage drifts with the cursor through a smoothed loop in JS, not a restarted transition. */
 .vj-landing .work-pic,.vj-landing .work-note{transition:none}
+/* Hero lens: "The answer is in the work." once, and large enough to read at a glance (a CSS
+   :after used to repeat "In the work." underneath it). */
+.vj-landing .hero-v12-reveal{clip-path:circle(124px at var(--cx) var(--cy))}
+.vj-landing .hero-v12-reveal>div{width:236px;gap:6px}
+.vj-landing .hero-v12-reveal>div span{font-size:13px}
+.vj-landing .hero-v12-reveal>div b{font-size:40px;line-height:.8}
+.vj-landing .hero-v12-reveal>div:after{content:none}
