@@ -39,9 +39,8 @@ export function TeamMemberCard({ member, variant = "core" }: TeamMemberCardProps
   const isOpen = OPEN_ROLE.test(member.name.trim());
   const meta = [member.branch, member.year].filter(Boolean).join(" / ");
   const links = [
-    member.email && { href: `mailto:${member.email}`, label: "Email", aria: `Email ${member.name}` },
-    member.phone && { href: `tel:${member.phone}`, label: "Call", aria: `Call ${member.name}` },
     member.linkedinUrl && { href: member.linkedinUrl, label: "LinkedIn", aria: `LinkedIn profile of ${member.name}` },
+    member.instagramUrl && { href: member.instagramUrl, label: "Instagram", aria: `Instagram profile of ${member.name}` },
   ].filter(Boolean) as { href: string; label: string; aria: string }[];
 
   return (

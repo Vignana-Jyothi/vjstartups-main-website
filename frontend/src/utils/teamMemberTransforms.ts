@@ -67,7 +67,8 @@ export function groupMembersByWing(members: SheetTeamMember[]): TeamDirectoryGro
         wing,
         wingName: resolveWingDisplayName(wing),
         wingMaster: wingMasters[0] ?? null,
-        coreTeam,
+        // A wing can have more than one master (Infra does); the others lead its team list.
+        coreTeam: [...wingMasters.slice(1), ...coreTeam],
       };
     })
     .sort((a, b) => compareWings(a.wing, b.wing));

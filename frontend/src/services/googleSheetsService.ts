@@ -17,11 +17,11 @@ import { compareWings } from "@/utils/teamMemberTransforms";
  * Role                      → role
  * Department                → branch
  * Year                      → year
- * email-id                  → email
  * Linkedin (ifany)          → linkedinUrl
- * Phone Number (...)        → phone
+ * Insta (optional)          → instagramUrl
  * Photo (Drive link)        → imageUrl
- * Worksheet/tab name        → wing
+ * Wing Name                 → wing (else the worksheet/tab name, for one-tab-per-wing sheets)
+ * email-id, Phone Number    → not read: personal contacts, and the directory is public
  * Row index within tab      → displayOrder
  */
 
@@ -30,9 +30,9 @@ const COLUMN_MATCHERS = {
   role: ["role"],
   branch: ["department", "branch"],
   year: ["year"],
-  email: ["email-id", "email"],
+  wing: ["wing name"],
   linkedinUrl: ["linkedin"],
-  phone: ["phone number", "phone"],
+  instagramUrl: ["insta"],
   imageUrl: ["photo", "drive link", "image"],
 } as const;
 
@@ -93,7 +93,11 @@ export function mapRowToTeamMember(
   wing: string,
   displayOrder: number
 ): SheetTeamMember | null {
-  const name = getColumnValue(row, COLUMN_MATCHERS.name);
+  // Exact header match only: the loose fallback would read "Wing Name" as a name and turn every
+  // unfilled row into a member called "Ignition".
+  const name = Object.entries(row)
+    .find(([key, value]) => COLUMN_MATCHERS.name.some((m) => normalizeHeader(key) === m) && value?.trim())?.[1]
+    ?.trim() ?? "";
 
   if (!name) {
     return null;
@@ -101,15 +105,16 @@ export function mapRowToTeamMember(
 
   const imageRaw = getColumnValue(row, COLUMN_MATCHERS.imageUrl);
 
+  const wingColumn = getColumnValue(row, COLUMN_MATCHERS.wing);
+
   return {
     name,
-    wing,
+    wing: wingColumn ? formatWingName(wingColumn) : wing,
     role: getColumnValue(row, COLUMN_MATCHERS.role),
     branch: getColumnValue(row, COLUMN_MATCHERS.branch),
     year: getColumnValue(row, COLUMN_MATCHERS.year),
-    email: getColumnValue(row, COLUMN_MATCHERS.email),
-    phone: getColumnValue(row, COLUMN_MATCHERS.phone),
     linkedinUrl: getColumnValue(row, COLUMN_MATCHERS.linkedinUrl),
+    instagramUrl: getColumnValue(row, COLUMN_MATCHERS.instagramUrl),
     imageUrl: convertDriveLinkToImageUrl(imageRaw),
     displayOrder,
   };

@@ -1,6 +1,8 @@
 /**
  * Normalized team member shape used by the Club Page Team Directory tab.
- * The `wing` field is derived from the Google Sheet worksheet/tab name.
+ * The `wing` field comes from the sheet's "Wing Name" column, or else the worksheet/tab name.
+ * The sheet's email and phone columns are deliberately not read: they are members' personal
+ * contacts and the directory is public.
  */
 export interface SheetTeamMember {
   name: string;
@@ -8,9 +10,8 @@ export interface SheetTeamMember {
   wing: string;
   branch: string;
   year: string;
-  email: string;
-  phone: string;
   linkedinUrl: string;
+  instagramUrl: string;
   imageUrl: string;
   displayOrder: number;
 }

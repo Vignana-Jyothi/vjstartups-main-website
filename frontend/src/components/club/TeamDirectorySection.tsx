@@ -133,7 +133,7 @@ export function TeamDirectorySection({
                 {group.wingMaster && <TeamMemberCard member={group.wingMaster} variant="master" />}
                 {group.coreTeam.map((member) => (
                   <TeamMemberCard
-                    key={`${member.email || member.name}-${member.displayOrder}`}
+                    key={`${member.wing}-${member.name}-${member.displayOrder}`}
                     member={member}
                     variant="core"
                   />
