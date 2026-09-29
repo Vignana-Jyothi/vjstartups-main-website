@@ -205,7 +205,7 @@ export default function StartupDetail() {
           <figure className="dt-figure dt-cover">
             <CardCover title={name} image={startupImage} />
             {startup.logo && (
-              <img className="dt-logo" src={`${import.meta.env.VITE_API_BASE_URL}${startup.logo}`} alt={`${name} logo`} />
+              <img className="dt-logo" src={getStartupImageUrl(startup.logo) ?? undefined} alt={`${name} logo`} />
             )}
           </figure>
 

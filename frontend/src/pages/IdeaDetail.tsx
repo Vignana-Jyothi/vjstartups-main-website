@@ -370,7 +370,7 @@ export default function IdeaDetail() {
       content: c.content || "",
       timestamp: c.createdAt ? new Date(c.createdAt).toLocaleString() : "",
       likes: c.likes?.length || 0,
-      isLiked: c.likes?.includes(user?.email) || false,
+      isLiked: hasUpvoted(c.likes, user?.email),
       replies: (c.replies || []).map((reply: any) => {
         const r = typeof reply === "object" ? reply : {};
         return {
@@ -380,7 +380,7 @@ export default function IdeaDetail() {
           content: r.content || "",
           timestamp: r.createdAt ? new Date(r.createdAt).toLocaleString() : "",
           likes: r.likes?.length || 0,
-          isLiked: r.likes?.includes(user?.email) || false,
+          isLiked: hasUpvoted(r.likes, user?.email),
         };
       }),
     };

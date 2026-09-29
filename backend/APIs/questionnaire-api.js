@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const prisma = require('../config/prisma');
+const { actingUser } = require('../middlewares/actingUser');
 
 router.use(express.json());
 
@@ -36,55 +37,6 @@ const evaluateStartupWorthiness = (responses) => {
     worthinessLevel: metCriteria >= 6 ? 'high' : metCriteria >= 4 ? 'medium' : 'low'
   };
 };
-
-// Test endpoint to create database collection
-router.post('/test-create', async (req, res) => {
-  try {
-    const testResponse = await prisma.questionnaireResponse.create({
-      data: {
-        responseId: 'test-' + Date.now(),
-        userId: 'test-user',
-        userEmail: 'test@example.com',
-        userName: 'Test User',
-        ideaId: 'test-idea-id',
-        stageFrom: 1,
-        stageTo: 2,
-        responses: {
-          problemDescription: 'Test problem description',
-          problemSeverity: 5
-        },
-        overallScore: 70,
-        status: 'COMPLETED',
-        scores: {
-          create: {
-            problemClarity: 75,
-            marketPotential: 60,
-            solutionViability: 80,
-            competitivePosition: 70,
-            executionReadiness: 65
-          }
-        },
-        recommendations: {
-          create: [
-            { recommendation: 'Test recommendation' }
-          ]
-        }
-      },
-      include: {
-        scores: true,
-        recommendations: true
-      }
-    });
-
-    res.status(201).json({ 
-      message: 'Test questionnaire created successfully! Database collection should now exist.',
-      data: testResponse 
-    });
-  } catch (err) {
-    console.error('Error creating test questionnaire:', err);
-    res.status(500).json({ message: "Error creating test questionnaire", error: err.message });
-  }
-});
 
 // Get all questionnaire responses for a user
 router.get('/responses/:userEmail', async (req, res) => {
@@ -216,7 +168,7 @@ router.get('/responses/idea/:ideaId', async (req, res) => {
 });
 
 // Create new questionnaire response
-router.post('/response', async (req, res) => {
+router.post('/response', actingUser({ email: ['userEmail'], name: ['userName'] }), async (req, res) => {
   try {
     const {
       userId,
@@ -336,7 +288,7 @@ router.post('/response', async (req, res) => {
 });
 
 // Update questionnaire response
-router.put('/response/:responseId', async (req, res) => {
+router.put('/response/:responseId', actingUser({ email: ['userEmail'] }), async (req, res) => {
   try {
     const response = await prisma.questionnaireResponse.findUnique({
       where: { responseId: req.params.responseId },
@@ -462,7 +414,7 @@ router.put('/response/:responseId', async (req, res) => {
 });
 
 // Delete questionnaire response
-router.delete('/response/:responseId', async (req, res) => {
+router.delete('/response/:responseId', actingUser({ email: ['userEmail'] }), async (req, res) => {
   try {
     const response = await prisma.questionnaireResponse.findUnique({
       where: { responseId: req.params.responseId }

@@ -53,7 +53,7 @@ const ProblemDetail = () => {
       content: c.text || c.comment || "",
       timestamp: c.createdAt ? new Date(c.createdAt).toLocaleString() : "",
       likes: Array.isArray(c.likedBy) ? c.likedBy.length : 0,
-      isLiked: Array.isArray(c.likedBy) ? c.likedBy.includes(user?.email) : false,
+      isLiked: hasUpvoted(c.likedBy, user?.email),
       replies: Array.isArray(c.replies)
         ? c.replies.map((r: any) => ({
             id: r.replyId,
@@ -62,7 +62,7 @@ const ProblemDetail = () => {
             content: r.reply || r.text || "",
             timestamp: r.createdAt ? new Date(r.createdAt).toLocaleString() : "",
             likes: Array.isArray(r.likedBy) ? r.likedBy.length : 0,
-            isLiked: Array.isArray(r.likedBy) ? r.likedBy.includes(user?.email) : false,
+            isLiked: hasUpvoted(r.likedBy, user?.email),
             replies: [],
           }))
         : [],

@@ -1,3 +1,4 @@
+import { authHeaders } from "@/lib/apiAuth";
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@/pages/UserContext';
@@ -286,7 +287,8 @@ const VirtualStartupJourney: React.FC = () => {
       await fetch(`${import.meta.env.VITE_API_BASE_URL}/notification-api/stage-notifications`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...authHeaders()
         },
         body: JSON.stringify({
           userEmail: user.email,

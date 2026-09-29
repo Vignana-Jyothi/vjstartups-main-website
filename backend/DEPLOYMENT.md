@@ -15,10 +15,16 @@ already use. Until the table exists the site keeps working: the stories pages fa
 built-in copy of that one story.
 
 This is automatic: the "Apply site database changes" step in `.github/workflows/deploy.yml`
-runs that file inside the backend container after every deploy. The file is safe to re-run
-(`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`), so nothing needs doing by hand and later edits to
-Veda's story are never overwritten. To apply it manually on a server instead:
-`docker compose exec -T backend npx prisma db execute --file prisma/migrations/20260929000000_add_success_stories/migration.sql --schema prisma/schema.prisma` Photo uploads for stories use the existing
+runs that file inside the backend container after every deploy, through `scripts/apply-sql.js`
+(the Prisma client; the Prisma CLI was killed for memory, exit 137). The file is safe to re-run
+(`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`), so later edits to Veda's story are never
+overwritten. To apply it by hand on a server:
+`docker compose exec -T backend node scripts/apply-sql.js prisma/migrations/20260929000000_add_success_stories/migration.sql`
+
+The backend container must reach the Plane Postgres: set the `PLANE_DATABASE_URL` secret for
+the environment (docker-compose falls back to `host.docker.internal:5434` otherwise).
+
+Photo uploads for stories use the existing
 `CLOUDINARY_*` variables (folder `success_stories`). Who can write stories: accounts whose
 public role is ADMIN or WING_MASTER, at `/stories/new` on the site.
 

@@ -1,72 +1,63 @@
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const multer = require('multer');
+const cloudinary = require('../config/cloudinary');
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+// Startup files (cover image, logo, pitch deck, one-pager) go to Cloudinary. They used to be
+// written to the container's uploads/ folder, which every deploy rebuilds from scratch, so each
+// deploy deleted them. Files are held in memory only long enough to be sent on.
+const IMAGE_FIELDS = ['coverImage', 'logo'];
+const DOC_FIELDS = ['pitchDeck', 'onePager'];
+const DOC_TYPES = new Set([
+  'application/pdf',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (IMAGE_FIELDS.includes(file.fieldname)) {
+      return file.mimetype.startsWith('image/')
+        ? cb(null, true)
+        : cb(new Error('Only image files are allowed for cover image and logo'));
+    }
+    if (DOC_FIELDS.includes(file.fieldname)) {
+      return DOC_TYPES.has(file.mimetype)
+        ? cb(null, true)
+        : cb(new Error('Only PDF, PPT, or DOC files are allowed for documents'));
+    }
+    return cb(new Error('Unexpected field'));
+  },
+});
+
+function sendToCloudinary(file, folder) {
+  return new Promise((resolve, reject) => {
+    const isDoc = DOC_FIELDS.includes(file.fieldname);
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        // Documents are stored as-is ("raw"), keeping their name and extension for download.
+        resource_type: isDoc ? 'raw' : 'image',
+        use_filename: true,
+        unique_filename: true,
+        filename_override: file.originalname,
+      },
+      (error, result) => (error ? reject(error) : resolve(result.secure_url))
+    );
+    stream.end(file.buffer);
+  });
 }
 
-// Configure storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        let uploadPath = uploadsDir;
-        
-        // Create subdirectories based on file type
-        if (file.fieldname === 'coverImage' || file.fieldname === 'logo') {
-            uploadPath = path.join(uploadsDir, 'images');
-        } else if (file.fieldname === 'pitchDeck' || file.fieldname === 'onePager') {
-            uploadPath = path.join(uploadsDir, 'documents');
-        }
-        
-        // Create subdirectory if it doesn't exist
-        if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath, { recursive: true });
-        }
-        
-        cb(null, uploadPath);
-    },
-    filename: function (req, file, cb) {
-        // Generate unique filename with timestamp
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const extension = path.extname(file.originalname);
-        const filename = file.fieldname + '-' + uniqueSuffix + extension;
-        cb(null, filename);
-    }
-});
-
-// File filter for validation
-const fileFilter = (req, file, cb) => {
-    if (file.fieldname === 'coverImage' || file.fieldname === 'logo') {
-        // Accept images only
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only image files are allowed for cover image and logo'), false);
-        }
-    } else if (file.fieldname === 'pitchDeck' || file.fieldname === 'onePager') {
-        // Accept documents only
-        if (file.mimetype === 'application/pdf' || 
-            file.mimetype === 'application/vnd.ms-powerpoint' ||
-            file.mimetype === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
-            file.mimetype === 'application/msword' ||
-            file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-            cb(null, true);
-        } else {
-            cb(new Error('Only PDF, PPT, or DOC files are allowed for documents'), false);
-        }
-    } else {
-        cb(new Error('Unexpected field'), false);
-    }
-};
-
-const upload = multer({ 
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB limit
-    }
-});
+/** Uploads the first file of each multer field; returns { fieldName: url }. */
+async function storeUploads(files = {}, folder = 'startups') {
+  const stored = {};
+  for (const [field, list] of Object.entries(files)) {
+    if (list && list[0]) stored[field] = await sendToCloudinary(list[0], folder);
+  }
+  return stored;
+}
 
 module.exports = upload;
+module.exports.storeUploads = storeUploads;

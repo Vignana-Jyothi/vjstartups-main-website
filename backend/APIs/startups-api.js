@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../config/prisma');
 const upload = require('../middlewares/upload');
+const { storeUploads } = upload;
 const userAuth = require('../middlewares/userAuth');
+const { actingUser } = require('../middlewares/actingUser');
 
 router.use(express.json());
 
@@ -220,12 +222,12 @@ router.post('/', userAuth, upload.fields([
         const parsedMilestones = milestones ? JSON.parse(milestones) : [];
         const parsedTeam = team ? JSON.parse(team) : [];
 
-        // Handle file uploads - convert absolute paths to relative URLs
-        const files = req.files || {};
-        const coverImageUrl = files.coverImage ? files.coverImage[0].path.replace(/.*\/uploads\//, '/uploads/') : '';
-        const logoUrl = files.logo ? files.logo[0].path.replace(/.*\/uploads\//, '/uploads/') : '';
-        const pitchDeckUrl = files.pitchDeck ? files.pitchDeck[0].path.replace(/.*\/uploads\//, '/uploads/') : '';
-        const onePagerUrl = files.onePager ? files.onePager[0].path.replace(/.*\/uploads\//, '/uploads/') : '';
+        // Files go to Cloudinary (see middlewares/upload.js); the startup stores their URLs.
+        const stored = await storeUploads(req.files, 'startups');
+        const coverImageUrl = stored.coverImage || '';
+        const logoUrl = stored.logo || '';
+        const pitchDeckUrl = stored.pitchDeck || '';
+        const onePagerUrl = stored.onePager || '';
 
         const financialNotes = [
             fundingAmount ? `Funding amount: ${fundingAmount}` : null,
@@ -424,11 +426,11 @@ router.put('/:id', userAuth, upload.fields([
         if (req.body.keyFeatures) updateData.keyFeatures = JSON.parse(req.body.keyFeatures);
         if (req.body.technologyStack) updateData.technologyStack = JSON.parse(req.body.technologyStack);
 
-        const files = req.files || {};
-        if (files.coverImage) updateData.coverImage = files.coverImage[0].path.replace(/.*\/uploads\//, '/uploads/');
-        if (files.logo) updateData.logo = files.logo[0].path.replace(/.*\/uploads\//, '/uploads/');
-        if (files.pitchDeck) updateData.pitchDeckUrl = files.pitchDeck[0].path.replace(/.*\/uploads\//, '/uploads/');
-        if (files.onePager) updateData.onePagerUrl = files.onePager[0].path.replace(/.*\/uploads\//, '/uploads/');
+        const stored = await storeUploads(req.files, 'startups');
+        if (stored.coverImage) updateData.coverImage = stored.coverImage;
+        if (stored.logo) updateData.logo = stored.logo;
+        if (stored.pitchDeck) updateData.pitchDeckUrl = stored.pitchDeck;
+        if (stored.onePager) updateData.onePagerUrl = stored.onePager;
 
         await prisma.$transaction(async (tx) => {
             await tx.startup.update({
@@ -533,7 +535,7 @@ router.delete('/:id', userAuth, async (req, res) => {
 });
 
 // POST upvote startup
-router.post('/:id/upvote', async (req, res) => {
+router.post('/:id/upvote', actingUser(), async (req, res) => {
     try {
         const startup = await prisma.startup.update({
             where: { id: req.params.id },
@@ -568,6 +570,12 @@ router.get('/:id/download/:docType', async (req, res) => {
 
         if (!startup) {
             return res.status(404).json({ message: 'Startup not found' });
+        }
+
+        // Files on Cloudinary are served from there.
+        const storedUrl = docType === 'pitchDeck' ? startup.pitchDeckUrl : docType === 'onePager' ? startup.onePagerUrl : null;
+        if (storedUrl && /^https?:\/\//.test(storedUrl)) {
+            return res.redirect(storedUrl);
         }
 
         let filePath;

@@ -1,3 +1,4 @@
+import { authHeaders } from "@/lib/apiAuth";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -152,7 +153,7 @@ const ProblemSubmissionForm = ({
         // New problem
         response = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem`,
-          { method: "POST", body: formData }
+          { method: "POST", body: formData, headers: authHeaders() }
         );
       }
 
