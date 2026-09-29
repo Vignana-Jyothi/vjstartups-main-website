@@ -3,6 +3,7 @@ const router = express.Router();
 const prisma = require('../config/prisma');
 const upload = require('../middlewares/upload');
 const userAuth = require('../middlewares/userAuth');
+const { actingUser } = require('../middlewares/actingUser');
 
 router.use(express.json());
 
@@ -533,7 +534,7 @@ router.delete('/:id', userAuth, async (req, res) => {
 });
 
 // POST upvote startup
-router.post('/:id/upvote', async (req, res) => {
+router.post('/:id/upvote', actingUser(), async (req, res) => {
     try {
         const startup = await prisma.startup.update({
             where: { id: req.params.id },

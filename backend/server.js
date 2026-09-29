@@ -35,13 +35,18 @@ app.use('/uploads', express.static('uploads'));
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
-// Existing public routes
-app.use('/problem-api', require('./APIs/problems-api'));
-app.use('/idea-api', require('./APIs/ideas-api'));
-app.use('/questionnaire-api', require('./APIs/questionnaire-api'));
-app.use('/startup-api', require('./APIs/startups-api'));
+// Existing public routes. They return other people's emails and phone numbers only where the
+// requester is entitled to them (middlewares/privacy.js); optionalUser tells it who is asking.
+const { optionalUser } = require('./middlewares/actingUser');
+const privacy = require('./middlewares/privacy');
+const publicApi = [optionalUser, privacy];
+
+app.use('/problem-api', publicApi, require('./APIs/problems-api'));
+app.use('/idea-api', publicApi, require('./APIs/ideas-api'));
+app.use('/questionnaire-api', publicApi, require('./APIs/questionnaire-api'));
+app.use('/startup-api', publicApi, require('./APIs/startups-api'));
 app.use('/auth', require('./APIs/auth-api'));
-app.use('/notification-api', require('./APIs/notifications-api'));
+app.use('/notification-api', publicApi, require('./APIs/notifications-api'));
 
 // Admin routes (all protected by adminAuth middleware inside)
 app.use('/admin-api', require('./APIs/admin-api'));
@@ -51,7 +56,7 @@ app.use('/admin-api', require('./APIs/admin-api'));
 // /"tasks", which now belong to Plane's own native project management
 // system after the Postgres merge - every route in that file 500s.
 
-app.use('/announcements-api', require('./APIs/announcements-api'));
+app.use('/announcements-api', publicApi, require('./APIs/announcements-api'));
 app.use('/story-api', require('./APIs/stories-api'));
 app.use('/leaderboard-api', require('./APIs/leaderboard-api'));
 

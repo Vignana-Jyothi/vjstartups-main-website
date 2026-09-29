@@ -2,7 +2,24 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const prisma = require('../config/prisma');
-const upload = require('../middlewares/upload');
+const multer = require('multer');
+const { actingUser, optionalUser } = require('../middlewares/actingUser');
+
+// Idea uploads go to Cloudinary straight from memory (the routes read file.buffer). The shared
+// disk middleware in middlewares/upload.js stored files on disk and rejected these field names,
+// so every idea with a cover image failed with "Unexpected field".
+const IMAGE_FIELDS = ['titleImage', 'teamImages'];
+const DOC_TYPES = /^(image\/|application\/pdf$|application\/msword$|application\/vnd\.(openxmlformats-officedocument|ms-powerpoint|ms-excel)|text\/plain$)/;
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 30 },
+  fileFilter: (req, file, cb) => {
+    if (IMAGE_FIELDS.includes(file.fieldname)) {
+      return file.mimetype.startsWith('image/') ? cb(null, true) : cb(new Error('Only image files are allowed here'));
+    }
+    return DOC_TYPES.test(file.mimetype) ? cb(null, true) : cb(new Error('Unsupported file type'));
+  },
+});
 const cloudinary = require('../config/cloudinary');
 const verifierAuth = require('../middlewares/verifierAuth');
 const userAuth = require('../middlewares/userAuth');
@@ -58,7 +75,6 @@ const createStageNotification = async (idea, previousStage, newStage) => {
       }
     });
     
-    console.log(`✅ Stage notification created: ${idea.title} moved to stage ${newStage}`);
   } catch (err) {
     console.error('Error creating stage notification:', err);
     // Don't fail the request if notification creation fails
@@ -131,9 +147,10 @@ router.get('/ideas/problem/:problemId', async (req, res) => {
 });
 
 // Get a specific idea (database only with access control)
-router.get('/ideas/:ideaId', async (req, res) => {
+router.get('/ideas/:ideaId', optionalUser, async (req, res) => {
   try {
-    const userEmail = req.query.userEmail || req.headers['user-email'];
+    // Who may see private attachments and links: the logged-in user, never an email in the URL.
+    const userEmail = req.user?.email;
     
     // Find in database only
     let idea = await prisma.idea.findUnique({
@@ -201,15 +218,9 @@ router.post('/idea', upload.fields([
   { name: 'titleImage', maxCount: 1 },
   { name: 'teamImages', maxCount: 10 },
   { name: 'attachments', maxCount: 20 }
-]), async (req, res) => {
-  console.log('🚀 POST /idea route hit');
-  console.log('📝 Request body:', req.body);
-  console.log('📁 Request files:', req.files);
-  console.log('🔍 Request headers:', req.headers);
+]), actingUser({ email: ['addedByEmail'], name: ['addedByName'] }), async (req, res) => {
   
   try {
-    console.log('✅ Starting idea creation process...');
-    console.log('🔍 Extracting data from request body...');
     const {
       title,
       description,
@@ -225,34 +236,15 @@ router.post('/idea', upload.fields([
       attachmentMetadata
     } = req.body;
     
-    console.log('📊 Extracted data:', {
-      title,
-      description,
-      relatedProblemId,
-      stage,
-      mentor,
-      contact,
-      targetCustomers,
-      addedByName,
-      addedByEmail,
-      teamType: typeof team,
-      linksType: typeof links,
-      attachmentMetadataType: typeof attachmentMetadata
-    });
 
-    console.log('📋 Parsing team members...');
     // Parse team members if sent as string
     let teamMembers = team;
     if (typeof team === 'string') {
       try {
         teamMembers = JSON.parse(team);
-        console.log('✅ Team members parsed:', teamMembers);
       } catch (error) {
-        console.log('⚠️ Error parsing team members:', error);
         teamMembers = [];
       }
-    } else {
-      console.log('📋 Team members already parsed:', teamMembers);
     }
     
     // Ensure teamMembers is an array
@@ -262,12 +254,9 @@ router.post('/idea', upload.fields([
 
     // Upload title image if provided
     let titleImageUrl = '';
-    console.log('📸 Debug - req.files:', req.files);
-    console.log('📸 Debug - titleImage files:', req.files?.titleImage);
     
     if (req.files && req.files.titleImage && req.files.titleImage[0]) {
       const file = req.files.titleImage[0];
-      console.log('📸 Debug - Processing title image:', file.originalname, file.mimetype);
       const b64 = Buffer.from(file.buffer).toString("base64");
       const dataURI = `data:${file.mimetype};base64,${b64}`;
       
@@ -277,53 +266,40 @@ router.post('/idea', upload.fields([
           resource_type: 'auto'
         });
         titleImageUrl = result.secure_url;
-        console.log('📸 Debug - Cloudinary upload successful:', titleImageUrl);
       } catch (error) {
         console.error("📸 Debug - Cloudinary upload error:", error);
       }
-    } else {
-      console.log('📸 Debug - No title image found in request');
     }
 
-    console.log('🔗 Processing links...');
     // Parse and process links
     let linksData = [];
     if (links) {
       try {
         const parsedLinks = typeof links === 'string' ? JSON.parse(links) : links;
-        console.log('✅ Links parsed:', parsedLinks);
         linksData = Array.isArray(parsedLinks) ? parsedLinks : [parsedLinks];
-        console.log('✅ Links data formatted:', linksData);
       } catch (error) {
         console.error('⚠️ Error parsing links:', error);
         linksData = [];
       }
-    } else {
-      console.log('📝 No links provided');
     }
 
-    console.log('📎 Processing file attachments...');
     // Process file attachments
     let attachmentsData = [];
     if (req.files && req.files.attachments) {
-      console.log('📎 Found attachments:', req.files.attachments.length);
       
       const attachmentMeta = attachmentMetadata ? 
         (typeof attachmentMetadata === 'string' ? JSON.parse(attachmentMetadata) : attachmentMetadata) : [];
       
       for (let i = 0; i < req.files.attachments.length; i++) {
-        console.log(`📎 Processing attachment ${i + 1}/${req.files.attachments.length}`);
         const file = req.files.attachments[i];
         const b64 = Buffer.from(file.buffer).toString("base64");
         const dataURI = `data:${file.mimetype};base64,${b64}`;
         
         try {
-          console.log('☁️ Uploading attachment to Cloudinary...');
           const result = await cloudinary.uploader.upload(dataURI, {
             folder: 'idea_attachments',
             resource_type: 'auto'
           });
-          console.log('✅ Attachment uploaded successfully:', result.secure_url);
           
           const meta = attachmentMeta[i] || {};
           
@@ -339,11 +315,8 @@ router.post('/idea', upload.fields([
           console.error("❌ Cloudinary upload error for attachment:", error);
         }
       }
-    } else {
-      console.log('📎 No attachments found');
     }
     
-    console.log('💾 Creating idea in database with transaction...');
     // Create idea with all relations in transaction
     const newIdea = await prisma.$transaction(async (tx) => {
       const idea = await tx.idea.create({
@@ -409,11 +382,9 @@ router.post('/idea', upload.fields([
       return idea;
     });
     
-    console.log('✅ Idea saved successfully:', newIdea.ideaId);
     
     // Create notification for new idea creation
     await createStageNotification(newIdea, 0, newIdea.stage);
-    console.log('🔔 Notification created for new idea');
     
     // Fetch with relations for response
     const ideaWithRelations = await prisma.idea.findUnique({
@@ -648,7 +619,7 @@ router.delete('/idea/:ideaId', userAuth, async (req, res) => {
 });
 
 // Upvote an idea (toggle)
-router.post('/idea/:ideaId/upvote', async (req, res) => {
+router.post('/idea/:ideaId/upvote', actingUser({ email: ['email'] }), async (req, res) => {
   try {
     const idea = await prisma.idea.findUnique({
       where: { ideaId: req.params.ideaId }
@@ -718,7 +689,7 @@ router.post('/idea/:ideaId/upvote', async (req, res) => {
 });
 
 // Add comment to an idea (v1)
-router.post('/idea/:ideaId/comment', async (req, res) => {
+router.post('/idea/:ideaId/comment', actingUser({ email: ['email'], name: ['name'] }), async (req, res) => {
   try {
     const idea = await prisma.idea.findUnique({
       where: { ideaId: req.params.ideaId }
@@ -784,7 +755,7 @@ router.get('/ideas/:ideaId/comments', async (req, res) => {
 });
 
 // Add a comment to an idea (v2)
-router.post('/ideas/:ideaId/comments', async (req, res) => {
+router.post('/ideas/:ideaId/comments', actingUser({ email: ['email'], name: ['author'] }), async (req, res) => {
   try {
     const { author, content, email } = req.body;
     
@@ -814,7 +785,7 @@ router.post('/ideas/:ideaId/comments', async (req, res) => {
 });
 
 // Like a comment (toggle)
-router.post('/ideas/:ideaId/comments/:commentId/like', async (req, res) => {
+router.post('/ideas/:ideaId/comments/:commentId/like', actingUser({ email: ['email'] }), async (req, res) => {
   try {
     const { email } = req.body;
     
@@ -881,7 +852,7 @@ router.post('/ideas/:ideaId/comments/:commentId/like', async (req, res) => {
 });
 
 // Add a reply to a comment
-router.post('/ideas/:ideaId/comments/:commentId/replies', async (req, res) => {
+router.post('/ideas/:ideaId/comments/:commentId/replies', actingUser({ email: ['email'], name: ['author'] }), async (req, res) => {
   try {
     const { author, content, email } = req.body;
     
@@ -933,7 +904,7 @@ router.post('/ideas/:ideaId/comments/:commentId/replies', async (req, res) => {
 });
 
 // Add attachment to an idea
-router.post('/ideas/:ideaId/attachments', upload.single('file'), async (req, res) => {
+router.post('/ideas/:ideaId/attachments', upload.single('file'), actingUser({ email: ['email'] }), async (req, res) => {
   try {
     const { name, type } = req.body;
     const userEmail = req.body.email;
@@ -1005,7 +976,7 @@ router.post('/ideas/:ideaId/attachments', upload.single('file'), async (req, res
 });
 
 // Delete attachment from an idea
-router.delete('/ideas/:ideaId/attachments/:attachmentIndex', async (req, res) => {
+router.delete('/ideas/:ideaId/attachments/:attachmentIndex', actingUser({ email: ['email'] }), async (req, res) => {
   try {
     const userEmail = req.body.email;
     const attachmentIndex = parseInt(req.params.attachmentIndex);
@@ -1051,7 +1022,7 @@ router.delete('/ideas/:ideaId/attachments/:attachmentIndex', async (req, res) =>
 });
 
 // Add link to an idea
-router.post('/ideas/:ideaId/links', async (req, res) => {
+router.post('/ideas/:ideaId/links', actingUser({ email: ['email'] }), async (req, res) => {
   try {
     const { title, description, url, accessLevel } = req.body;
     const userEmail = req.body.email;
@@ -1102,7 +1073,7 @@ router.post('/ideas/:ideaId/links', async (req, res) => {
 });
 
 // Update link in an idea
-router.put('/ideas/:ideaId/links/:linkIndex', async (req, res) => {
+router.put('/ideas/:ideaId/links/:linkIndex', actingUser({ email: ['email'] }), async (req, res) => {
   try {
     const { title, description, url, accessLevel } = req.body;
     const userEmail = req.body.email;
@@ -1162,7 +1133,7 @@ router.put('/ideas/:ideaId/links/:linkIndex', async (req, res) => {
 });
 
 // Delete link from an idea
-router.delete('/ideas/:ideaId/links/:linkIndex', async (req, res) => {
+router.delete('/ideas/:ideaId/links/:linkIndex', actingUser({ email: ['email'] }), async (req, res) => {
   try {
     const userEmail = req.body.email;
     const linkIndex = parseInt(req.params.linkIndex);
@@ -1208,18 +1179,30 @@ router.delete('/ideas/:ideaId/links/:linkIndex', async (req, res) => {
 });
 
 // Update idea startup status
-router.put('/idea/:id/startup-status', async (req, res) => {
+router.put('/idea/:id/startup-status', actingUser({ email: ['userEmail'] }), async (req, res) => {
   try {
     const { isStartupWorthy, worthinessLevel, evaluatedAt, userEmail, hasStartupCreated } = req.body;
-    
+
     const idea = await prisma.idea.findUnique({
-      where: { ideaId: req.params.id }
+      where: { ideaId: req.params.id },
+      include: { teamMembers: true, collaborators: true }
     });
-    
+
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
-    
+
+    // Only the idea's own people (or the wing members, masters and admins who assess ideas)
+    // may change its startup status.
+    const role = req.user?.adminProfile?.publicRole;
+    const canEdit = userEmail === idea.addedByEmail ||
+                   idea.teamMembers.some(member => member.email === userEmail) ||
+                   idea.collaborators.some(c => c.email === userEmail) ||
+                   ['WING_MEMBER', 'WING_MASTER', 'ADMIN'].includes(role);
+    if (!canEdit) {
+      return res.status(403).json({ message: "Unauthorized to change this idea's startup status" });
+    }
+
     // Update startup status fields
     const updatedIdea = await prisma.idea.update({
       where: { id: idea.id },
