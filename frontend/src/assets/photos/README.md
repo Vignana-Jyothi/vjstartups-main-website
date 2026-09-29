@@ -22,12 +22,12 @@ keep the stock photo, so they can be replaced one at a time.
 | File name | Where it appears | What to shoot |
 | --- | --- | --- |
 | `hero` | Opening screen, inside the lens that grows to fill the screen | The widest, busiest room you have: a VJ Startups session in full swing, many students at work. The first thing anyone sees. |
-| `people` | Journey 01 "Start with friction", the ProblemHub door, the three-lenses card | Two to four students around a table, mid-conversation about a problem. Hands, laptops, notebooks. |
-| `pitch` | Journey 02 "Make a hypothesis", the IdeaHub door | Someone sketching an idea on a whiteboard or notebook while another person points or questions. |
+| `people` | Journey 01 "Start with friction", the Problem Hunt door, the three-lenses card | Two to four students around a table, mid-conversation about a problem. Hands, laptops, notebooks. |
+| `pitch` | Journey 02 "Make a hypothesis", the Ideathon door | Someone sketching an idea on a whiteboard or notebook while another person points or questions. |
 | `research` | Journey 03 "Pressure-test it" | Focused work: a student with a laptop, papers or data. The library or a lab works. |
 | `room` | Journey 04 "Let reality answer" | Students talking to real users off campus or around it: a shopkeeper, the canteen, other students. |
 | `prototype` | Journey 05 "Make it tangible", the three-lenses card | Hands on a physical or digital prototype: a circuit, a 3D print, an app on a phone. |
-| `founders` | Journey 06 "Ship to learn", the StartupHub door, the three-lenses card | A team presenting or demoing: Monthly Connect, a showcase, the Startup Challenge finale. |
+| `founders` | Journey 06 "Ship to learn", the Startups door, the three-lenses card | A team presenting or demoing: Monthly Connect, a showcase, the Startup Challenge finale. |
 | `campus` | Journey 07 "Make traction compound" | VNRVJIET itself: a wide shot of a campus building or the grounds in good light. (The stock photo here is a US university.) |
 | `atlast` | Proof: ATLAST Hydrogen Solutions | ATLAST's own product, prototype or team. Ask them for one. |
 | `salcit` | Proof: Salcit AI Health | Salcit's own product or team. |

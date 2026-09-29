@@ -115,3 +115,6 @@
   .sc-nav .sc-links a,.sc-nav .sc-text{position:relative}
   .sc-nav .sc-links a:before,.sc-nav .sc-text:before{content:"";position:absolute;inset:-14px -8px}
 }
+/* Admins get two extra header links (announcements, admin panel); the place line gives way to
+   them below wide screens instead of running into "Admin panel". */
+@media(max-width:1500px){.sc-nav:has(a[href="/announcements/new"]) .sc-place{display:none}}

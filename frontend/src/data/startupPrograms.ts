@@ -118,7 +118,7 @@ export const startupPrograms: StartupProgram[] = [
     shortDescription: 'Transform your problem into a viable solution through structured TRL progression',
     overview: `The Innovation Internship is a comprehensive 1-2 month program that guides students through the Technology Readiness Levels (TRL) framework to develop viable solutions for real-world problems. Students work on their own identified problems with structured guidance.`,
     howToParticipate: [
-      'Submit a problem statement you want to solve on ProblemHub',
+      'Submit a problem statement you want to solve on Problem Hunt',
       'Attend the TRL framework orientation session',
       'Commit to the structured milestone-based approach',
       'Participate in weekly review sessions',

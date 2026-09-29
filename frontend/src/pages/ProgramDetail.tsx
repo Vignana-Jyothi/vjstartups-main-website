@@ -6,7 +6,7 @@ import "@/components/design-system/programs.css";
 import { PageHero } from "@/components/design-system/PageHero";
 import SuccessStoryCard from "@/components/SuccessStoryCard";
 import { startupPrograms, PROGRAM_CATEGORIES, PROGRAM_STATUS } from "@/data/startupPrograms";
-import { getSuccessStoriesByProgram } from "@/data/successStories";
+import { useStories } from "@/data/storiesApi";
 
 const accent = { "--lx-accent": "var(--lime)" } as CSSProperties;
 
@@ -21,7 +21,7 @@ const ProgramDetail = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const program = startupPrograms.find((p) => p.id === id);
-  const stories = program ? getSuccessStoriesByProgram(program.id) : [];
+  const { stories } = useStories(program?.id ?? "none");
 
   // Deep links (the footer's "Mentor network") land on the mentor panel once the page has entered.
   useEffect(() => {

@@ -59,6 +59,7 @@ app.use('/admin-api', require('./APIs/admin-api'));
 // system after the Postgres merge - every route in that file 500s.
 
 app.use('/announcements-api', require('./APIs/announcements-api'));
+app.use('/story-api', require('./APIs/stories-api'));
 
 // TEMPORARY - for diagnosing the admin proxy's persistent 401. Echoes back
 // exactly what this server received, no auth involved, to rule in/out

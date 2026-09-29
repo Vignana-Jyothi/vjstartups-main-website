@@ -24,6 +24,7 @@ const IdeaValidation = lazy(() => import("./pages/IdeaValidation"));
 const Programs = lazy(() => import("./pages/Programs"));
 const ProgramDetail = lazy(() => import("./pages/ProgramDetail"));
 const SuccessStories = lazy(() => import("./pages/SuccessStories"));
+const StoryForm = lazy(() => import("./pages/StoryForm"));
 const SuccessStoryDetail = lazy(() => import("./pages/SuccessStoryDetail"));
 const Club = lazy(() => import("./pages/Club"));
 const Startups = lazy(() => import("./pages/Startups"));
@@ -86,6 +87,8 @@ const App = () => (
                 <Route path="/programs" element={<Programs />} />
                 <Route path="/programs/:id" element={<ProgramDetail />} />
                 <Route path="/stories" element={<SuccessStories />} />
+                <Route path="/stories/new" element={<StoryForm />} />
+                <Route path="/stories/:id/edit" element={<StoryForm />} />
                 <Route path="/programs/:programId/success-stories" element={<SuccessStories />} />
                 <Route path="/programs/:programId/success-stories/:storyId" element={<SuccessStoryDetail />} />
                 <Route path="/club" element={<Club />} />

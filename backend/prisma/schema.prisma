@@ -683,6 +683,43 @@ model Announcement {
 }
 
 // ============================================================================
+// SUCCESS STORIES
+//
+// Written up by admins and wing masters from the site (/stories/new). The id is
+// the story's URL slug (/programs/:programId/success-stories/:id). programId
+// matches a program id in the frontend's programs list. The nested parts
+// (participants, journey, outcomes, quotes, gallery) keep the shape the story
+// pages render, so they are stored as JSON.
+// ============================================================================
+
+model SuccessStory {
+  id             String   @id
+  programId      String
+  season         String
+  title          String
+  subtitle       String   @default("")
+  storyDate      String   @default("")
+  overview       String   @default("") @db.Text
+  participants   Json     @default("[]")
+  journey        Json     @default("[]")
+  outcomes       Json     @default("[]")
+  quotes         Json     @default("[]")
+  gallery        Json     @default("[]")
+  tags           String[] @default([])
+  achievements   String[] @default([])
+  featured       Boolean  @default(false)
+  isPublished    Boolean  @default(true)
+  postedByName   String   @default("")
+  postedByEmail  String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([programId])
+  @@index([isPublished])
+  @@map("success_stories")
+}
+
+// ============================================================================
 // NOTIFICATIONS
 // ============================================================================
 

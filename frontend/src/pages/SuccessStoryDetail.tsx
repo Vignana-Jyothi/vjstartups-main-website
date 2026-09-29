@@ -1,6 +1,9 @@
 import type { CSSProperties } from "react";
-import { useParams, Link } from "react-router-dom";
-import { getSuccessStoryById, formatStoryDate, Participant } from "@/data/successStories";
+import { useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { formatStoryDate, Participant } from "@/data/successStories";
+import { canWriteStories, hideStory, useStory } from "@/data/storiesApi";
+import { useUser } from "./UserContext";
 import { startupPrograms } from "@/data/startupPrograms";
 import { usePdfAvailable } from "@/hooks/usePdfAvailable";
 import { PageHero } from "@/components/design-system/PageHero";
@@ -18,9 +21,21 @@ function participantLinks(p: Participant) {
 
 const SuccessStoryDetail = () => {
   const { programId, storyId } = useParams();
-  const story = storyId ? getSuccessStoryById(storyId) : undefined;
-  const program = startupPrograms.find((p) => p.id === programId);
+  const { story, status } = useStory(storyId);
+  const program = startupPrograms.find((p) => p.id === (story?.programId ?? programId));
   const pdfLive = usePdfAvailable(story?.pdfUrl);
+  const { user } = useUser();
+  const navigate = useNavigate();
+  const [hiding, setHiding] = useState(false);
+  const canWrite = canWriteStories(user?.role) && !!user?.adminToken && status === "ready";
+
+  if (status === "loading") {
+    return (
+      <div className="page-shell lx">
+        <div className="lx-section"><div className="lx-loading">Loading the story</div></div>
+      </div>
+    );
+  }
 
   if (!story || !program) {
     return (
@@ -51,11 +66,34 @@ const SuccessStoryDetail = () => {
         description={story.subtitle}
         backLink={{ label: "Success stories", to: storiesHref }}
         stats={[
-          { value: formatStoryDate(story.date), label: "When" },
+          ...(story.date ? [{ value: formatStoryDate(story.date), label: "When" }] : []),
           { value: String(story.participants.length), label: story.participants.length === 1 ? "Participant" : "Participants" },
           ...(headline ? [{ value: headline.metrics!, label: headline.title }] : []),
         ]}
       >
+        {canWrite && (
+          <div className="lx-gate-actions">
+            <Link to={`/stories/${story.id}/edit`} className="lx-cta">Edit story ↗</Link>
+            <button
+              type="button"
+              className="lx-textbtn"
+              disabled={hiding}
+              onClick={async () => {
+                if (!window.confirm("Hide this story? It disappears from the site until someone publishes it again.")) return;
+                setHiding(true);
+                try {
+                  await hideStory(user!.adminToken!, story.id);
+                  navigate("/stories");
+                } catch (err) {
+                  window.alert(err instanceof Error ? err.message : "Couldn't hide the story");
+                  setHiding(false);
+                }
+              }}
+            >
+              {hiding ? "Hiding…" : "Hide story"}
+            </button>
+          </div>
+        )}
         {pdfLive && (
           <a href={story.pdfUrl} target="_blank" rel="noopener noreferrer" className="lx-cta">
             Download the report ↗
@@ -117,7 +155,7 @@ const SuccessStoryDetail = () => {
                 <figure key={quote.text} className="st-quote">
                   <blockquote>“{quote.text}”</blockquote>
                   <figcaption>
-                    {quote.author} / {quote.designation}
+                    {[quote.author, quote.designation].filter(Boolean).join(" / ")}
                   </figcaption>
                 </figure>
               ))}
@@ -161,7 +199,7 @@ const SuccessStoryDetail = () => {
                   <div>
                     <strong>{p.name}</strong>
                     {p.role && <em>{p.role}</em>}
-                    <small>{p.branch} / {p.year} year</small>
+                    <small>{[p.branch, p.year && `${p.year.replace(/\s*year$/i, "")} year`].filter(Boolean).join(" / ")}</small>
                     <div className="st-links">
                       {participantLinks(p).map((link) => (
                         <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer">
@@ -175,21 +213,25 @@ const SuccessStoryDetail = () => {
             </div>
           </div>
 
-          <div className="lx-field">
-            <h3>Key achievements</h3>
-            <ul className="lx-list">
-              {story.achievements.map((achievement) => <li key={achievement}>{achievement}</li>)}
-            </ul>
-          </div>
-
-          <div className="lx-field">
-            <h3>Tags</h3>
-            <div className="lx-tags">
-              {story.tags.map((tag) => (
-                <span key={tag} className="lx-tag is-static">{tag.replace(/-/g, " ")}</span>
-              ))}
+          {story.achievements.length > 0 && (
+            <div className="lx-field">
+              <h3>Key achievements</h3>
+              <ul className="lx-list">
+                {story.achievements.map((achievement) => <li key={achievement}>{achievement}</li>)}
+              </ul>
             </div>
-          </div>
+          )}
+
+          {story.tags.length > 0 && (
+            <div className="lx-field">
+              <h3>Tags</h3>
+              <div className="lx-tags">
+                {story.tags.map((tag) => (
+                  <span key={tag} className="lx-tag is-static">{tag.replace(/-/g, " ")}</span>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="st-cta">
             <p>Join {program.title} and write your own story.</p>

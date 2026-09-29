@@ -55,9 +55,9 @@ const STAGES = [
 ] as const;
 
 const HUBS = [
-  ["ProblemHub", "DISCOVER", "The problem is the first customer.", IMG.people, "/problems"],
-  ["IdeaHub", "CREATE", "Turn a real observation into something testable.", IMG.pitch, "/ideas"],
-  ["StartupHub", "SCALE", "Take evidence, make it traction, and keep going.", IMG.founders, "/startups"],
+  ["Problem Hunt", "DISCOVER", "The problem is the first customer.", IMG.people, "/problems"],
+  ["Ideathon", "CREATE", "Turn a real observation into something testable.", IMG.pitch, "/ideas"],
+  ["Startups", "SCALE", "Take evidence, make it traction, and keep going.", IMG.founders, "/startups"],
 ] as const;
 
 const VENTURES = FUNDED_VENTURES.map((v, i) => [String(i + 1).padStart(2, "0"), v.sector, v.name, v.description, IMG[v.photo]] as const);
@@ -460,10 +460,10 @@ function Morph() {
 function Starting() {
   const [active,setActive]=useState(0);
   const items=[
-    ["I HAVE A PROBLEM","Good. Stay here a little longer.","ProblemHub is where friction becomes a defined problem worth solving.","Open ProblemHub","/problems"],
-    ["I HAVE AN IDEA","Now make it uncomfortable.","IdeaHub helps you test the assumptions hidden inside the idea.","Validate your idea","/idea-validation"],
+    ["I HAVE A PROBLEM","Good. Stay here a little longer.","Problem Hunt is where friction becomes a defined problem worth solving.","Open Problem Hunt","/problems"],
+    ["I HAVE AN IDEA","Now make it uncomfortable.","Ideathon helps you test the assumptions hidden inside the idea.","Validate your idea","/idea-validation"],
     ["I HAVE A PROTOTYPE","Put it in the world.","Use the journey to validate the product, collect evidence, and iterate.","Enter the journey","/journey"],
-    ["I HAVE TRACTION","Make it repeatable.","StartupHub is where evidence becomes systems, networks, and growth.","Explore StartupHub","/startups"],
+    ["I HAVE TRACTION","Make it repeatable.","Startups is where evidence becomes systems, networks, and growth.","Explore Startups","/startups"],
   ];
   return <section className="starting light" data-tone="paper" id="start"><Reveal className="starting-head"><span className="chapter-label dark">02 / ORIENTATION</span><h2>WHERE ARE<br/><i>YOU NOW?</i></h2><p>Don't follow a template. Start from the truth of what you already have.</p></Reveal><div className="starting-panel" data-reveal><div className="starting-tabs">{items.map(([label],i)=><button key={label} className={i===active?"active":""} onClick={()=>setActive(i)}><small>0{i+1}</small>{label}</button>)}</div><div className="starting-response"><span className="response-no">0{active+1}</span><span className="kicker dark">YOUR NEXT MOVE</span><h3>{items[active][1]}</h3><p>{items[active][2]}</p><Magnetic href={items[active][4]}><span>{items[active][3]}</span><Arrow/></Magnetic></div></div></section>;
 }
@@ -1040,7 +1040,7 @@ function Community() {
 }
 
 function FAQ() {
-  const [open,setOpen]=useState<number|null>(null), items=[["What is VJ Startups?","A campus startup platform helping college entrepreneurs turn real-world challenges into innovations through a structured journey."],["Who can join?","Students and emerging builders can discover problems, develop ideas, connect with peers, and progress through the startup journey."],["What is the Virtual Startup Journey?","A seven-stage system covering Problem Discovery, Idea & Concept, Research & Feasibility, User Validation, Prototype Development, MVP & Launch, and Growth & Scaling."],["How do the Hubs work?","ProblemHub focuses on discovery, IdeaHub on solution development, and StartupHub on building and scaling ventures."],["Does the ecosystem include mentors and partners?","Yes. The public platform describes entrepreneurship partners, research partners, industry mentors, and a broader network around founders."]];return <section className="faq light" data-tone="paper" id="faq"><Reveal className="faq-head"><span className="chapter-label dark">12 / QUESTIONS</span><h2>GOOD QUESTIONS<br/><i>CHANGE THINGS.</i></h2><p>Start with the answer that gets you back to building.</p></Reveal><div className="faq-list" data-reveal>{items.map(([q,a],i)=><div className={`faq-item ${open===i?"open":""}`} key={q}><button onClick={()=>setOpen(open===i?null:i)}><span>0{i+1}</span><b>{q}</b><i>{open===i?"−":"+"}</i></button><div><p>{a}</p></div></div>)}</div></section>;
+  const [open,setOpen]=useState<number|null>(null), items=[["What is VJ Startups?","A campus startup platform helping college entrepreneurs turn real-world challenges into innovations through a structured journey."],["Who can join?","Students and emerging builders can discover problems, develop ideas, connect with peers, and progress through the startup journey."],["What is the Virtual Startup Journey?","A seven-stage system covering Problem Discovery, Idea & Concept, Research & Feasibility, User Validation, Prototype Development, MVP & Launch, and Growth & Scaling."],["What are Problem Hunt, Ideathon and Startups?","Problem Hunt focuses on discovery, Ideathon on solution development, and Startups on building and scaling ventures."],["Does the ecosystem include mentors and partners?","Yes. The public platform describes entrepreneurship partners, research partners, industry mentors, and a broader network around founders."]];return <section className="faq light" data-tone="paper" id="faq"><Reveal className="faq-head"><span className="chapter-label dark">12 / QUESTIONS</span><h2>GOOD QUESTIONS<br/><i>CHANGE THINGS.</i></h2><p>Start with the answer that gets you back to building.</p></Reveal><div className="faq-list" data-reveal>{items.map(([q,a],i)=><div className={`faq-item ${open===i?"open":""}`} key={q}><button onClick={()=>setOpen(open===i?null:i)}><span>0{i+1}</span><b>{q}</b><i>{open===i?"−":"+"}</i></button><div><p>{a}</p></div></div>)}</div></section>;
 }
 
 const TONES:Record<string,string>={ink:"#080808",paper:"#f0eee8",pink:"#ff4aa7"};
