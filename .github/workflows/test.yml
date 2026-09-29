@@ -1,8 +1,9 @@
-name: Backend tests
+name: Tests
 
-# Runs the backend's unit tests on every pull request that touches it. The tests
-# use Node's built-in runner and need no packages or database, so this stays fast
-# and cannot fail for environmental reasons. Runs on GitHub's own runners, not the
+# Runs the backend and frontend unit tests on every pull request that touches them.
+# Both suites use Node's built-in test runner. The backend needs no packages or
+# database; the frontend needs its dependencies installed (its test runner bundles
+# with esbuild, which ships with Vite). Runs on GitHub's own runners, not the
 # self-hosted deploy machines.
 
 on:
@@ -12,13 +13,14 @@ on:
       - dev
     paths:
       - 'backend/**'
+      - 'frontend/**'
       - '.github/workflows/test.yml'
 
 permissions:
   contents: read
 
 jobs:
-  test:
+  backend:
     name: npm test (backend)
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -33,4 +35,27 @@ jobs:
 
       - name: Run the backend tests
         working-directory: backend
+        run: npm test
+
+  frontend:
+    name: npm test (frontend)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # There is no package-lock.json in frontend/ (only a Bun lockfile), so `npm ci`
+      # cannot be used. The tests import npm packages such as axios.
+      - name: Install the frontend dependencies
+        working-directory: frontend
+        run: npm install --no-audit --no-fund
+
+      - name: Run the frontend tests
+        working-directory: frontend
         run: npm test
