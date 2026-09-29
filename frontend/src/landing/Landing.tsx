@@ -20,8 +20,12 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:6220";
 // Stock placeholders until the club's own photos arrive. Sized to the device (a phone was
 // downloading 2200px, q92 originals: ~3 MB for the page) and served as AVIF/WebP by auto=format.
 const deviceWidth = typeof window === "undefined" ? 1800 : Math.ceil((window.innerWidth * Math.min(window.devicePixelRatio || 1, 2)) / 200) * 200;
-const unsplash = (id: string, max: number) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${Math.min(max, deviceWidth)}&q=80`;
+// Served through the wsrv.nl image relay: images.unsplash.com is blocked on some Indian mobile
+// networks (the photos were blank on phones), while the relay reaches it and serves WebP.
+const unsplash = (id: string, max: number) => {
+  const w = Math.min(max, deviceWidth);
+  return `https://wsrv.nl/?url=${encodeURIComponent(`images.unsplash.com/${id}?fit=crop&w=${w}&q=80`)}&output=webp&q=80`;
+};
 
 // Real photos replace the stock ones slot by slot: a file named after a slot in
 // src/assets/photos (e.g. hero.jpg) is used instead. That folder's README is the shot list.
