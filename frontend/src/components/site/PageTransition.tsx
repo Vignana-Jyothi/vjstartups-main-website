@@ -17,6 +17,7 @@ const LABELS: [RegExp, string][] = [
   [/^\/ideas/, "Ideas"],
   [/^\/submit-idea/, "New idea"],
   [/^\/idea-validation/, "Validate"],
+  [/^\/stories/, "Stories"],
   [/^\/programs\/[^/]+\/success-stories\/[^/]+/, "Story"],
   [/^\/programs\/[^/]+\/success-stories/, "Stories"],
   [/^\/programs\/[^/]+/, "Program"],

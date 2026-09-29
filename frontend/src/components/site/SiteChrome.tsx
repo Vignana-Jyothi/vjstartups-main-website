@@ -1,3 +1,4 @@
+import { LogoMark } from "./LogoMark";
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useUser } from "@/pages/UserContext";
@@ -37,7 +38,7 @@ export function Magnetic({ href, children, variant, className = "" }: { href: st
 }
 
 export function BrandMark({ href = "/" }: { href?: string }) {
-  const content = <><span className="sc-brand-symbol"><i /><i /><i /><i /><i /><i /></span><span>VJ STARTUPS</span></>;
+  const content = <><LogoMark className="sc-logo" /><span className="sc-wordmark">Startups</span></>;
   if (href.startsWith("#")) return <a className="sc-brand" href={href} aria-label="VJ Startups">{content}</a>;
   return <Link className="sc-brand" to={href} aria-label="VJ Startups home">{content}</Link>;
 }

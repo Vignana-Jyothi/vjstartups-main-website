@@ -9,6 +9,7 @@ import { successStories } from "@/data/successStories";
 import { getIdeaNavigationSlug } from "@/utils/slugUtils";
 import { isReadableTitle } from "@/utils/readableTitle";
 import { Arrow, Magnetic, SiteFooter, SiteNav } from "@/components/site/SiteChrome";
+import { LogoMark } from "@/components/site/LogoMark";
 import { onMeasure, pageMetrics, progressOf, useSectionFrame } from "./frame";
 import { loadNetworkData, type NetItem } from "./network/data";
 import "./landing.css";
@@ -208,7 +209,7 @@ function Intro() {
 
       <div className="intro-v16-center">
         <div className="intro-v16-signal">
-          <i/><i/><i/><i/><i/>
+          <LogoMark/>
         </div>
         <div className="intro-v16-brand">
           <span>VJ</span>
@@ -638,8 +639,9 @@ function WorkField() {
   },[]);return <section className="work-field light" data-tone="paper" ref={ref}><div className="work-top"><span>06 / THE WORK</span><span>{work?"POSTED BY STUDENTS":"WORK IN PROGRESS"}</span></div><div className="work-word">BUILD</div>{WORK_SLOTS.map(([slot,depth,img],i)=>{const w=work?.[i];return <div key={slot} className={`work-pic ${slot}${w?" is-card":""}`} data-depth={depth}>{w?<Link to={w.href!} className={`work-card is-${w.kind}`}><span>{w.kind==="problem"?"Problem":"Idea"}<small>{w.kind==="problem"?" / posted by a student":" / answering a problem"}</small></span><b>{w.title}</b><em>Open ↗</em></Link>:<img src={img} alt="" loading="lazy" decoding="async"/>}</div>})}<span className="work-note wn-a" data-depth="25">question → evidence</span><span className="work-note wn-b" data-depth="-18">prototype / 04</span><span className="work-note wn-c" data-depth="33">iteration / 07</span><div className="work-rule"/><div className="work-caption"><span>THE THING THAT LOOKS LIKE A STARTUP<br/>IS USUALLY A COLLECTION OF ITERATIONS.</span><span>{work?"VJ / WORK LOG / LIVE FROM THE PLATFORM":"VJ / WORK LOG"}</span></div></section>;
 }
 
-// 07 / One student: the Startup Challenge's clearest result, told on the landing instead of three
-// clicks deep. Everything shown comes from the story's own record (data/successStories.ts).
+// 07 / Student stories: one student's result told in full on the landing (the first of the stories,
+// not the only one; the rest are a click away on /stories). Everything shown comes from the story's
+// own record (data/successStories.ts).
 const STORY=successStories.find(s=>s.id==="startup-challenge-season-2-veda-dance");
 const STORY_EARNED=12000;
 function OneStudent(){
@@ -663,7 +665,7 @@ function OneStudent(){
   const shot=STORY.gallery?.find(g=>g.type==="image");
   const href=`/programs/${STORY.programId}/success-stories/${STORY.id}`;
   return <section className="tale light" data-tone="paper" id="story" ref={ref}>
-    <div className="tale-top"><span className="chapter-label dark">07 / ONE STUDENT</span><span>STARTUP CHALLENGE / {STORY.season.toUpperCase()} / AUG 2025</span></div>
+    <div className="tale-top"><span className="chapter-label dark">07 / STUDENT STORIES</span><span>STORY 01 / STARTUP CHALLENGE / {STORY.season.toUpperCase()} / AUG 2025</span></div>
     <div className="tale-body">
       <div className="tale-copy">
         <h2 aria-label={`₹12,000 in 15 days`}><span className="tale-amount"><small>₹</small><span ref={amount}>12,000</span></span><i>in 15 days.</i></h2>
@@ -689,7 +691,8 @@ function OneStudent(){
     </div>}
     <div className="tale-links">
       <Magnetic href={href} className="tale-cta">Read Veda&apos;s story <Arrow/></Magnetic>
-      <Link to={`/programs/${STORY.programId}`}>About the Startup Challenge <Arrow/></Link>
+      <Magnetic href="/stories" variant="ghost" className="tale-more">View more stories <Arrow/></Magnetic>
+      <p className="tale-next">One of the stories from our programs. More are written up as each one runs, and the next could be yours.</p>
     </div>
   </section>;
 }

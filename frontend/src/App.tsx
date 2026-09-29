@@ -85,6 +85,7 @@ const App = () => (
                 <Route path="/idea-validation" element={<IdeaValidation />} />
                 <Route path="/programs" element={<Programs />} />
                 <Route path="/programs/:id" element={<ProgramDetail />} />
+                <Route path="/stories" element={<SuccessStories />} />
                 <Route path="/programs/:programId/success-stories" element={<SuccessStories />} />
                 <Route path="/programs/:programId/success-stories/:storyId" element={<SuccessStoryDetail />} />
                 <Route path="/club" element={<Club />} />

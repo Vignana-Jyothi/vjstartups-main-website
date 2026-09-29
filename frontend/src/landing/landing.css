@@ -992,3 +992,13 @@ html.lenis{scroll-behavior:auto}
   .vj-landing .recognition-list span{grid-row:auto;margin-bottom:6px;font-size:52px}
   .vj-landing .recognition-list small{grid-column:1}
 }
+
+/* Intro: the mark stands where the signal bars were, its rocket lifting while the page loads. */
+.vj-landing .intro-v16-signal{height:auto}
+.vj-landing .intro-v16-signal .logo-mark{display:block;width:auto;height:58px;color:#fff;overflow:visible}
+.vj-landing .intro-v16-signal .logo-rocket{animation:introLift 1.4s cubic-bezier(.45,0,.25,1) infinite alternate}
+@keyframes introLift{from{transform:translateY(40px)}to{transform:translateY(-90px)}}
+@media(prefers-reduced-motion:reduce){.vj-landing .intro-v16-signal .logo-rocket{animation:none}}
+.vj-landing .tale .magnetic.ghost{border:1px solid rgba(0,0,0,.2);background:transparent;color:#080808}
+.vj-landing .tale .magnetic.ghost:hover{border-color:#080808}
+.vj-landing .tale-next{flex-basis:100%;max-width:520px;margin:6px 0 0;color:rgba(0,0,0,.5);font-size:14px;line-height:1.5}
