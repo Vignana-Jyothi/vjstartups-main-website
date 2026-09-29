@@ -19,8 +19,8 @@ const TABS = [
   { value: "join", label: "Get involved" },
 ];
 
-// The team sheet names its tabs after the wings; Core Wing's tab is called "Infra".
-const SHEET_ALIASES: Record<string, string> = { core: "infra" };
+// Team-sheet wing names that differ from the wing list's (none since Core became Infra).
+const SHEET_ALIASES: Record<string, string> = {};
 const wingKey = (name: string) => wingDisplayName(name).split(/\s+/)[0].toLowerCase();
 
 const ClubPage = () => {

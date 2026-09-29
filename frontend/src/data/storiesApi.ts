@@ -16,7 +16,12 @@ const cache = new Map<string, SuccessStory[]>();
 
 async function getJSON<T>(path: string): Promise<T> {
   const res = await fetch(`${API}/story-api${path}`);
-  if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+  if (!res.ok) {
+    // The stories API answers "not found" in JSON; a backend without the API gives Express's
+    // HTML 404 instead. Only the first means the story really isn't there.
+    const fromApi = (res.headers.get("content-type") || "").includes("application/json");
+    throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status, fromApi });
+  }
   return res.json();
 }
 
@@ -52,7 +57,9 @@ export function useStory(id?: string) {
       .then(({ story }) => live && setState({ story, status: "ready" }))
       .catch((err) => {
         if (!live) return;
-        if (err.status === 404) return setState({ status: "missing" });
+        // Hidden or unknown story (the API said so): missing. The API unreachable or not there
+        // yet: fall back to the built-in copy if there is one.
+        if (err.status === 404 && err.fromApi) return setState({ status: "missing" });
         const story = builtIn.find((s) => s.id === id);
         setState(story ? { story, status: "fallback" } : { status: "missing" });
       });

@@ -36,24 +36,25 @@ const Leaderboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const planeApiBaseUrl = import.meta.env.VITE_PLANE_API_BASE_URL || 'http://localhost:8000';
+    // Read through the site's backend, which fetches the VJOS leaderboard server-to-server (the
+    // browser can't read VJOS directly) and returns only members who have earned points.
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6220';
 
     const fetchLeaderboard = async () => {
       try {
-        const response = await fetch(`${planeApiBaseUrl}/api/vj-startups/leaderboards/members/`);
+        const response = await fetch(`${apiBase}/leaderboard-api/members`);
         if (!response.ok) {
           throw new Error('Failed to fetch leaderboard');
         }
 
         const data = await response.json();
-        // Map Django OrganizationMemberProfile array to LeaderboardEntry interface
-        const mappedEntries: LeaderboardEntry[] = (data || []).map((profile: any, index: number) => ({
+        const mappedEntries: LeaderboardEntry[] = (data.members || []).map((member: any, index: number) => ({
           rank: index + 1,
-          id: String(profile.id ?? index),
-          name: `${profile.user?.first_name || ''} ${profile.user?.last_name || ''}`.trim() || profile.user?.username || 'Member',
-          avatar: profile.user?.avatar,
-          lastActivityAt: profile.updated_at || new Date().toISOString(),
-          reputationScore: profile.reputation_score
+          id: member.id,
+          name: member.name,
+          avatar: member.avatar || undefined,
+          lastActivityAt: member.updatedAt || new Date().toISOString(),
+          reputationScore: member.reputationScore
         }));
         setEntries(mappedEntries);
       } catch (error) {

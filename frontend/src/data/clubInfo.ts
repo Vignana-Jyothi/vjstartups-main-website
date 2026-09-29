@@ -931,8 +931,8 @@ export const wings: Wing[] = [
     contactEmail: "fuel@vjstartups.vnrvjiet.in"
   },
   {
-    id: "core-wing",
-    name: "Core Wing 🪽",
+    id: "infra-wing",
+    name: "Infra Wing 🪽",
     description: "Handles college infrastructure to deploy servers and ensures all apps are working properly",
     purpose: "To provide technical infrastructure support for all VJ Startups digital initiatives",
     focusAreas: [
@@ -944,7 +944,7 @@ export const wings: Wing[] = [
     ],
     wingMaster: {
       name: "Prof. Krishna Murthy",
-      role: "Wing Master - Core Infrastructure",
+      role: "Wing Master - Infrastructure",
       email: "krishna.murthy@vnrvjiet.in",
       phone: "+91 9876543215",
       linkedinUrl: "https://linkedin.com/in/prof-krishna-murthy",
@@ -984,7 +984,7 @@ export const wings: Wing[] = [
       "Application Performance Optimization",
       "Backup & Disaster Recovery Setup"
     ],
-    contactEmail: "core@vjstartups.vnrvjiet.in"
+    contactEmail: "infra@vjstartups.vnrvjiet.in"
   },
   {
     id: "digital-wing",

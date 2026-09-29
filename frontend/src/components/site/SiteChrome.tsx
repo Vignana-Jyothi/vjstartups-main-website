@@ -4,7 +4,9 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useUser } from "@/pages/UserContext";
 import "./site.css";
 
-const PLANE_ADMIN_URL = import.meta.env.VITE_PLANE_ADMIN_URL || "http://localhost:3001/god-mode/";
+// The production deploy doesn't set VITE_PLANE_ADMIN_URL, so the default is the live VJOS admin;
+// local development sets it in frontend/.env.
+const PLANE_ADMIN_URL = import.meta.env.VITE_PLANE_ADMIN_URL || "https://vjos.vjstartup.com/god-mode/";
 const MENTOR_NETWORK = "/programs/mentorship-program-1?tab=mentors#faculty-mentor-panel";
 export const PLATFORM_LINKS = [
   ["Problems", "/problems"],

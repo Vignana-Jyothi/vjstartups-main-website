@@ -1,10 +1,8 @@
 import { wings } from "@/data/clubInfo";
 import { SheetTeamMember, TeamDirectoryGroup } from "@/types/sheetTeamMember";
 
-/** Sheet tab names that differ from clubInfo wing names */
-const WING_ALIASES: Record<string, string> = {
-  infra: "core",
-};
+/** Team-sheet wing names that differ from clubInfo wing names (none since Core became Infra) */
+const WING_ALIASES: Record<string, string> = {};
 
 function normalizeWingKey(wing: string): string {
   const lower = wing.toLowerCase().trim();

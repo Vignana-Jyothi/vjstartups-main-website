@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fetchTeamMembersFromGoogleSheet } from "@/services/googleSheetsService";
 import { CLUB_TEAM } from "@/data/clubTeam";
 import { SheetTeamMember, TeamDirectoryGroup } from "@/types/sheetTeamMember";
-import { extractSpreadsheetId } from "@/utils/spreadsheetUtils";
 import {
   filterGroupsByWing,
   getAvailableWings,
@@ -52,6 +50,12 @@ export function useTeamMembersFromSheet(
         setError(null);
         return;
       }
+      // Loaded only when a live sheet is configured: the reader pulls in the CSV and zip
+      // libraries (~120 KB), which the bundled list doesn't need.
+      const [{ fetchTeamMembersFromGoogleSheet }, { extractSpreadsheetId }] = await Promise.all([
+        import("@/services/googleSheetsService"),
+        import("@/utils/spreadsheetUtils"),
+      ]);
       const data = await fetchTeamMembersFromGoogleSheet(extractSpreadsheetId(TEAM_SHEET));
       setMembers(data);
       setError(null);
