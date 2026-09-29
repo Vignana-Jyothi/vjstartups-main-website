@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../config/prisma');
+const adminAuth = require('../middlewares/adminAuth');
+const { actingUser } = require('../middlewares/actingUser');
 
 router.use(express.json());
 
@@ -335,7 +337,7 @@ router.get('/stage-notifications/leaderboard', async (req, res) => {
 });
 
 // Create a stage notification (internal use)
-router.post('/stage-notifications', async (req, res) => {
+router.post('/stage-notifications', actingUser({ email: ['userEmail'], name: ['userName'] }), async (req, res) => {
   try {
     const {
       ideaId,
@@ -445,7 +447,7 @@ router.post('/stage-notifications', async (req, res) => {
 });
 
 // Delete old notifications (cleanup endpoint)
-router.delete('/stage-notifications/cleanup', async (req, res) => {
+router.delete('/stage-notifications/cleanup', adminAuth, async (req, res) => {
   try {
     const daysOld = parseInt(req.query.days) || 30;
     const cutoffDate = new Date();

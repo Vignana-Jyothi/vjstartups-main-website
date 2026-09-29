@@ -5,6 +5,7 @@ const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const verifierAuth = require("../middlewares/verifierAuth");
 const userAuth = require("../middlewares/userAuth");
+const { actingUser } = require("../middlewares/actingUser");
 
 // -------------------- MULTER (memory storage) --------------------
 const storage = multer.memoryStorage(); 
@@ -34,7 +35,7 @@ const streamUpload = (buffer) => {
 // -------------------- ROUTES --------------------
 
 // POST create problem with image upload
-router.post("/problem", upload.single("image"), async (req, res) => {
+router.post("/problem", upload.single("image"), actingUser({ email: ["addedByEmail"], name: ["addedByName"] }), async (req, res) => {
   try {
     const {
       title,
@@ -170,21 +171,6 @@ router.get("/problems", async (req, res) => {
       prisma.problem.count({ where })
     ]);
     
-    // If no problems in database, return mock data
-    if (problems.length === 0) {
-      const mockProblems = require('../data/mockProblems');
-      return res.status(200).json({
-        problems: mockProblems,
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: mockProblems.length,
-          itemsPerPage: mockProblems.length,
-          hasNextPage: false,
-          hasPrevPage: false
-        }
-      });
-    }
     
     // Calculate pagination metadata
     const totalPages = Math.ceil(total / limit);
@@ -229,13 +215,6 @@ router.get("/problems/:id", async (req, res) => {
     });
 
     if (!problem) {
-      // Check mock data if not found in database
-      const mockProblems = require('../data/mockProblems');
-      const mockProblem = mockProblems.find(p => p.problemId === req.params.id);
-      
-      if (mockProblem) {
-        return res.status(200).json(mockProblem);
-      }
       
       return res.status(404).json({ message: "Problem not found" });
     }
@@ -313,7 +292,7 @@ router.patch("/problem/:id/unverify", verifierAuth, async (req, res) => {
 });
 
 // POST toggle upvote a problem
-router.post("/problem/:id/upvote", async (req, res) => {
+router.post("/problem/:id/upvote", actingUser({ email: ["email"] }), async (req, res) => {
   try {
     const { id } = req.params;
     const { email } = req.body;
@@ -393,7 +372,7 @@ router.post("/problem/:id/upvote", async (req, res) => {
 });
 
 // POST add a comment to a problem
-router.post("/problem/:id/comment", async (req, res) => {
+router.post("/problem/:id/comment", actingUser({ email: ["email"], name: ["name"] }), async (req, res) => {
   try {
     const { id } = req.params;
     const { comment, name, email } = req.body;
@@ -484,7 +463,7 @@ router.get("/problem/:id/comments", async (req, res) => {
 });
 
 // POST add a reply to a comment
-router.post("/problem/:id/comment/:commentId/reply", async (req, res) => {
+router.post("/problem/:id/comment/:commentId/reply", actingUser({ email: ["email"], name: ["name"] }), async (req, res) => {
   try {
     const { id, commentId } = req.params;
     const { reply, name, email } = req.body;
@@ -546,7 +525,7 @@ router.post("/problem/:id/comment/:commentId/reply", async (req, res) => {
 });
 
 // POST toggle like on comment or reply
-router.post("/problem/:id/comment/:commentId/like", async (req, res) => {
+router.post("/problem/:id/comment/:commentId/like", actingUser({ email: ["email"] }), async (req, res) => {
   try {
     const { id, commentId } = req.params;
     const { email, replyId } = req.body;
