@@ -34,7 +34,13 @@ services:
       # merged into Plane's own Postgres (see docs/vj-startups/production_db_merge_runbook.md) -
       # every cross-service feature (admin proxy, startup provisioning,
       # shared users table) silently had nothing to read/write against.
-      - DATABASE_URL=postgresql://plane:plane@host.docker.internal:5434/plane
+      #
+      # The value comes from PLANE_DATABASE_URL (deploy.yml writes it to the
+      # .env file beside this compose file from the PLANE_DATABASE_URL secret).
+      # The fallback is Plane's bundled default credentials, i.e. what has been
+      # deployed so far - set the secret when Plane's database password changes.
+      # (The DATABASE_URL in backend/.env is not used: this line wins.)
+      - DATABASE_URL=${PLANE_DATABASE_URL:-postgresql://plane:plane@host.docker.internal:5434/plane}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: always
