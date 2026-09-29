@@ -5,6 +5,7 @@ const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const verifierAuth = require("../middlewares/verifierAuth");
 const userAuth = require("../middlewares/userAuth");
+const { isInstitutionalEmail } = require("../config/appConfig");
 
 // -------------------- MULTER (memory storage) --------------------
 const storage = multer.memoryStorage(); 
@@ -78,7 +79,7 @@ router.post("/problem", upload.single("image"), async (req, res) => {
       formattedCollaborators = collabArray
         .filter(email => email && email.trim())
         .map(email => email.trim())
-        .filter(email => email.endsWith('@vnrvjiet.in'));
+        .filter(email => isInstitutionalEmail(email));
     }
 
     // Create problem with collaborators in transaction
@@ -760,7 +761,7 @@ router.put("/problems/:id", userAuth, upload.single("image"), async (req, res) =
       formattedCollaborators = collabArray
         .filter(email => email && email.trim())
         .map(email => email.trim())
-        .filter(email => email.endsWith('@vnrvjiet.in'));
+        .filter(email => isInstitutionalEmail(email));
     }
 
     // Update in transaction

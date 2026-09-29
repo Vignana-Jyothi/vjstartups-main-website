@@ -3,6 +3,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const prisma = require('./config/prisma');
+const { corsOrigins } = require('./config/appConfig');
 
 dotenv.config();
 const app = express();
@@ -10,25 +11,10 @@ const app = express();
 // Parse JSON bodies
 app.use(express.json());
 
-// CORS — allow main site, admin panel, and plane board
+// CORS — allowed origins come from config/appConfig.js (CORS_ORIGINS overrides;
+// localhost is only allowed outside production).
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:4000',
-    'http://localhost:4001', // admin dev
-    'http://localhost:4002', // plane dev
-    'https://hub.vjstartup.com',
-    // The site's live domains (www.vjstartup.com reaches this API same-origin through /be, but
-    // the others call it cross-origin) and the Vercel preview of the redesign.
-    'https://www.vjstartup.com',
-    'https://vjstartup.com',
-    'https://dev-vj.vjstartup.com',
-    'https://vjstartups-main-website.vercel.app',
-    'https://vjstartups.com',
-    'https://www.vjstartups.com',
-    'https://admin.vjstartups.com',
-    'https://plane.vjstartups.com',
-  ],
+  origin: corsOrigins(),
   credentials: true
 }));
 
@@ -68,13 +54,6 @@ app.use('/admin-api', require('./APIs/admin-api'));
 app.use('/announcements-api', require('./APIs/announcements-api'));
 app.use('/story-api', require('./APIs/stories-api'));
 app.use('/leaderboard-api', require('./APIs/leaderboard-api'));
-
-// TEMPORARY - for diagnosing the admin proxy's persistent 401. Echoes back
-// exactly what this server received, no auth involved, to rule in/out
-// whether a custom header is even reaching Express. Remove once resolved.
-app.get('/debug-echo-headers', (req, res) => {
-  res.json({ headers: req.headers });
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 
