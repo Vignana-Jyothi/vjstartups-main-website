@@ -1,3 +1,4 @@
+import { hasUpvoted } from "@/utils/upvotes";
 import { useState, useEffect, type CSSProperties } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Search, Plus } from "lucide-react";
@@ -71,7 +72,7 @@ const Ideas = () => {
         // Mark which ideas the current user has already liked and attach problem info
         const updatedIdeas = res.data.map((i: any) => ({
           ...i,
-          likedByUser: Boolean(user?.email && (i.upvotedBy || []).includes(user.email)),
+          likedByUser: hasUpvoted(i.upvotedBy, user?.email),
           relatedProblemId: i.relatedProblemId,
           relatedProblemTitle: i.relatedProblemId && problemMap[i.relatedProblemId]
             ? problemMap[i.relatedProblemId].title
@@ -162,7 +163,7 @@ const Ideas = () => {
             ? {
                 ...idea,
                 upvotes: res.data.upvotes,
-                likedByUser: res.data.upvotedBy.includes(user.email)
+                likedByUser: hasUpvoted(res.data.upvotedBy, user.email)
               }
             : idea
         )
