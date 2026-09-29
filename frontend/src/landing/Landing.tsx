@@ -5,6 +5,7 @@ import { useUser } from "@/pages/UserContext";
 import { counters } from "@/data/mockData";
 import { FUNDED_VENTURES } from "@/data/ventures";
 import { startupPrograms, type StartupProgram } from "@/data/startupPrograms";
+import { successStories } from "@/data/successStories";
 import { getIdeaNavigationSlug } from "@/utils/slugUtils";
 import { isReadableTitle } from "@/utils/readableTitle";
 import { Arrow, Magnetic, SiteFooter, SiteNav } from "@/components/site/SiteChrome";
@@ -637,8 +638,64 @@ function WorkField() {
   },[]);return <section className="work-field light" data-tone="paper" ref={ref}><div className="work-top"><span>06 / THE WORK</span><span>{work?"POSTED BY STUDENTS":"WORK IN PROGRESS"}</span></div><div className="work-word">BUILD</div>{WORK_SLOTS.map(([slot,depth,img],i)=>{const w=work?.[i];return <div key={slot} className={`work-pic ${slot}${w?" is-card":""}`} data-depth={depth}>{w?<Link to={w.href!} className={`work-card is-${w.kind}`}><span>{w.kind==="problem"?"Problem":"Idea"}<small>{w.kind==="problem"?" / posted by a student":" / answering a problem"}</small></span><b>{w.title}</b><em>Open ↗</em></Link>:<img src={img} alt="" loading="lazy" decoding="async"/>}</div>})}<span className="work-note wn-a" data-depth="25">question → evidence</span><span className="work-note wn-b" data-depth="-18">prototype / 04</span><span className="work-note wn-c" data-depth="33">iteration / 07</span><div className="work-rule"/><div className="work-caption"><span>THE THING THAT LOOKS LIKE A STARTUP<br/>IS USUALLY A COLLECTION OF ITERATIONS.</span><span>{work?"VJ / WORK LOG / LIVE FROM THE PLATFORM":"VJ / WORK LOG"}</span></div></section>;
 }
 
+// 07 / One student: the Startup Challenge's clearest result, told on the landing instead of three
+// clicks deep. Everything shown comes from the story's own record (data/successStories.ts).
+const STORY=successStories.find(s=>s.id==="startup-challenge-season-2-veda-dance");
+const STORY_EARNED=12000;
+function OneStudent(){
+  const ref=useRef<HTMLElement>(null),photo=useRef<HTMLDivElement>(null),amount=useRef<HTMLSpanElement>(null),line=useRef<HTMLDivElement>(null);
+  const shown=useRef(-1);
+  useSectionFrame(ref,frame=>{
+    // Not pinned: progress runs from the section's top entering the screen to its bottom
+    // arriving, so the photo, the number and the fifteen days play out as it scrolls through.
+    const q=Math.min(Math.max((frame.viewport*.92-frame.top)/Math.max(frame.height,1),0),1);
+    const open=band(q,.02,.42), count=band(q,.08,.5), days=band(q,.35,.92);
+    if(photo.current){
+      photo.current.style.setProperty("--open",open.toFixed(4));
+    }
+    const value=Math.round(STORY_EARNED*count/100)*100;
+    if(amount.current&&value!==shown.current){amount.current.textContent=value.toLocaleString("en-IN");shown.current=value;}
+    line.current?.style.setProperty("--days",days.toFixed(4));
+  });
+  if(!STORY)return null;
+  const person=STORY.participants[0];
+  const quote=STORY.quotes?.[0];
+  const shot=STORY.gallery?.find(g=>g.type==="image");
+  const href=`/programs/${STORY.programId}/success-stories/${STORY.id}`;
+  return <section className="tale light" data-tone="paper" id="story" ref={ref}>
+    <div className="tale-top"><span className="chapter-label dark">07 / ONE STUDENT</span><span>STARTUP CHALLENGE / {STORY.season.toUpperCase()} / AUG 2025</span></div>
+    <div className="tale-body">
+      <div className="tale-copy">
+        <h2 aria-label={`₹12,000 in 15 days`}><span className="tale-amount"><small>₹</small><span ref={amount}>12,000</span></span><i>in 15 days.</i></h2>
+        <p className="tale-lede">{STORY.subtitle}</p>
+        {quote&&<figure className="tale-quote">
+          <blockquote>“{quote.text}”</blockquote>
+          <figcaption>
+            {person?.imageUrl&&<img src={person.imageUrl} alt="" loading="lazy" decoding="async"/>}
+            <span><b>{person?.name}</b><small>{person?.branch.replace("Computer Science - ","")} / {person?.year} year</small></span>
+          </figcaption>
+        </figure>}
+      </div>
+      {shot&&<div className="tale-photo" ref={photo}>
+        <img src={shot.url} alt={shot.caption||""} loading="lazy" decoding="async"/>
+        <span>{shot.caption}</span>
+      </div>}
+    </div>
+    {STORY.journey&&<div className="tale-days" ref={line}>
+      <i aria-hidden="true"><b/></i>
+      <ol>{STORY.journey.map((step,i)=>{const [when,what]=step.phase.split(":");return <li key={step.phase} style={{"--at":i/(STORY.journey!.length-1)} as CSSProperties}>
+        <em>{when.trim()}</em><b>{(what||"").trim()}</b><span>{step.achievement}</span>
+      </li>})}</ol>
+    </div>}
+    <div className="tale-links">
+      <Magnetic href={href} className="tale-cta">Read Veda&apos;s story <Arrow/></Magnetic>
+      <Link to={`/programs/${STORY.programId}`}>About the Startup Challenge <Arrow/></Link>
+    </div>
+  </section>;
+}
+
 function Ventures() {
-  const [active,setActive]=useState(0), v=VENTURES[active];return <section className="ventures light" data-tone="paper" id="ventures"><Reveal className="ventures-head"><span className="chapter-label dark">07 / PROOF</span><h2>IDEAS THAT<br/><i>MOVED.</i></h2><p>Selected ventures and technologies already moving through the ecosystem.</p></Reveal><div className="venture-stage" data-reveal><div className="venture-menu">{VENTURES.map((x,i)=><button key={x[0]} className={i===active?"active":""} onClick={()=>setActive(i)}><span>{x[0]}</span><div><small>{x[1]}</small><b>{x[2]}</b></div><Arrow/></button>)}</div><div className="venture-image"><img src={v[4]} alt="" key={v[0]} loading="lazy" decoding="async"/><div><span>{v[1]}</span><span>{v[0]} / 03</span></div></div><div className="venture-copy"><span className="kicker dark">{v[1]}</span><h3>{v[2]}</h3><p>{v[3]}</p><Link to="/startups">Explore the build <Arrow/></Link></div></div></section>;
+  const [active,setActive]=useState(0), v=VENTURES[active];return <section className="ventures light" data-tone="paper" id="ventures"><Reveal className="ventures-head"><span className="chapter-label dark">08 / PROOF</span><h2>IDEAS THAT<br/><i>MOVED.</i></h2><p>Selected ventures and technologies already moving through the ecosystem.</p></Reveal><div className="venture-stage" data-reveal><div className="venture-menu">{VENTURES.map((x,i)=><button key={x[0]} className={i===active?"active":""} onClick={()=>setActive(i)}><span>{x[0]}</span><div><small>{x[1]}</small><b>{x[2]}</b></div><Arrow/></button>)}</div><div className="venture-image"><img src={v[4]} alt="" key={v[0]} loading="lazy" decoding="async"/><div><span>{v[1]}</span><span>{v[0]} / 03</span></div></div><div className="venture-copy"><span className="kicker dark">{v[1]}</span><h3>{v[2]}</h3><p>{v[3]}</p><Link to="/startups">Explore the build <Arrow/></Link></div></div></section>;
 }
 
 const VENTURE_NAMES=VENTURES.map(v=>v[2]);
@@ -750,7 +807,7 @@ function Network() {
     <section className="network-v16 dark" data-tone="ink" id="network" ref={sectionRef}>
       <div className="network-v16-sticky" ref={stickyRef}>
         <div className="network-v16-head" data-reveal ref={headRef}>
-          <span className="chapter-label">08 / THE NETWORK</span>
+          <span className="chapter-label">09 / THE NETWORK</span>
           <h2>ONE BUILDER.<br/><i>MANY FORCES.</i></h2>
           <p>The right people, knowledge, access and momentum turn a single build into a living ecosystem.</p>
         </div>
@@ -966,7 +1023,7 @@ function Community() {
   }));
   const rows=[...unlocks,...(record?record.rows:[])].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
   return <section className="community light" data-tone="paper" id="community" ref={ref}>
-    <Reveal className="community-head"><span className="chapter-label dark">09 / IN MOTION</span><h2>THE WORK IS<br/><i>STILL MOVING.</i></h2><p>Not a highlights reel: the latest things students actually posted on the platform, newest first.</p></Reveal>
+    <Reveal className="community-head"><span className="chapter-label dark">10 / IN MOTION</span><h2>THE WORK IS<br/><i>STILL MOVING.</i></h2><p>Not a highlights reel: the latest things students actually posted on the platform, newest first.</p></Reveal>
     <div className="feed" data-reveal>
       {rows.length?rows.map((row,i)=>{
         const body=<><span>{recordDate(row.date)}</span><i className={`is-${row.kind}`}/><div><b>{row.label.toUpperCase()}</b><span>{row.kind==="unlock"?row.text:<em>“{row.text}”</em>}</span></div><small>{String(i+1).padStart(2,"0")}</small></>;
@@ -980,7 +1037,7 @@ function Community() {
 }
 
 function FAQ() {
-  const [open,setOpen]=useState<number|null>(null), items=[["What is VJ Startups?","A campus startup platform helping college entrepreneurs turn real-world challenges into innovations through a structured journey."],["Who can join?","Students and emerging builders can discover problems, develop ideas, connect with peers, and progress through the startup journey."],["What is the Virtual Startup Journey?","A seven-stage system covering Problem Discovery, Idea & Concept, Research & Feasibility, User Validation, Prototype Development, MVP & Launch, and Growth & Scaling."],["How do the Hubs work?","ProblemHub focuses on discovery, IdeaHub on solution development, and StartupHub on building and scaling ventures."],["Does the ecosystem include mentors and partners?","Yes. The public platform describes entrepreneurship partners, research partners, industry mentors, and a broader network around founders."]];return <section className="faq light" data-tone="paper" id="faq"><Reveal className="faq-head"><span className="chapter-label dark">11 / QUESTIONS</span><h2>GOOD QUESTIONS<br/><i>CHANGE THINGS.</i></h2><p>Start with the answer that gets you back to building.</p></Reveal><div className="faq-list" data-reveal>{items.map(([q,a],i)=><div className={`faq-item ${open===i?"open":""}`} key={q}><button onClick={()=>setOpen(open===i?null:i)}><span>0{i+1}</span><b>{q}</b><i>{open===i?"−":"+"}</i></button><div><p>{a}</p></div></div>)}</div></section>;
+  const [open,setOpen]=useState<number|null>(null), items=[["What is VJ Startups?","A campus startup platform helping college entrepreneurs turn real-world challenges into innovations through a structured journey."],["Who can join?","Students and emerging builders can discover problems, develop ideas, connect with peers, and progress through the startup journey."],["What is the Virtual Startup Journey?","A seven-stage system covering Problem Discovery, Idea & Concept, Research & Feasibility, User Validation, Prototype Development, MVP & Launch, and Growth & Scaling."],["How do the Hubs work?","ProblemHub focuses on discovery, IdeaHub on solution development, and StartupHub on building and scaling ventures."],["Does the ecosystem include mentors and partners?","Yes. The public platform describes entrepreneurship partners, research partners, industry mentors, and a broader network around founders."]];return <section className="faq light" data-tone="paper" id="faq"><Reveal className="faq-head"><span className="chapter-label dark">12 / QUESTIONS</span><h2>GOOD QUESTIONS<br/><i>CHANGE THINGS.</i></h2><p>Start with the answer that gets you back to building.</p></Reveal><div className="faq-list" data-reveal>{items.map(([q,a],i)=><div className={`faq-item ${open===i?"open":""}`} key={q}><button onClick={()=>setOpen(open===i?null:i)}><span>0{i+1}</span><b>{q}</b><i>{open===i?"−":"+"}</i></button><div><p>{a}</p></div></div>)}</div></section>;
 }
 
 const TONES:Record<string,string>={ink:"#080808",paper:"#f0eee8",pink:"#ff4aa7"};
@@ -1115,12 +1172,12 @@ export default function Landing(){
     schedule();
     return()=>{stop();window.removeEventListener("scroll",schedule);cancelAnimationFrame(raf)};
   },[]);
-  return <div className="vj-landing"><Intro/><Cursor/><SmoothScroll/><PageField/><ActRail/><div className="global-progress"><span ref={progressRef}/></div><a href="#main" className="skip-link">Skip to content</a><SiteNav overlay brandHref="#top"/><main id="main" tabIndex={-1}><Hero/><StartHere/><section className="statement dark" data-tone="ink"><Reveal><span className="chapter-label">00 / THE PREMISE</span><h2>DON&apos;T START<br/><span>WITH THE IDEA.</span></h2><p>Start with the thing that keeps breaking.</p></Reveal></section><Morph/><Starting/><Journey/><Sphere/><Hubs/><WorkField/><Ventures/><Network/><Community/><section className="recognition dark" data-tone="ink"><Reveal><span className="chapter-label">10 / SIGNALS</span><h2>PROOF IS A<br/><i>MILESTONE.</i></h2><p>Recognition and funding are signals along the journey, not the destination.</p></Reveal><div className="recognition-list"><div><span>2024</span><b>Best Innovation Award</b><small>National Startup Competition</small></div><div><span>₹2.8Cr</span><b>Total funding raised</b><small>Across the current funded portfolio</small></div><div><span>{String(counters.funded).padStart(2,"0")}</span><b>Funded startups</b><small>Ventures that moved beyond the idea stage</small></div></div></section><FAQ/><section className="contact-v13 dark" data-tone="pink" id="contact">
+  return <div className="vj-landing"><Intro/><Cursor/><SmoothScroll/><PageField/><ActRail/><div className="global-progress"><span ref={progressRef}/></div><a href="#main" className="skip-link">Skip to content</a><SiteNav overlay brandHref="#top"/><main id="main" tabIndex={-1}><Hero/><StartHere/><section className="statement dark" data-tone="ink"><Reveal><span className="chapter-label">00 / THE PREMISE</span><h2>DON&apos;T START<br/><span>WITH THE IDEA.</span></h2><p>Start with the thing that keeps breaking.</p></Reveal></section><Morph/><Starting/><Journey/><Sphere/><Hubs/><WorkField/><OneStudent/><Ventures/><Network/><Community/><section className="recognition dark" data-tone="ink"><Reveal><span className="chapter-label">11 / SIGNALS</span><h2>PROOF IS A<br/><i>MILESTONE.</i></h2><p>Recognition and funding are signals along the journey, not the destination.</p></Reveal><div className="recognition-list"><div><span>2024</span><b>Best Innovation Award</b><small>National Startup Competition</small></div><div><span>₹2.8Cr</span><b>Total funding raised</b><small>Across the current funded portfolio</small></div><div><span>{String(counters.funded).padStart(2,"0")}</span><b>Funded startups</b><small>Ventures that moved beyond the idea stage</small></div></div></section><FAQ/><section className="contact-v13 dark" data-tone="pink" id="contact">
   <div className="contact-v13-back" aria-hidden="true">
     <span>QUESTION</span><span>BUILD</span><span>PROVE</span><span>IMPACT</span>
   </div>
   <Reveal className="contact-v13-main">
-    <span className="chapter-label">12 / YOUR TURN</span>
+    <span className="chapter-label">13 / YOUR TURN</span>
     <h2>
       <span className="contact-line">WHAT <i>WILL</i></span>
       <span className="contact-line accent">YOU <i>BUILD?</i></span>

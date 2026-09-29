@@ -929,3 +929,55 @@ html.lenis{scroll-behavior:auto}
 /* The lens line takes the pink line's italic voice: "is in" in ink, "the work." in pink. */
 .vj-landing .hero-v12-reveal>div b{font-size:38px;font-style:italic;font-weight:600;line-height:.9;letter-spacing:-.06em;transform:rotate(1deg)}
 .vj-landing .hero-v12-reveal>div b i{display:block;font-style:italic;color:var(--pink)}
+
+/* 07 / One student: Veda's fifteen days from the Startup Challenge. The photo opens, the amount
+   counts up and the days fill in as the section passes through the screen (--open, --days). */
+.vj-landing .tale{position:relative;padding:clamp(110px,14vh,160px) 7vw clamp(96px,12vh,140px);color:#080808}
+.vj-landing .tale-top{display:flex;justify-content:space-between;align-items:baseline;gap:20px;font:12px var(--mono);letter-spacing:.14em;color:rgba(0,0,0,.42)}
+.vj-landing .tale-body{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);align-items:end;gap:clamp(32px,5vw,96px);margin-top:clamp(36px,6vh,72px)}
+.vj-landing .tale h2{display:grid;margin:0;line-height:.8}
+.vj-landing .tale-amount{display:flex;align-items:flex-start;font-size:clamp(76px,min(12.4vw,22vh),220px);font-weight:800;letter-spacing:-.075em;font-variant-numeric:tabular-nums}
+.vj-landing .tale-amount small{margin:.1em .05em 0 0;font-size:.42em;font-weight:700;letter-spacing:0}
+.vj-landing .tale h2 i{margin-top:.1em;color:var(--pink);font-size:clamp(46px,min(6.3vw,11vh),112px);font-style:italic;font-weight:600;letter-spacing:-.06em}
+.vj-landing .tale-lede{max-width:430px;margin:28px 0 0;color:rgba(0,0,0,.66);font-size:17px;line-height:1.45}
+.vj-landing .tale-quote{max-width:480px;margin:34px 0 0;padding-top:24px;border-top:1px solid rgba(0,0,0,.12)}
+.vj-landing .tale-quote blockquote{margin:0;color:rgba(0,0,0,.78);font-size:15px;font-style:italic;line-height:1.6}
+.vj-landing .tale-quote figcaption{display:flex;align-items:center;gap:12px;margin-top:18px}
+.vj-landing .tale-quote img{flex:none;width:46px;height:46px;border-radius:50%;object-fit:cover}
+.vj-landing .tale-quote b{display:block;font-size:14px;font-weight:800}
+.vj-landing .tale-quote small{display:block;margin-top:3px;color:rgba(0,0,0,.45);font:11px var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.vj-landing .tale-photo{--r:clamp(18px,2vw,30px);position:relative;aspect-ratio:4/3;overflow:hidden;border-radius:var(--r);clip-path:inset(calc((1 - var(--open,1)) * 16%) calc((1 - var(--open,1)) * 12%) round var(--r));box-shadow:0 40px 90px -40px rgba(0,0,0,.35)}
+.vj-landing .tale-photo img{width:100%;height:100%;object-fit:cover;transform:scale(calc(1.16 - var(--open,1) * .16))}
+.vj-landing .tale-photo:after{content:"";position:absolute;inset:auto 0 0;height:32%;background:linear-gradient(transparent,rgba(0,0,0,.42));pointer-events:none}
+.vj-landing .tale-photo span{position:absolute;z-index:1;left:20px;right:20px;bottom:16px;color:rgba(255,255,255,.9);font:11px var(--mono);letter-spacing:.1em;text-transform:uppercase;opacity:var(--open,1)}
+.vj-landing .tale-days{--g:24px;position:relative;margin-top:clamp(56px,9vh,100px)}
+.vj-landing .tale-days>i{position:absolute;left:6px;right:calc(25% - var(--g) * .75);top:6px;height:1px;background:rgba(0,0,0,.14)}
+.vj-landing .tale-days>i b{position:absolute;inset:0;background:var(--pink);transform:scaleX(var(--days,1));transform-origin:left}
+.vj-landing .tale-days ol{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--g);margin:0;padding:0;list-style:none}
+.vj-landing .tale-days li{--lit:clamp(0,(var(--days,1) - var(--at)) * 8 + 1,1);position:relative;padding-top:32px;opacity:calc(.3 + var(--lit) * .7)}
+.vj-landing .tale-days li:before,.vj-landing .tale-days li:after{content:"";position:absolute;top:0;left:0;width:13px;height:13px;border-radius:50%}
+.vj-landing .tale-days li:before{border:1px solid rgba(0,0,0,.25);background:#f0eee8}
+.vj-landing .tale-days li:after{background:var(--pink);transform:scale(var(--lit))}
+.vj-landing .tale-days em{display:block;color:rgba(0,0,0,.5);font:12px var(--mono);font-style:normal;letter-spacing:.12em;text-transform:uppercase}
+.vj-landing .tale-days b{display:block;margin-top:8px;font-size:17px;font-weight:800;letter-spacing:-.03em}
+.vj-landing .tale-days span{display:block;margin-top:8px;color:rgba(0,0,0,.6);font-size:14px;line-height:1.45}
+.vj-landing .tale-links{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:clamp(44px,7vh,72px)}
+.vj-landing .tale .magnetic{padding:15px 20px;border-radius:999px;background:#080808;color:var(--lime);font-size:13px;font-weight:800}
+.vj-landing .tale-links>a:not(.magnetic){padding-bottom:3px;border-bottom:1px solid rgba(0,0,0,.25);color:#080808;font-size:14px;font-weight:700;text-decoration:none}
+@media(max-width:900px){
+  .vj-landing .tale-body{grid-template-columns:1fr;align-items:start;gap:0}
+  .vj-landing .tale-copy{display:contents}
+  .vj-landing .tale h2{order:1}
+  .vj-landing .tale-photo{order:2;margin-top:30px}
+  .vj-landing .tale-lede{order:3}
+  .vj-landing .tale-quote{order:4}
+  .vj-landing .tale-days ol{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:30px}
+  .vj-landing .tale-days>i{display:none}
+}
+@media(max-width:700px){
+  .vj-landing .tale{padding:96px 18px 90px}
+  .vj-landing .tale-top{flex-direction:column;gap:8px}
+  .vj-landing .tale-lede{font-size:16px}
+  .vj-landing .tale-days b{font-size:16px}
+}
+.vj-landing .tale-amount small{margin-right:-.06em}
