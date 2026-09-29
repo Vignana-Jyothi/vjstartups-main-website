@@ -1158,6 +1158,13 @@ export default function Landing(){
   const { user }=useUser();
   const progressRef=useRef<HTMLSpanElement>(null);
   useEffect(()=>{
+    // A photo that fails to load (the stock host can be blocked or reset on some networks) is
+    // hidden, leaving its frame's own dark surface, instead of showing a broken-image icon.
+    const onError=(e:Event)=>{const el=e.target;if(el instanceof HTMLImageElement&&el.closest(".vj-landing"))el.classList.add("is-broken");};
+    document.addEventListener("error",onError,true);
+    return()=>document.removeEventListener("error",onError,true);
+  },[]);
+  useEffect(()=>{
     const observer=new IntersectionObserver(entries=>entries.forEach(e=>e.isIntersecting&&e.target.classList.add("revealed")),{threshold:.07});
     document.querySelectorAll("[data-reveal]").forEach(el=>observer.observe(el));
     return()=>observer.disconnect();

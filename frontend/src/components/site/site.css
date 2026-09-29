@@ -109,3 +109,9 @@
 .sc-nav:not(.is-overlay){background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
 .sc-nav:not(.is-overlay):before{content:"";position:absolute;inset:0 0 -40px;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(7,7,7,.9),rgba(7,7,7,.62) 58%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);-webkit-mask-image:linear-gradient(180deg,#000 50%,transparent);mask-image:linear-gradient(180deg,#000 50%,transparent);transition:opacity .4s}
 .sc-nav.is-top:not(.is-overlay):before{opacity:0}
+/* Touch screens wide enough for the inline menu (iPad landscape): finger-sized targets for the
+   header links, same look. */
+@media(pointer:coarse){
+  .sc-nav .sc-links a,.sc-nav .sc-text{position:relative}
+  .sc-nav .sc-links a:before,.sc-nav .sc-text:before{content:"";position:absolute;inset:-14px -8px}
+}

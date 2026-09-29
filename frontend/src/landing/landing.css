@@ -1002,3 +1002,4 @@ html.lenis{scroll-behavior:auto}
 .vj-landing .tale .magnetic.ghost{border:1px solid rgba(0,0,0,.2);background:transparent;color:#080808}
 .vj-landing .tale .magnetic.ghost:hover{border-color:#080808}
 .vj-landing .tale-next{flex-basis:100%;max-width:520px;margin:6px 0 0;color:rgba(0,0,0,.5);font-size:14px;line-height:1.5}
+.vj-landing img.is-broken{visibility:hidden}
