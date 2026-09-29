@@ -926,3 +926,6 @@ html.lenis{scroll-behavior:auto}
 .vj-landing .hero-v12-reveal>div span{font-size:13px}
 .vj-landing .hero-v12-reveal>div b{font-size:40px;line-height:.8}
 .vj-landing .hero-v12-reveal>div:after{content:none}
+/* The lens line takes the pink line's italic voice: "is in" in ink, "the work." in pink. */
+.vj-landing .hero-v12-reveal>div b{font-size:38px;font-style:italic;font-weight:600;line-height:.9;letter-spacing:-.06em;transform:rotate(1deg)}
+.vj-landing .hero-v12-reveal>div b i{display:block;font-style:italic;color:var(--pink)}

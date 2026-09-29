@@ -390,7 +390,7 @@ function Hero() {
       <div className="hero-v12-reveal" ref={reveal} aria-hidden="true">
         <div>
           <span>THE ANSWER</span>
-          <b>IS IN THE WORK.</b>
+          <b>IS IN <i>THE WORK.</i></b>
         </div>
       </div>
 
