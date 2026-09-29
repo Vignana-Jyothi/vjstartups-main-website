@@ -17,7 +17,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "6220:6220"
-    # Everything deploy.yml writes to backend/.env (PLANE_INTERNAL_TOKEN,
+    # Everything deploy.yml writes to backend/.env (PLANE_INTERNAL_TOKEN
     # GOOGLE_CLIENT_ID, ADMIN_EMAILS, CLOUDINARY_*, PLANE_API_URL) was never
     # actually reaching the container - there was no env_file here, so it
     # relied entirely on the Dockerfile's `COPY . .` baking .env into the
