@@ -1,0 +1,36 @@
+name: Backend tests
+
+# Runs the backend's unit tests on every pull request that touches it. The tests
+# use Node's built-in runner and need no packages or database, so this stays fast
+# and cannot fail for environmental reasons. Runs on GitHub's own runners, not the
+# self-hosted deploy machines.
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'backend/**'
+      - '.github/workflows/test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: npm test (backend)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run the backend tests
+        working-directory: backend
+        run: npm test
