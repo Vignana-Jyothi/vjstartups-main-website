@@ -1,4 +1,5 @@
-import { useParams, Link } from "react-router-dom";
+import { hasUpvoted } from "@/utils/upvotes";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { PageHero } from "@/components/design-system/PageHero";
 import UpvoteButton from "@/components/UpvoteButton";
 import axios from "axios";
@@ -22,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const ProblemDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [problem, setProblem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
@@ -198,6 +200,11 @@ const ProblemDetail = () => {
   );
 
   const upvote = async () => {
+    // Upvoting needs an account (it is recorded against the user); send visitors to sign in.
+    if (!user?.email) {
+      navigate("/login");
+      return;
+    }
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem/${problem.problemId}/upvote`,
@@ -275,7 +282,7 @@ const ProblemDetail = () => {
         <aside className="dt-side">
           <div className="dt-card">
             <div className="dt-vote">
-              <UpvoteButton upvotes={problem.upvotes || 0} hasUpvoted={problem.upvotedBy?.includes(user?.email || "")} onClick={upvote} />
+              <UpvoteButton upvotes={problem.upvotes || 0} hasUpvoted={hasUpvoted(problem.upvotedBy, user?.email)} onClick={upvote} />
               <span>{problem.upvotes === 1 ? "person feels this" : "people feel this"}</span>
             </div>
             <dl className="dt-facts">

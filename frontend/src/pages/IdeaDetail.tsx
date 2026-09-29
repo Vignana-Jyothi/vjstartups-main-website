@@ -1,3 +1,4 @@
+import { hasUpvoted } from "@/utils/upvotes";
 import { useState, useEffect, type CSSProperties } from "react";
 import "@/components/design-system/listing.css";
 import "@/components/design-system/detail.css";
@@ -522,7 +523,7 @@ export default function IdeaDetail() {
         <aside className="dt-side">
           <div className="dt-card">
             <div className="dt-vote">
-              <UpvoteButton upvotes={idea.upvotes || 0} hasUpvoted={idea.upvotedBy?.includes(user?.email)} onClick={() => handleUpvote(idea.ideaId)} />
+              <UpvoteButton upvotes={idea.upvotes || 0} hasUpvoted={hasUpvoted(idea.upvotedBy, user?.email)} onClick={() => handleUpvote(idea.ideaId)} />
               <span>{idea.upvotes === 1 ? "person backs this" : "people back this"}</span>
             </div>
             <dl className="dt-facts">

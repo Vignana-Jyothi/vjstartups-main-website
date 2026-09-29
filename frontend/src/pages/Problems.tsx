@@ -1,3 +1,4 @@
+import { hasUpvoted } from "@/utils/upvotes";
 import { useEffect, useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -45,7 +46,7 @@ const Problems = () => {
       // Mark which problems the current user has already liked
       const updatedProblems = problemsData.map((p: any) => ({
         ...p,
-        likedByUser: Boolean(user?.email && (p.upvotedBy || []).includes(user.email))
+        likedByUser: hasUpvoted(p.upvotedBy, user?.email)
       }));
       
       setAllProblems(updatedProblems);
@@ -238,7 +239,7 @@ const handleUpvote = async (problemId: string) => {
               ...p,
               upvotes: res.data.upvotes,
               upvotedBy: res.data.upvotedBy,
-              likedByUser: res.data.upvotedBy.includes(user.email),
+              likedByUser: hasUpvoted(res.data.upvotedBy, user.email),
             }
           : p
       )
