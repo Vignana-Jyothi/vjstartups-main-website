@@ -22,6 +22,7 @@ import { useUser } from "@/pages/UserContext";
 import { deleteStartup, upvoteStartup } from "@/services/startupsService";
 import { formatFundingStatus, getStartupImageUrl } from "@/utils/startupFormatters";
 import axios from "axios";
+import { API_BASE } from "@/config/api";
 
 export default function StartupDetail() {
   const { id } = useParams();
@@ -103,7 +104,7 @@ export default function StartupDetail() {
   useEffect(() => {
     const fetchStartup = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/startup-api/${id}`);
+        const response = await axios.get(`${API_BASE}/startup-api/${id}`);
         setStartup(response.data);
       } catch (err) {
         console.error('Error fetching startup:', err);
@@ -278,10 +279,10 @@ export default function StartupDetail() {
               )}
               {website && <a href={introHref} className="lx-textbtn">Ask for an intro ↗</a>}
               {startup.pitchDeck && (
-                <a href={`${import.meta.env.VITE_API_BASE_URL}/startup-api/${startup.id}/download/pitchDeck`} download className="lx-textbtn">Pitch deck ↗</a>
+                <a href={`${API_BASE}/startup-api/${startup.id}/download/pitchDeck`} download className="lx-textbtn">Pitch deck ↗</a>
               )}
               {startup.onePager && (
-                <a href={`${import.meta.env.VITE_API_BASE_URL}/startup-api/${startup.id}/download/onePager`} download className="lx-textbtn">One-pager ↗</a>
+                <a href={`${API_BASE}/startup-api/${startup.id}/download/onePager`} download className="lx-textbtn">One-pager ↗</a>
               )}
               <button type="button" className="lx-textbtn" onClick={share}>Share ↗</button>
               {canEditDelete && (

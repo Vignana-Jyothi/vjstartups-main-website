@@ -10,6 +10,7 @@ import "@/components/design-system/forms.css";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/pages/UserContext";
 import axios from "axios";
+import { API_BASE } from "@/config/api";
 
 interface QuestionnaireData {
   // Problem Definition
@@ -130,7 +131,7 @@ const IdeaValidationQuestionnaire = ({ stageTransition, onComplete }: IdeaValida
     setIsSubmitting(true);
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/questionnaire-api/response`,
+        `${API_BASE}/questionnaire-api/response`,
         {
           userId: user?.email,
           userEmail: user?.email || "anonymous@example.com",

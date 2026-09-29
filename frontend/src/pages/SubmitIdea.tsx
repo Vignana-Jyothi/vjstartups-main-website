@@ -14,6 +14,7 @@ import { ArrowLeft, Lightbulb, Users, Target, Upload, X, Plus, Trash2, UserPlus,
 import { useUser } from '@/pages/UserContext';
 import { useToast } from '@/hooks/use-toast';
 import { stageLabels } from '@/data/mockData';
+import { API_BASE } from "@/config/api";
 
 interface TeamMember {
   name: string;
@@ -99,7 +100,7 @@ const SubmitIdea: React.FC = () => {
     const fetchProblems = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/problem-api/problems?limit=1000`);
+        const response = await axios.get(`${API_BASE}/problem-api/problems?limit=1000`);
         const problemsData = response.data?.problems || response.data || [];
         setProblems(problemsData);
         setFilteredProblems(problemsData);
@@ -353,7 +354,7 @@ const SubmitIdea: React.FC = () => {
       }
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/idea-api/idea`,
+        `${API_BASE}/idea-api/idea`,
         submitData,
         {
           headers: {

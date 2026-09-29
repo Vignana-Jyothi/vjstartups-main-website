@@ -13,6 +13,7 @@ import axios from "axios";
 import { useUser } from "@/pages/UserContext";
 import { Link } from "react-router-dom";
 import StageTransitionValidator from "./StageTransitionValidator";
+import { API_BASE } from "@/config/api";
 
 interface TeamMember {
   name: string;
@@ -70,9 +71,9 @@ const IdeaSubmissionForm = () => {
     const fetchProblems = async () => {
       try {
         setLoading(true);
-        console.log("Fetching problems from:", `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems`);
+        console.log("Fetching problems from:", `${API_BASE}/problem-api/problems`);
         // Set a high limit (1000) to fetch all problems at once
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/problem-api/problems?limit=1000`);
+        const response = await axios.get(`${API_BASE}/problem-api/problems?limit=1000`);
         console.log("Problems response:", response.data);
         
         // Extract problems array from the response structure
@@ -263,7 +264,7 @@ const IdeaSubmissionForm = () => {
 
       // Send data to backend
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/idea-api/idea`,
+        `${API_BASE}/idea-api/idea`,
         formData,
         {
           headers: {

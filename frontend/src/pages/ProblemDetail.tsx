@@ -20,6 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { API_BASE } from "@/config/api";
 
 const ProblemDetail = () => {
   const { id } = useParams();
@@ -75,7 +76,7 @@ const ProblemDetail = () => {
     try {
       setDeleting(true);
       await axios.delete(
-        `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${problem.problemId}`,
+        `${API_BASE}/problem-api/problems/${problem.problemId}`,
         { headers: { Authorization: `Bearer ${user?.sessionToken}` } }
       );
       
@@ -107,12 +108,12 @@ const ProblemDetail = () => {
     const fetchProblem = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${id}`
+          `${API_BASE}/problem-api/problems/${id}`
         );
         setProblem(res.data);
 
         const commentsRes = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem/${res.data.problemId}/comments`
+          `${API_BASE}/problem-api/problem/${res.data.problemId}/comments`
         );
 
         setComments(mapCommentsFromBackend(commentsRes.data.comments || []));
@@ -129,7 +130,7 @@ const ProblemDetail = () => {
   const handleAddComment = async (content: string) => {
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem/${problem.problemId}/comment`,
+        `${API_BASE}/problem-api/problem/${problem.problemId}/comment`,
         {
           comment: content,
           name: user?.name || "Anonymous",
@@ -145,7 +146,7 @@ const ProblemDetail = () => {
   const handleLikeComment = async (commentId: string, replyId?: string) => {
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem/${problem.problemId}/comment/${commentId}/like`,
+        `${API_BASE}/problem-api/problem/${problem.problemId}/comment/${commentId}/like`,
         { email: user?.email, replyId: replyId || null }
       );
       setComments(mapCommentsFromBackend(res.data.comments || []));
@@ -157,7 +158,7 @@ const ProblemDetail = () => {
   const handleReply = async (commentId: string, content: string) => {
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem/${problem.problemId}/comment/${commentId}/reply`,
+        `${API_BASE}/problem-api/problem/${problem.problemId}/comment/${commentId}/reply`,
         {
           reply: content,
           name: user?.name || "Anonymous",
@@ -207,7 +208,7 @@ const ProblemDetail = () => {
     }
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem/${problem.problemId}/upvote`,
+        `${API_BASE}/problem-api/problem/${problem.problemId}/upvote`,
         { email: user?.email }
       );
       setProblem(res.data);

@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "../pages/UserContext";
 import { useNavigate } from "react-router-dom";
 import { QuestionHelp } from "./QuestionHelp";
+import { API_BASE } from "@/config/api";
 
 interface ProblemFormData {
   title: string;
@@ -146,13 +147,13 @@ const ProblemSubmissionForm = ({
       if (initialData) {
         // Update
         response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${initialData.problemId}`,
+          `${API_BASE}/problem-api/problems/${initialData.problemId}`,
           { method: "PUT", body: formData, headers: { Authorization: `Bearer ${user.sessionToken}` } }
         );
       } else {
         // New problem
         response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/problem-api/problem`,
+          `${API_BASE}/problem-api/problem`,
           { method: "POST", body: formData, headers: authHeaders() }
         );
       }

@@ -15,6 +15,7 @@ import { getQuestionnaireForStage, getStageTransitionTitle } from "@/config/stag
 import { stageLabels } from "@/data/mockData";
 import QuestionHelp from "@/components/QuestionHelp";
 import axios from "axios";
+import { API_BASE } from "@/config/api";
 
 interface StageTransitionModalProps {
   ideaId: string;
@@ -74,7 +75,7 @@ const StageTransitionModal = ({
   const loadPreviousResponses = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/questionnaire-api/responses/idea/${ideaId}`
+        `${API_BASE}/questionnaire-api/responses/idea/${ideaId}`
       );
       
       console.log('Previous questionnaire data:', response.data);
@@ -146,7 +147,7 @@ const StageTransitionModal = ({
     try {
       // Submit questionnaire response
       const questionnaireResponse = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/questionnaire-api/response`,
+        `${API_BASE}/questionnaire-api/response`,
         {
           userId: user?.email,
           userEmail: user?.email || "anonymous@example.com",
@@ -163,7 +164,7 @@ const StageTransitionModal = ({
 
       // Update idea stage
       await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/idea-api/idea/${ideaId}`,
+        `${API_BASE}/idea-api/idea/${ideaId}`,
         {
           stage: targetStage,
           email: user?.email

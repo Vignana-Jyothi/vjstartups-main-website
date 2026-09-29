@@ -5,6 +5,7 @@ import { useUser } from '@/pages/UserContext';
 import { generateIdeaSlug } from '@/utils/slugUtils';
 import InteractiveQuiz from './InteractiveQuiz';
 import { PageHero } from '@/components/design-system/PageHero';
+import { API_BASE } from "@/config/api";
 import '@/components/design-system/listing.css';
 import '@/components/design-system/detail.css';
 import '@/components/design-system/journey-hub.css';
@@ -284,7 +285,7 @@ const VirtualStartupJourney: React.FC = () => {
     if (completedStageIndex < 0 || unlockedStageIndex < 0 || !completedStage) return;
 
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE_URL}/notification-api/stage-notifications`, {
+      await fetch(`${API_BASE}/notification-api/stage-notifications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -311,7 +312,7 @@ const VirtualStartupJourney: React.FC = () => {
   const fetchCommunityStats = async () => {
     try {
       setIsLoadingNotifications(true);
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/notification-api/stage-notifications/stats`);
+      const response = await fetch(`${API_BASE}/notification-api/stage-notifications/stats`);
       if (!response.ok) {
         throw new Error('Failed to fetch notifications');
       }

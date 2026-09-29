@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import type { CSSProperties } from "react";
 import "@/components/design-system/listing.css";
 import { generateIdeaSlug } from "@/utils/slugUtils";
+import { API_BASE } from "@/config/api";
 
 interface ChangeItem {
   id?: string;
@@ -53,7 +54,7 @@ const AllChanges = () => {
 
         while (hasMore) {
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/notification-api/stage-notifications?limit=${pageSize}&skip=${skip}`
+            `${API_BASE}/notification-api/stage-notifications?limit=${pageSize}&skip=${skip}`
           );
 
           if (!response.ok) {

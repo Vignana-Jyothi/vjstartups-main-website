@@ -1,7 +1,6 @@
 import axios from "axios";
 import { StartupListItem } from "@/types/startup";
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+import { API_BASE } from "@/config/api";
 
 export async function fetchStartups(minStage?: number): Promise<StartupListItem[]> {
   const params = minStage ? { minStage } : undefined;

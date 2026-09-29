@@ -1,3 +1,5 @@
+import { API_BASE } from "@/config/api";
+
 const FUNDING_STATUS_LABELS: Record<string, string> = {
   bootstrapped: "Bootstrapped",
   "seeking-funding": "Seeking Funding",
@@ -20,7 +22,7 @@ export function truncateText(text: string, maxLength = 160): string {
 export function getStartupImageUrl(path?: string): string | null {
   if (!path) return null;
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  return `${import.meta.env.VITE_API_BASE_URL}${path}`;
+  return `${API_BASE}${path}`;
 }
 
 export const FUNDING_FILTER_OPTIONS = [

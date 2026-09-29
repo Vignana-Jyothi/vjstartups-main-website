@@ -18,6 +18,7 @@ import { PageHero } from "@/components/design-system/PageHero";
 import { stageLabels } from "@/data/mockData";
 import axios from "axios";
 import { useUser } from "./UserContext";
+import { API_BASE } from "@/config/api";
 
 export default function IdeaDetail() {
   const { slug } = useParams();
@@ -42,7 +43,7 @@ export default function IdeaDetail() {
 
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/idea-api/idea/${ideaId}/upvote`,
+        `${API_BASE}/idea-api/idea/${ideaId}/upvote`,
         { email: user.email }
       );
 
@@ -62,7 +63,7 @@ export default function IdeaDetail() {
     // Reload the entire idea data to get updated startup status
     if (id && user?.email) {
       try {
-        const ideaResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas/${id}`, {
+        const ideaResponse = await axios.get(`${API_BASE}/idea-api/ideas/${id}`, {
           params: { userEmail: user?.email },
           headers: { 'user-email': user?.email }
         });
@@ -93,7 +94,7 @@ export default function IdeaDetail() {
       formData.append('stage', newStage.toString());
       formData.append('email', user.email);
       
-      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/idea-api/idea/${idea.ideaId}`, formData, {
+      await axios.put(`${API_BASE}/idea-api/idea/${idea.ideaId}`, formData, {
         headers: { Authorization: `Bearer ${user.sessionToken}` }
       });
       
@@ -114,7 +115,7 @@ export default function IdeaDetail() {
       if (!id) return;
       
       try {
-        const ideaResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas/${id}`, {
+        const ideaResponse = await axios.get(`${API_BASE}/idea-api/ideas/${id}`, {
           params: { userEmail: user?.email },
           headers: { 'user-email': user?.email }
         });
@@ -128,14 +129,14 @@ export default function IdeaDetail() {
         // Fetch related problem if available
         if (ideaResponse.data.relatedProblemId) {
           const problemResponse = await axios.get(
-            `${import.meta.env.VITE_API_BASE_URL}/problem-api/problems/${ideaResponse.data.relatedProblemId}`
+            `${API_BASE}/problem-api/problems/${ideaResponse.data.relatedProblemId}`
           );
           setProblem(problemResponse.data);
         }
         
         // Fetch comments
         const commentsResponse = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas/${id}/comments`
+          `${API_BASE}/idea-api/ideas/${id}/comments`
         );
         console.log("Comments data received:", commentsResponse.data);
         
@@ -173,7 +174,7 @@ export default function IdeaDetail() {
     
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas/${id}/comments`,
+        `${API_BASE}/idea-api/ideas/${id}/comments`,
         {
           author: user.name || user.email,
           content,
@@ -193,7 +194,7 @@ export default function IdeaDetail() {
     
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas/${id}/comments/${commentId}/like`,
+        `${API_BASE}/idea-api/ideas/${id}/comments/${commentId}/like`,
         { email: user.email }
       );
       
@@ -211,7 +212,7 @@ export default function IdeaDetail() {
     
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas/${id}/comments/${commentId}/replies`,
+        `${API_BASE}/idea-api/ideas/${id}/comments/${commentId}/replies`,
         {
           author: user.name || user.email,
           content,
@@ -243,7 +244,7 @@ export default function IdeaDetail() {
       formData.append('type', file.type);
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas/${id}/attachments`,
+        `${API_BASE}/idea-api/ideas/${id}/attachments`,
         formData,
         {
           headers: {
@@ -272,7 +273,7 @@ export default function IdeaDetail() {
 
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas/${id}/attachments/${index}`,
+        `${API_BASE}/idea-api/ideas/${id}/attachments/${index}`,
         { data: { email: user.email } }
       );
 
@@ -292,7 +293,7 @@ export default function IdeaDetail() {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas/${id}/links`,
+        `${API_BASE}/idea-api/ideas/${id}/links`,
         {
           ...newLink,
           email: user.email
@@ -318,7 +319,7 @@ export default function IdeaDetail() {
 
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas/${id}/links/${index}`,
+        `${API_BASE}/idea-api/ideas/${id}/links/${index}`,
         { data: { email: user.email } }
       );
 
