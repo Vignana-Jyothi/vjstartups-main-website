@@ -3,6 +3,9 @@ const router = express.Router();
 const prisma = require("../config/prisma");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
+const verifierAuth = require("../middlewares/verifierAuth");
+const userAuth = require("../middlewares/userAuth");
+const { isInstitutionalEmail } = require("../config/appConfig");
 
 // -------------------- MULTER (memory storage) --------------------
 const storage = multer.memoryStorage(); 
@@ -76,7 +79,7 @@ router.post("/problem", upload.single("image"), async (req, res) => {
       formattedCollaborators = collabArray
         .filter(email => email && email.trim())
         .map(email => email.trim())
-        .filter(email => email.endsWith('@vnrvjiet.in'));
+        .filter(email => isInstitutionalEmail(email));
     }
 
     // Create problem with collaborators in transaction
@@ -143,10 +146,15 @@ router.get("/problems", async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
     const skip = (page - 1) * limit;
-    
+
+    const where = {};
+    if (req.query.verified === 'true') where.verified = true;
+    if (req.query.verified === 'false') where.verified = false;
+
     // Get problems with pagination
     const [problems, total] = await Promise.all([
       prisma.problem.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -160,7 +168,7 @@ router.get("/problems", async (req, res) => {
           }
         }
       }),
-      prisma.problem.count()
+      prisma.problem.count({ where })
     ]);
     
     // If no problems in database, return mock data
@@ -237,6 +245,71 @@ router.get("/problems/:id", async (req, res) => {
   } catch (error) {
     console.error("Error fetching problem:", error);
     res.status(500).json({ message: "Failed to fetch problem" });
+  }
+});
+
+// PATCH mark a problem as verified (wing member, wing master, or admin only)
+router.patch("/problem/:id/verify", verifierAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { verificationNotes } = req.body;
+
+    const problem = await prisma.problem.findUnique({ where: { problemId: id } });
+    if (!problem) {
+      return res.status(404).json({ message: "Problem not found" });
+    }
+
+    const updated = await prisma.problem.update({
+      where: { id: problem.id },
+      data: {
+        verified: true,
+        verifiedBy: req.user.email,
+        verifiedAt: new Date(),
+        verificationNotes: verificationNotes || null
+      },
+      include: {
+        collaborators: true,
+        upvotedBy: true,
+        comments: { include: { replies: true, likedBy: true } }
+      }
+    });
+
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("Error verifying problem:", error);
+    res.status(500).json({ message: "Verification failed" });
+  }
+});
+
+// PATCH clear a problem's verified status (wing member, wing master, or admin only)
+router.patch("/problem/:id/unverify", verifierAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const problem = await prisma.problem.findUnique({ where: { problemId: id } });
+    if (!problem) {
+      return res.status(404).json({ message: "Problem not found" });
+    }
+
+    const updated = await prisma.problem.update({
+      where: { id: problem.id },
+      data: {
+        verified: false,
+        verifiedBy: null,
+        verifiedAt: null,
+        verificationNotes: null
+      },
+      include: {
+        collaborators: true,
+        upvotedBy: true,
+        comments: { include: { replies: true, likedBy: true } }
+      }
+    });
+
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("Error unverifying problem:", error);
+    res.status(500).json({ message: "Unverification failed" });
   }
 });
 
@@ -612,14 +685,9 @@ router.post("/problem/:id/comment/:commentId/like", async (req, res) => {
 });
 
 // DELETE a problem (only owner or collaborator can delete)
-router.delete("/problems/:problemId", async (req, res) => {
+router.delete("/problems/:problemId", userAuth, async (req, res) => {
   try {
     const { problemId } = req.params;
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
 
     const problem = await prisma.problem.findUnique({
       where: { problemId: problemId },
@@ -632,9 +700,9 @@ router.delete("/problems/:problemId", async (req, res) => {
       return res.status(404).json({ message: "Problem not found" });
     }
 
-    // Check if user is owner or collaborator
-    const isOwner = problem.addedByEmail === email;
-    const isCollaborator = problem.collaborators.some(c => c.email === email);
+    // Check if the requesting session is the owner or a collaborator
+    const isOwner = problem.addedByEmail === req.user.email;
+    const isCollaborator = problem.collaborators.some(c => c.email === req.user.email);
     
     if (!isOwner && !isCollaborator) {
       return res.status(403).json({ message: "You are not allowed to delete this problem" });
@@ -656,13 +724,9 @@ router.delete("/problems/:problemId", async (req, res) => {
 });
 
 // PUT update a problem (only owner or collaborator can update)
-router.put("/problems/:id/:email", upload.single("image"), async (req, res) => {
+router.put("/problems/:id", userAuth, upload.single("image"), async (req, res) => {
   try {
-    const { id, email } = req.params;
-
-    if (!email) {
-      return res.status(400).json({ message: "User email is required" });
-    }
+    const { id } = req.params;
 
     const problem = await prisma.problem.findUnique({
       where: { problemId: id },
@@ -675,10 +739,10 @@ router.put("/problems/:id/:email", upload.single("image"), async (req, res) => {
       return res.status(404).json({ message: "Problem not found" });
     }
 
-    // Check if user is owner or collaborator
-    const isOwner = problem.addedByEmail === email;
-    const isCollaborator = problem.collaborators.some(c => c.email === email);
-    
+    // Check if the requesting session is the owner or a collaborator
+    const isOwner = problem.addedByEmail === req.user.email;
+    const isCollaborator = problem.collaborators.some(c => c.email === req.user.email);
+
     if (!isOwner && !isCollaborator) {
       return res.status(403).json({ message: "You are not allowed to edit this problem" });
     }
@@ -697,7 +761,7 @@ router.put("/problems/:id/:email", upload.single("image"), async (req, res) => {
       formattedCollaborators = collabArray
         .filter(email => email && email.trim())
         .map(email => email.trim())
-        .filter(email => email.endsWith('@vnrvjiet.in'));
+        .filter(email => isInstitutionalEmail(email));
     }
 
     // Update in transaction

@@ -4,6 +4,8 @@ const { v4: uuidv4 } = require('uuid');
 const prisma = require('../config/prisma');
 const upload = require('../middlewares/upload');
 const cloudinary = require('../config/cloudinary');
+const verifierAuth = require('../middlewares/verifierAuth');
+const userAuth = require('../middlewares/userAuth');
 
 router.use(express.json());
 
@@ -66,7 +68,12 @@ const createStageNotification = async (idea, previousStage, newStage) => {
 // Get all ideas (database only)
 router.get('/ideas', async (req, res) => {
   try {
+    const where = {};
+    if (req.query.verified === 'true') where.verified = true;
+    if (req.query.verified === 'false') where.verified = false;
+
     const ideas = await prisma.idea.findMany({
+      where,
       include: {
         teamMembers: true,
         collaborators: true,
@@ -428,23 +435,43 @@ router.post('/idea', upload.fields([
 });
 
 // Update idea
-router.put('/idea/:ideaId', upload.array('teamImages'), async (req, res) => {
+router.put('/idea/:ideaId', userAuth, upload.array('teamImages'), async (req, res) => {
   try {
     const idea = await prisma.idea.findUnique({
       where: { ideaId: req.params.ideaId }
     });
-    
+
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
 
-    // Check if the user is the creator of the idea
-    if (idea.addedByEmail !== req.body.email) {
+    // Check if the requesting session belongs to the creator of the idea
+    if (idea.addedByEmail !== req.user.email) {
       return res.status(403).json({ message: "Unauthorized to update this idea" });
     }
 
     // Store previous stage for notification
     const previousStage = idea.stage;
+
+    // Advancing a stage requires a completed validation questionnaire for that
+    // exact transition - the frontend's "Skip Validation" option only skips the
+    // UI prompt, so this has to be enforced here or it's not enforced at all.
+    const requestedStage = req.body.stage ? parseInt(req.body.stage) : idea.stage;
+    if (requestedStage > idea.stage) {
+      const completedValidation = await prisma.questionnaireResponse.findFirst({
+        where: {
+          ideaId: idea.ideaId,
+          stageFrom: idea.stage,
+          stageTo: requestedStage,
+          status: 'COMPLETED'
+        }
+      });
+      if (!completedValidation) {
+        return res.status(400).json({
+          message: `Cannot advance from stage ${idea.stage} to ${requestedStage} without a completed validation questionnaire for this transition.`
+        });
+      }
+    }
 
     // Parse team if provided
     let teamMembers = null;
@@ -524,19 +551,85 @@ router.put('/idea/:ideaId', upload.array('teamImages'), async (req, res) => {
   }
 });
 
-// Delete idea
-router.delete('/idea/:ideaId', async (req, res) => {
+// PATCH mark an idea as verified (wing member, wing master, or admin only)
+router.patch('/idea/:ideaId/verify', verifierAuth, async (req, res) => {
   try {
-    const idea = await prisma.idea.findUnique({
-      where: { ideaId: req.params.ideaId }
-    });
-    
+    const idea = await prisma.idea.findUnique({ where: { ideaId: req.params.ideaId } });
     if (!idea) {
       return res.status(404).json({ message: "Idea not found" });
     }
 
-    // Check if the user is the creator of the idea
-    if (idea.addedByEmail !== req.body.email) {
+    const updated = await prisma.idea.update({
+      where: { id: idea.id },
+      data: {
+        verified: true,
+        verifiedBy: req.user.email,
+        verifiedAt: new Date(),
+        verificationNotes: req.body.verificationNotes || null
+      },
+      include: {
+        teamMembers: true,
+        collaborators: true,
+        upvotedBy: true,
+        comments: { include: { replies: true, likes: true } },
+        attachments: true,
+        links: true
+      }
+    });
+
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("Error verifying idea:", error);
+    res.status(500).json({ message: "Verification failed" });
+  }
+});
+
+// PATCH clear an idea's verified status (wing member, wing master, or admin only)
+router.patch('/idea/:ideaId/unverify', verifierAuth, async (req, res) => {
+  try {
+    const idea = await prisma.idea.findUnique({ where: { ideaId: req.params.ideaId } });
+    if (!idea) {
+      return res.status(404).json({ message: "Idea not found" });
+    }
+
+    const updated = await prisma.idea.update({
+      where: { id: idea.id },
+      data: {
+        verified: false,
+        verifiedBy: null,
+        verifiedAt: null,
+        verificationNotes: null
+      },
+      include: {
+        teamMembers: true,
+        collaborators: true,
+        upvotedBy: true,
+        comments: { include: { replies: true, likes: true } },
+        attachments: true,
+        links: true
+      }
+    });
+
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("Error unverifying idea:", error);
+    res.status(500).json({ message: "Unverification failed" });
+  }
+});
+
+// Delete idea
+router.delete('/idea/:ideaId', userAuth, async (req, res) => {
+  try {
+    const idea = await prisma.idea.findUnique({
+      where: { ideaId: req.params.ideaId }
+    });
+
+    if (!idea) {
+      return res.status(404).json({ message: "Idea not found" });
+    }
+
+    // Check if the requesting session belongs to the creator of the idea
+    if (idea.addedByEmail !== req.user.email) {
       return res.status(403).json({ message: "Unauthorized to delete this idea" });
     }
 

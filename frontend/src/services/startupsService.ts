@@ -23,8 +23,8 @@ export async function upvoteStartup(id: string): Promise<number> {
   return response.data.upvotes;
 }
 
-export async function deleteStartup(id: string, email?: string): Promise<void> {
+export async function deleteStartup(id: string, sessionToken?: string): Promise<void> {
   await axios.delete(`${API_BASE}/startup-api/${id}`, {
-    data: { requestingUserEmail: email },
+    headers: { Authorization: `Bearer ${sessionToken}` },
   });
 }

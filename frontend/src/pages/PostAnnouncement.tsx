@@ -55,12 +55,11 @@ const PostAnnouncement = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.adminToken}`,
         },
         body: JSON.stringify({
           title: formData.title,
           content: formData.content,
-          posterEmail: user.email,
-          posterName: user.name,
         }),
       });
 

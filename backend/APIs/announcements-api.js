@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../config/prisma');
+const verifierAuth = require('../middlewares/verifierAuth');
 
 // GET /announcements-api/ — returns all active announcements, sorted by createdAt descending
 router.get('/', async (req, res) => {
@@ -24,9 +25,9 @@ router.get('/', async (req, res) => {
 });
 
 // POST /announcements-api/ — create announcement (admin or wing master only)
-router.post('/', async (req, res) => {
+router.post('/', verifierAuth, async (req, res) => {
   try {
-    const { title, content, posterEmail, posterName } = req.body;
+    const { title, content } = req.body;
 
     // Basic validation
     if (!title || !content) {
@@ -41,8 +42,8 @@ router.post('/', async (req, res) => {
       data: {
         title,
         content,
-        postedByName: posterName || 'Anonymous',
-        postedByEmail: posterEmail || '',
+        postedByName: [req.user.firstName, req.user.lastName].filter(Boolean).join(' ') || req.user.displayName || 'Anonymous',
+        postedByEmail: req.user.email,
         isActive: true
       }
     });
@@ -61,7 +62,7 @@ router.post('/', async (req, res) => {
 });
 
 // DELETE /announcements-api/:id — soft delete (set isActive: false)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifierAuth, async (req, res) => {
   try {
     const { id } = req.params;
 

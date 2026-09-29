@@ -3,6 +3,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const prisma = require('./config/prisma');
+const { corsOrigins } = require('./config/appConfig');
 
 dotenv.config();
 const app = express();
@@ -10,19 +11,10 @@ const app = express();
 // Parse JSON bodies
 app.use(express.json());
 
-// CORS — allow main site, admin panel, and plane board
+// CORS — allowed origins come from config/appConfig.js (CORS_ORIGINS overrides;
+// localhost is only allowed outside production).
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:4000',
-    'http://localhost:4001', // admin dev
-    'http://localhost:4002', // plane dev
-    'https://hub.vjstartup.com',
-    'https://vjstartups.com',
-    'https://www.vjstartups.com',
-    'https://admin.vjstartups.com',
-    'https://plane.vjstartups.com',
-  ],
+  origin: corsOrigins(),
   credentials: true
 }));
 
@@ -53,8 +45,10 @@ app.use('/notification-api', require('./APIs/notifications-api'));
 // Admin routes (all protected by adminAuth middleware inside)
 app.use('/admin-api', require('./APIs/admin-api'));
 
-// Tasks/Projects routes (public reads, write requires userId in body)
-app.use('/tasks-api', require('./APIs/tasks-api'));
+// tasks-api.js (kanban board) is unmounted: confirmed zero frontend usage,
+// and its Project/Task models named their tables "projects"/"project_members"
+// /"tasks", which now belong to Plane's own native project management
+// system after the Postgres merge - every route in that file 500s.
 
 app.use('/announcements-api', require('./APIs/announcements-api'));
 

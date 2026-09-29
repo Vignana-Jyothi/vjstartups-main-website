@@ -167,6 +167,9 @@ const StageTransitionModal = ({
         {
           stage: targetStage,
           email: user?.email
+        },
+        {
+          headers: { Authorization: `Bearer ${user?.sessionToken}` }
         }
       );
 
