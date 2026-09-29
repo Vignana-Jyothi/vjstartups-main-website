@@ -51,13 +51,3 @@ jobs:
         run: |
           docker compose down
           docker compose up -d --build
-
-      # The site's own tables get no Prisma migration history on this database, so changes that
-      # add tables ship as SQL that is safe to re-run and are applied here, inside the backend
-      # container (which already points at the shared Plane database). Existing rows are never
-      # overwritten.
-      - name: Apply site database changes
-        run: |
-          docker compose exec -T backend npx prisma db execute \
-            --file prisma/migrations/20260929000000_add_success_stories/migration.sql \
-            --schema prisma/schema.prisma
