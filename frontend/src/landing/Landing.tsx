@@ -413,7 +413,6 @@ function Hero() {
       </div>
 
       <div className="hero-v12-side hero-side-left">00 — QUESTION</div>
-      <div className="hero-v12-side hero-side-right">FIVE STARTUPS A YEAR</div>
 
       <div className="hero-v12-bottom">
         <span>A STUDENT STARTUP COMMUNITY AT VNRVJIET</span>
@@ -816,10 +815,6 @@ function Network() {
             </div>
           </div>
 
-        </div>
-
-        <div className="network-v16-bottom">
-          <span>{counters.startups} STARTUPS</span><span>{counters.students} FUTURE BUILDERS</span><span>15 RESEARCH PARTNERS</span><span>10+ INDUSTRY MENTORS</span><span>{counters.funded} FUNDED</span>
         </div>
       </div>
     </section>

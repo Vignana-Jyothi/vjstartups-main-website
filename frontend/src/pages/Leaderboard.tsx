@@ -78,7 +78,10 @@ const Leaderboard = () => {
         backLink={{ label: "Home", to: "/" }}
         stats={[
           { value: String(entries.length), label: entries.length === 1 ? "Ranked member" : "Ranked members" },
-          { value: "Live", label: "Refreshes every 30s" },
+          {
+            value: entries.length ? String(Math.round(Math.max(...entries.map((e) => Number(e.reputationScore ?? 0))))) : "0",
+            label: "Top score",
+          },
         ]}
       />
 
