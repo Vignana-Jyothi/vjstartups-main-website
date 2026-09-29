@@ -1,0 +1,24 @@
+/* /manage: the list of each kind of site content, with its tabs. The forms use forms.css. */
+.mg-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+.mg-tabs button{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border:1px solid rgba(247,245,239,.12);border-radius:999px;background:none;color:hsl(var(--muted-foreground));font:700 14px var(--sans);cursor:pointer;transition:color .2s,border-color .2s,background .2s}
+.mg-tabs button:hover{color:var(--white);border-color:rgba(247,245,239,.28)}
+.mg-tabs button.is-on{border-color:var(--lx-accent);background:color-mix(in srgb,var(--lx-accent) 12%,transparent);color:var(--white)}
+.mg-tabs small{font:11px var(--mono);letter-spacing:.08em;opacity:.7}
+
+.mg-list{display:grid;margin:0 0 28px;padding:0;list-style:none;border-top:1px solid rgba(247,245,239,.1)}
+.mg-list li{display:grid;grid-template-columns:40px minmax(0,1fr) auto;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid rgba(247,245,239,.1)}
+.mg-list li.is-hidden .mg-what{opacity:.5}
+.mg-no{color:var(--lx-accent);font:12px var(--mono);letter-spacing:.12em}
+.mg-what{display:grid;gap:4px;min-width:0}
+.mg-what b{color:var(--white);font-size:16px;overflow-wrap:anywhere}
+.mg-what small{color:hsl(var(--muted-foreground));font-size:13px}
+.mg-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.mg-actions button{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px;padding:0 12px;border:1px solid rgba(247,245,239,.12);border-radius:999px;background:none;color:hsl(var(--muted-foreground));font:700 13px var(--sans);cursor:pointer}
+.mg-actions button:hover:not(:disabled){color:var(--white);border-color:rgba(247,245,239,.3)}
+.mg-actions button:disabled{opacity:.35;cursor:default}
+.mg-actions button.is-main{border-color:var(--lx-accent);color:var(--white)}
+
+@media (max-width:640px){
+  .mg-list li{grid-template-columns:32px minmax(0,1fr)}
+  .mg-actions{grid-column:2;justify-content:flex-start}
+}

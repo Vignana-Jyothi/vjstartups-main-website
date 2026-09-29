@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/design-system/PageHero";
-import { startupPrograms } from "@/data/startupPrograms";
+import { useSiteContent } from "@/data/siteContent";
 import type { SuccessStory } from "@/data/successStories";
 import { canWriteStories, createStory, updateStory, uploadStoryImage, useStory, type StoryDraft } from "@/data/storiesApi";
 import { useUser } from "./UserContext";
@@ -116,6 +116,7 @@ const StoryForm = () => {
   const { user } = useUser();
   const navigate = useNavigate();
   const existing = useStory(id);
+  const { programs: startupPrograms } = useSiteContent();
   const [form, setForm] = useState<Form>(empty);
   const [loaded, setLoaded] = useState(!editing);
   const [saving, setSaving] = useState(false);

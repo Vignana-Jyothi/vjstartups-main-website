@@ -1,4 +1,4 @@
-import { wings } from "@/data/clubInfo";
+import { siteContentNow } from "@/data/siteContent";
 import { SheetTeamMember, TeamDirectoryGroup } from "@/types/sheetTeamMember";
 
 /** Team-sheet wing names that differ from clubInfo wing names (none since Core became Infra) */
@@ -13,7 +13,7 @@ function normalizeWingKey(wing: string): string {
 export function getWingSortIndex(wing: string): number {
   const key = normalizeWingKey(wing);
 
-  const index = wings.findIndex((entry) => {
+  const index = siteContentNow().wings.findIndex((entry) => {
     const entryName = entry.name.toLowerCase();
     const entryKey = entryName.replace(/\s*wing.*$/, "").trim();
     return entryName.includes(key) || entryKey.includes(key) || key.includes(entryKey);
@@ -36,7 +36,7 @@ export function isWingMaster(member: SheetTeamMember): boolean {
 
 export function resolveWingDisplayName(wing: string): string {
   const normalized = wing.toLowerCase().trim();
-  const match = wings.find((entry) =>
+  const match = siteContentNow().wings.find((entry) =>
     entry.name.toLowerCase().includes(normalized)
   );
 

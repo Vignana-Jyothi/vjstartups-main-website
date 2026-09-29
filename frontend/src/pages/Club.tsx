@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
-import { wings, wingDisplayName } from "@/data/clubInfo";
+import { wingDisplayName } from "@/data/clubInfo";
+import { useSiteContent } from "@/data/siteContent";
 import { useTeamMembersFromSheet } from "@/hooks/useTeamMembersFromSheet";
 import { ClubHero } from "@/components/club/ClubHero";
 import { ClubAboutSection } from "@/components/club/ClubAboutSection";
@@ -28,6 +29,7 @@ const ClubPage = () => {
   const [selectedWing, setSelectedWing] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const tabsRef = useRef<HTMLDivElement>(null);
+  const { wings } = useSiteContent();
   const { groups, allGroups, wings: sheetWings, isLoading, error, isEmpty, refetch } = useTeamMembersFromSheet({
     selectedWing,
   });
@@ -43,7 +45,7 @@ const ClubPage = () => {
         return [wing.id, counts[SHEET_ALIASES[key] ?? key]];
       })
     );
-  }, [allGroups]);
+  }, [allGroups, wings]);
 
   const goTo = (tab: string, anchorId?: string) => {
     setActiveTab(tab);
