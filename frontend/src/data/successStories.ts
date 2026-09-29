@@ -72,7 +72,7 @@ export const successStories: SuccessStory[] = [
         name: 'Veda Nampally',
         branch: 'Computer Science - CSBS',
         year: '2nd',
-        imageUrl: '/src/assets/veda_nampally.png',
+        imageUrl: '/success-stories/veda_nampally.webp',
         socialLinks: [
           {
             platform: 'linkedin',
@@ -138,7 +138,7 @@ export const successStories: SuccessStory[] = [
     gallery: [
       {
         type: 'image',
-        url: '/src/assets/veda_team.png',
+        url: '/success-stories/veda_team.webp',
         caption: 'Veda with the kids during dance training session'
       },      
       {
@@ -155,92 +155,6 @@ export const successStories: SuccessStory[] = [
       '100% Parent Satisfaction',
       'Standing Ovation Performance'
     ]
-  },
-  {
-    id: 'innovation-internship-batch-1-smart-irrigation',
-    programId: 'innovation-internship-1',
-    season: 'Batch 1',
-    title: 'Smart Irrigation System for Water Conservation',
-    subtitle: 'Agriculture IoT solution developed through structured TRL progression',
-    date: '2024-06-30',
-    participants: [
-      {
-        name: 'Kiran Kumar',
-        branch: 'Electronics & Communication',
-        year: '4th Year',
-        role: 'Hardware Lead',
-        linkedinUrl: 'https://linkedin.com/in/kiran-kumar-vnrvjiet'
-      },
-      {
-        name: 'Deepika Rao',
-        branch: 'Computer Science',
-        year: '3rd Year',
-        role: 'Software Developer'
-      }
-    ],
-    contentType: 'hybrid',
-    overview: `Kiran and Deepika developed an IoT-based smart irrigation system that reduces water usage by 40% while improving crop yield. Their solution progressed through all TRL levels and is now being piloted in 5 local farms.`,
-    outcomes: [
-      {
-        title: 'Water Conservation',
-        description: 'Achieved 40% reduction in water usage through sensor-based automation',
-        metrics: '40% water savings'
-      },
-      {
-        title: 'Crop Yield Improvement',
-        description: 'Optimized watering schedule led to 25% increase in crop yield',
-        metrics: '25% yield increase'
-      },
-      {
-        title: 'Commercial Validation',
-        description: 'Secured pilots with 5 local farms and 2 potential customers',
-        metrics: '₹2,50,000 potential revenue pipeline'
-      }
-    ],
-    pdfUrl: '/documents/success-stories/smart-irrigation-detailed-report.pdf',
-    pdfDescription: 'Comprehensive 25-page report including technical specifications, TRL progression documentation, market analysis, and pilot results with farmer testimonials.',
-    tags: ['iot', 'agriculture', 'water-conservation', 'sensors'],
-    featured: true,
-    achievements: [
-      'TRL 1-3 Completion in 2 Months',
-      '40% Water Usage Reduction',
-      '5 Farm Pilots Secured',
-      'Patent Application Filed'
-    ]
-  },
-  {
-    id: 'problem-hunt-season-2-mental-health',
-    programId: 'problem-hunt-2',
-    season: 'Season 2',
-    title: 'Mental Health Support System Design',
-    subtitle: 'Community-driven problem identification leading to solution development',
-    date: '2024-09-15',
-    participants: [
-      {
-        name: 'Ananya Singh',
-        branch: 'Psychology',
-        year: '3rd Year',
-        role: 'Problem Researcher'
-      },
-      {
-        name: 'Rahul Mehta',
-        branch: 'Computer Science',
-        year: '4th Year',
-        role: 'Solution Architect'
-      }
-    ],
-    contentType: 'pdf',
-    overview: `During Problem Hunt Season 2, Ananya identified mental health support as the most upvoted problem. This led to a comprehensive research and solution design that's now being developed as a campus mental health platform.`,
-    pdfUrl: '/documents/success-stories/mental-health-problem-to-solution.pdf',
-    pdfDescription: 'Complete journey from problem identification to solution design, including research methodology, community feedback analysis, solution architecture, and implementation roadmap.',
-    tags: ['mental-health', 'community-research', 'problem-identification'],
-    featured: false,
-    achievements: [
-      'Most Upvoted Problem (250+ votes)',
-      'Comprehensive Research Report',
-      'Solution Design Approved',
-      'Development Grant Secured'
-    ]
   }
 ];
 
@@ -255,4 +169,13 @@ export const getFeaturedSuccessStories = (): SuccessStory[] => {
 
 export const getSuccessStoryById = (id: string): SuccessStory | undefined => {
   return successStories.find(story => story.id === id);
+};
+
+// Dates are stored either as ISO ("2024-06-30") or as "Aug-2025". new Date() only parses the
+// second form in Chrome, so both are formatted here as "June 2024" / "Aug 2025".
+export const formatStoryDate = (date: string): string => {
+  const iso = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(date);
+  if (!iso) return date.replace(/-/g, " ");
+  const parsed = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3] ?? 1));
+  return parsed.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 };

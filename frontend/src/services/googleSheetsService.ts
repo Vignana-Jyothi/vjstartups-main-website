@@ -17,11 +17,11 @@ import { compareWings } from "@/utils/teamMemberTransforms";
  * Role                      → role
  * Department                → branch
  * Year                      → year
- * email-id                  → email
  * Linkedin (ifany)          → linkedinUrl
- * Phone Number (...)        → phone
+ * Insta (optional)          → instagramUrl
  * Photo (Drive link)        → imageUrl
- * Worksheet/tab name        → wing
+ * Wing Name                 → wing (else the worksheet/tab name, for one-tab-per-wing sheets)
+ * email-id, Phone Number    → not read: personal contacts, and the directory is public
  * Row index within tab      → displayOrder
  */
 
@@ -30,9 +30,9 @@ const COLUMN_MATCHERS = {
   role: ["role"],
   branch: ["department", "branch"],
   year: ["year"],
-  email: ["email-id", "email"],
+  wing: ["wing name"],
   linkedinUrl: ["linkedin"],
-  phone: ["phone number", "phone"],
+  instagramUrl: ["insta"],
   imageUrl: ["photo", "drive link", "image"],
 } as const;
 
@@ -68,19 +68,22 @@ function getColumnValue(
   return "";
 }
 
+// Drive no longer serves `uc?export=view` links as embeddable images (they redirect to an HTML
+// page), so every team photo was broken. The thumbnail endpoint returns the image itself.
+const driveImage = (id: string) => `https://drive.google.com/thumbnail?id=${id}&sz=w800`;
+
 function convertDriveLinkToImageUrl(url: string): string {
   const value = url.trim();
   if (!value) return "";
 
+  // A folder link is not a photo.
+  if (/drive\.google\.com\/drive\/folders\//.test(value)) return "";
+
   const fileIdMatch = value.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if (fileIdMatch?.[1]) {
-    return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
-  }
+  if (fileIdMatch?.[1]) return driveImage(fileIdMatch[1]);
 
   const idParamMatch = value.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (idParamMatch?.[1]) {
-    return `https://drive.google.com/uc?export=view&id=${idParamMatch[1]}`;
-  }
+  if (idParamMatch?.[1]) return driveImage(idParamMatch[1]);
 
   return value;
 }
@@ -90,7 +93,11 @@ export function mapRowToTeamMember(
   wing: string,
   displayOrder: number
 ): SheetTeamMember | null {
-  const name = getColumnValue(row, COLUMN_MATCHERS.name);
+  // Exact header match only: the loose fallback would read "Wing Name" as a name and turn every
+  // unfilled row into a member called "Ignition".
+  const name = Object.entries(row)
+    .find(([key, value]) => COLUMN_MATCHERS.name.some((m) => normalizeHeader(key) === m) && value?.trim())?.[1]
+    ?.trim() ?? "";
 
   if (!name) {
     return null;
@@ -98,15 +105,16 @@ export function mapRowToTeamMember(
 
   const imageRaw = getColumnValue(row, COLUMN_MATCHERS.imageUrl);
 
+  const wingColumn = getColumnValue(row, COLUMN_MATCHERS.wing);
+
   return {
     name,
-    wing,
+    wing: wingColumn ? formatWingName(wingColumn) : wing,
     role: getColumnValue(row, COLUMN_MATCHERS.role),
     branch: getColumnValue(row, COLUMN_MATCHERS.branch),
     year: getColumnValue(row, COLUMN_MATCHERS.year),
-    email: getColumnValue(row, COLUMN_MATCHERS.email),
-    phone: getColumnValue(row, COLUMN_MATCHERS.phone),
     linkedinUrl: getColumnValue(row, COLUMN_MATCHERS.linkedinUrl),
+    instagramUrl: getColumnValue(row, COLUMN_MATCHERS.instagramUrl),
     imageUrl: convertDriveLinkToImageUrl(imageRaw),
     displayOrder,
   };

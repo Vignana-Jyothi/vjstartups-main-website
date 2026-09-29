@@ -1,0 +1,17 @@
+/* SiteCursor (platform pages). Hidden until SiteCursor opts the page in. */
+.scu-ring,.scu-dot{position:fixed;left:0;top:0;z-index:2500;display:none;pointer-events:none;will-change:transform}
+.has-site-cursor .scu-ring,.has-site-cursor .scu-dot{display:block}
+.has-site-cursor,.has-site-cursor *{cursor:none!important}
+.has-site-cursor :is(input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea,[contenteditable='true'],[role=textbox]){cursor:text!important}
+.has-site-cursor iframe{cursor:auto!important}
+
+.scu-dot{width:6px;height:6px;border-radius:50%;background:#d7ff63;transition:opacity .2s,width .25s,height .25s}
+.scu-ring{width:28px;height:28px;border:1px solid rgba(247,245,239,.55);border-radius:50%;transition:width .35s cubic-bezier(.2,.8,.2,1),height .35s cubic-bezier(.2,.8,.2,1),background .3s,border-color .3s,opacity .2s}
+.scu-ring span{position:absolute;inset:0;display:grid;place-items:center;color:#080808;font:600 10px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;opacity:0;transition:opacity .2s}
+
+[data-cursor="active"] .scu-ring{width:48px;height:48px;border-color:#d7ff63}
+[data-cursor="active"] .scu-dot{width:4px;height:4px}
+[data-cursor="card"] .scu-ring{width:84px;height:84px;border-color:transparent;background:#d7ff63}
+[data-cursor="card"] .scu-ring span{opacity:1}
+[data-cursor="card"] .scu-dot{opacity:0}
+[data-cursor="text"] .scu-ring,[data-cursor="text"] .scu-dot,[data-cursor="hidden"] .scu-ring,[data-cursor="hidden"] .scu-dot{opacity:0}

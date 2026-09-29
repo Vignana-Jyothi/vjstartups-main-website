@@ -1,10 +1,8 @@
 import { wings } from "@/data/clubInfo";
 import { SheetTeamMember, TeamDirectoryGroup } from "@/types/sheetTeamMember";
 
-/** Sheet tab names that differ from clubInfo wing names */
-const WING_ALIASES: Record<string, string> = {
-  infra: "core",
-};
+/** Team-sheet wing names that differ from clubInfo wing names (none since Core became Infra) */
+const WING_ALIASES: Record<string, string> = {};
 
 function normalizeWingKey(wing: string): string {
   const lower = wing.toLowerCase().trim();
@@ -67,7 +65,8 @@ export function groupMembersByWing(members: SheetTeamMember[]): TeamDirectoryGro
         wing,
         wingName: resolveWingDisplayName(wing),
         wingMaster: wingMasters[0] ?? null,
-        coreTeam,
+        // A wing can have more than one master (Infra does); the others lead its team list.
+        coreTeam: [...wingMasters.slice(1), ...coreTeam],
       };
     })
     .sort((a, b) => compareWings(a.wing, b.wing));

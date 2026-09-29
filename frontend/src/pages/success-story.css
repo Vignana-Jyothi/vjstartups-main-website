@@ -1,0 +1,50 @@
+/* Success story detail. Builds on listing.css (lx-*). */
+.st .ph-title{font-size:clamp(48px,7vw,112px)}
+.st .ph-extra{margin-top:36px}
+.st a.lx-textbtn{text-decoration:none}
+.st-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:72px;align-items:start}
+.st-main>.lx-block:first-child{margin-top:0}
+.lx .st-lead{margin:0 0 88px;font-size:clamp(20px,2vw,28px)}
+.lx.st .lx-sec-head h2{font-size:clamp(32px,3.4vw,52px)}
+.st-steps{margin-top:32px}
+.st-steps li{padding:22px 0}
+.st-steps p.st-win{display:inline-block;margin-top:12px;padding:8px 12px;border:1px solid color-mix(in srgb,var(--lime) 30%,transparent);border-radius:12px;background:color-mix(in srgb,var(--lime) 7%,transparent);color:var(--white);font-size:14px}
+.st-phase-img{width:100%;max-width:440px;margin-top:14px;border-radius:14px}
+.st-outcomes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:32px}
+.st-outcome{display:flex;flex-direction:column;gap:10px;padding:24px;border:1px solid rgba(247,245,239,.07);border-radius:20px;background:hsl(var(--card))}
+.st-outcome b{color:var(--lime);font-size:clamp(24px,2.4vw,34px);font-weight:800;line-height:1;letter-spacing:-.05em}
+.lx .st-outcome h3{margin:6px 0 0;color:var(--white);font-size:17px;font-weight:800;letter-spacing:-.03em}
+.st-outcome p{margin:0;color:hsl(var(--muted-foreground));font-size:14px;line-height:1.55}
+.st-quote{margin:32px 0 0;padding-left:24px;border-left:2px solid var(--lime)}
+.st-quote blockquote{margin:0;color:var(--white);font-size:clamp(20px,2vw,26px);font-weight:600;line-height:1.35;letter-spacing:-.03em}
+.st-quote figcaption{margin-top:14px;color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.st-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:32px}
+.st-gallery figure{margin:0}
+.st-gallery img,.st-video{display:block;width:100%;aspect-ratio:4/3;border-radius:18px;object-fit:cover}
+.st-video{display:grid;place-content:center;gap:14px;border:1px solid rgba(247,245,239,.08);background:radial-gradient(circle at 70% 30%,color-mix(in srgb,var(--lime) 14%,transparent),transparent 60%),hsl(var(--card));color:var(--white);font:12px var(--mono);letter-spacing:.12em;text-align:center;text-decoration:none;text-transform:uppercase;transition:border-color .2s}
+.st-video:hover{border-color:var(--lime)}
+.st-video span{display:grid;place-items:center;width:64px;height:64px;margin:0 auto;border-radius:50%;background:var(--lime);color:#080808;font-size:20px}
+.st-gallery figcaption{margin-top:10px;color:hsl(var(--muted-foreground));font-size:14px;line-height:1.5}
+.st-side{position:sticky;top:112px;display:grid;gap:36px}
+.st-side>.lx-field{padding-top:20px;border-top:1px solid rgba(247,245,239,.1)}
+.st-people{display:grid;gap:18px}
+.st-person{display:flex;gap:14px}
+.st-avatar{display:grid;flex:none;place-items:center;width:52px;height:52px;overflow:hidden;border-radius:50%;background:var(--lime);color:#080808;font:800 18px var(--sans)}
+.st-avatar img{width:100%;height:100%;object-fit:cover}
+.st-person strong{display:block;color:var(--white);font-size:17px;font-weight:800;letter-spacing:-.03em}
+.st-person em{display:block;margin-top:2px;color:var(--lime);font-size:14px;font-style:normal;font-weight:600}
+.st-person small{display:block;margin-top:4px;color:hsl(var(--muted-foreground));font:11px var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.st-links{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px}
+.st-links a{color:rgba(247,245,239,.7);font:12px var(--mono);letter-spacing:.1em;text-decoration:none;text-transform:uppercase}
+.st-links a:hover{color:var(--lime)}
+.st-cta{display:grid;gap:14px;justify-items:start;padding:24px;border:1px solid rgba(247,245,239,.08);border-radius:20px;background:radial-gradient(circle at 90% 0,color-mix(in srgb,var(--lime) 14%,transparent),transparent 55%),hsl(var(--card))}
+.st-cta p{margin:0;color:var(--white);font-size:15px;font-weight:600;line-height:1.45}
+
+@media(max-width:1100px){
+  .st-grid{grid-template-columns:1fr;gap:88px}
+  .st-side{position:static}
+}
+@media(max-width:700px){
+  .st-outcomes,.st-gallery{grid-template-columns:1fr}
+  .lx .st-lead{margin-bottom:64px}
+}

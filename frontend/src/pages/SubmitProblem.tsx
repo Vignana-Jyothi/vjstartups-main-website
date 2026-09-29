@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import "@/components/design-system/forms.css";
+import { PageHero } from "@/components/design-system/PageHero";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -192,37 +194,18 @@ const SubmitProblem: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 pt-24 pb-16 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          
-          <div className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-4 rounded-full bg-gradient-to-r from-orange-500 to-red-600">
-                <AlertTriangle className="w-8 h-8 text-white" />
-              </div>
-            </div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Submit a New Problem
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Identify real-world challenges that need innovative solutions. Help the community understand problems worth solving and inspire breakthrough ideas.
-            </p>
-            
-            <div className="mt-4 p-3 bg-amber-900/30 border border-amber-600 text-amber-200 rounded-lg text-sm max-w-2xl mx-auto">
-              ⚠️ Note: Off-topic or irrelevant submissions will be rejected by the admin team.
-            </div>
-          </div>
-        </div>
+    <div className="page-shell">
+      <PageHero
+        kind="tool"
+        accent="pink"
+        eyebrow="Problem discovery"
+        title={"Submit a New Problem"}
+        description={"Identify real-world challenges that need innovative solutions. Help the community understand problems worth solving and inspire breakthrough ideas."}
+        backLink={{ label: "Problems", to: "/problems" }}
+      >
+        <p className="ph-note">Off-topic or irrelevant submissions will be rejected by the admin team.</p>
+      </PageHero>
+      <div className="form-shell fm" data-accent="pink">
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}

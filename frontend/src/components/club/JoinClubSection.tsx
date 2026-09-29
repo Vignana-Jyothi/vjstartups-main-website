@@ -1,9 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Calendar, CheckCircle, Mail } from "lucide-react";
-
 interface JoinClubSectionProps {
-  onApplyNow: () => void;
+  onMeetTeam: () => void;
 }
 
 const benefits = [
@@ -33,81 +29,60 @@ const steps = [
   },
 ];
 
-export function JoinClubSection({ onApplyNow }: JoinClubSectionProps) {
-  return (
-    <article className="overflow-hidden rounded-vj-large border border-vj-border bg-vj-surface shadow-[var(--vj-shadow-subtle)] animate-fade-in-up">
-      <header className="border-b border-vj-border bg-gradient-to-r from-vj-neutral to-vj-surface p-6 md:p-8">
-        <h2 className="text-2xl font-semibold text-vj-primary">Join VJ Startups Club</h2>
-        <p className="mt-2 text-vj-muted">
-          Be part of VNRVJIET's most dynamic entrepreneurship community
-        </p>
-      </header>
+const APPLY_HREF = `mailto:head.iie@vnrvjiet.in?subject=${encodeURIComponent("Joining VJ Startups Club")}`;
+const COMMUNITY_HREF = "https://chat.whatsapp.com/IBfChZgpT8qJoHKbBWMvqA";
 
-      <div className="p-6 md:p-8">
-        <div className="grid gap-8 md:grid-cols-2">
-          <div>
-            <h3 className="mb-5 font-semibold text-vj-primary">Why Join Us?</h3>
-            <ul className="space-y-3">
-              {benefits.map((benefit) => (
-                <li key={benefit} className="flex items-start gap-3 rounded-vj-button p-2 transition-colors hover:bg-vj-neutral/60">
-                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-green-600" aria-hidden="true" />
-                  <span className="text-sm leading-relaxed">{benefit}</span>
-                </li>
-              ))}
+export function JoinClubSection({ onMeetTeam }: JoinClubSectionProps) {
+  return (
+    <>
+      <section className="lx-block">
+        <div className="lx-sec-head">
+          <span>Be part of VNRVJIET's most dynamic entrepreneurship community</span>
+          <h2>Join VJ Startups Club</h2>
+        </div>
+
+        <div className="lx-pair">
+          <div className="lx-field">
+            <h3>Why join us</h3>
+            <ul className="lx-list">
+              {benefits.map((benefit) => <li key={benefit}>{benefit}</li>)}
             </ul>
           </div>
 
-          <div>
-            <h3 className="mb-5 font-semibold text-vj-primary">How to Join</h3>
-            <div className="relative space-y-5">
-              <div className="absolute left-3 top-3 bottom-3 w-px bg-vj-border" aria-hidden="true" />
+          <div className="lx-field">
+            <h3>How to join</h3>
+            <ol className="lx-steps">
               {steps.map((step, index) => (
-                <div key={step.title} className="relative flex items-start gap-4 pl-1">
-                  <div className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-vj-accent text-xs font-bold text-white">
-                    {index + 1}
-                  </div>
+                <li key={step.title}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
                   <div>
-                    <p className="text-sm font-medium text-vj-primary">{step.title}</p>
-                    <p className="mt-0.5 text-xs text-vj-muted">{step.description}</p>
+                    <strong>{step.title}</strong>
+                    <p>{step.description}</p>
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ol>
           </div>
         </div>
+      </section>
 
-        <Separator className="my-10" />
-
-        <div className="text-center">
-          <h3 className="mb-5 font-semibold text-vj-primary">
-            Ready to Start Your Entrepreneurial Journey?
-          </h3>
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button
-              size="lg"
-              className="min-h-[44px] rounded-vj-button px-8"
-              onClick={onApplyNow}
-            >
-              <Mail className="mr-2 h-4 w-4" aria-hidden="true" />
-              Apply Now
-            </Button>
-            <Button variant="outline" size="lg" className="min-h-[44px] rounded-vj-button px-8">
-              <Calendar className="mr-2 h-4 w-4" aria-hidden="true" />
-              Attend Next Meetup
-            </Button>
-          </div>
-
-          <p className="mt-6 text-sm text-vj-muted">
-            Have questions? Contact us at{" "}
-            <a
-              href="mailto:head.iie+questions@vnrvjiet.in"
-              className="text-vj-accent underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vj-accent"
-            >
-              head.iie+questions@vnrvjiet.in
-            </a>
-          </p>
+      <div className="lx-gate">
+        <span>Your move</span>
+        <h2>Ready to <em>start?</em></h2>
+        <p>
+          Write to the innovation cell to join, or say hello in the community chat first. Questions go to{" "}
+          <a href="mailto:head.iie+questions@vnrvjiet.in">head.iie+questions@vnrvjiet.in</a>.
+        </p>
+        <div className="lx-gate-actions">
+          <a href={APPLY_HREF} className="lx-cta">Apply to join ↗</a>
+          <a href={COMMUNITY_HREF} target="_blank" rel="noopener noreferrer" className="lx-textbtn">
+            Community chat ↗
+          </a>
+          <button type="button" className="lx-textbtn" onClick={onMeetTeam}>
+            Meet the team ↗
+          </button>
         </div>
       </div>
-    </article>
+    </>
   );
 }

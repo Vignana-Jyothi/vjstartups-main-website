@@ -5,14 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, ArrowLeft, ArrowRight, Lightbulb, Target, Users, TrendingUp, Cog, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
+import "@/components/design-system/forms.css";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/pages/UserContext";
-import StartupRecommendationCard from "@/components/StartupRecommendationCard";
-import { evaluateStartupReadiness, shouldRecommendStartup } from "@/utils/startupRecommendation";
 import axios from "axios";
 
 interface QuestionnaireData {
@@ -105,37 +101,25 @@ const IdeaValidationQuestionnaire = ({ stageTransition, onComplete }: IdeaValida
   const steps = [
     {
       title: "Problem Definition",
-      icon: Target,
       description: "Define the problem you're solving"
     },
     {
       title: "Target Audience",
-      icon: Users,
       description: "Identify your target customers"
     },
     {
       title: "Value Proposition",
-      icon: Lightbulb,
       description: "Describe your solution"
     },
     {
       title: "Market Analysis",
-      icon: TrendingUp,
       description: "Analyze the market opportunity"
     },
     {
       title: "Feasibility",
-      icon: Cog,
       description: "Assess technical and resource feasibility"
-    },
-    {
-      title: "Results",
-      icon: FileText,
-      description: "View your validation results"
     }
   ];
-
-  const progress = ((currentStep + 1) / steps.length) * 100;
 
   const onSubmit = async (data: QuestionnaireData) => {
     if (currentStep < steps.length - 1) {
@@ -190,12 +174,6 @@ const IdeaValidationQuestionnaire = ({ stageTransition, onComplete }: IdeaValida
     }
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600";
-    if (score >= 60) return "text-yellow-600";
-    return "text-red-600";
-  };
-
   const getScoreLabel = (score: number) => {
     if (score >= 80) return "Excellent";
     if (score >= 60) return "Good";
@@ -203,198 +181,91 @@ const IdeaValidationQuestionnaire = ({ stageTransition, onComplete }: IdeaValida
     return "Needs Improvement";
   };
 
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const scoreTone = (score: number) => (score >= 70 ? "is-high" : score >= 50 ? "is-mid" : "is-low");
+
   if (results) {
+    const overall = results.score.overallScore;
     return (
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold text-green-600">
-              Idea Validation Results
-            </CardTitle>
-            <CardDescription>
-              Your startup idea has been analyzed across key validation criteria
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Overall Score */}
-            <div className="text-center p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
-              <div className={`text-6xl font-bold ${getScoreColor(results.score.overallScore)}`}>
-                {results.score.overallScore}
+      <div className="iq fm" data-accent="lime">
+        <div className="iq-result">
+          <div className="lx-sec-head">
+            <span>Assessment / results</span>
+            <h2>How the idea scores</h2>
+          </div>
+          <div className={`iq-overall ${scoreTone(overall)}`}>
+            <b>{overall}</b>
+            <span>Overall / {getScoreLabel(overall)}</span>
+          </div>
+          <dl className="iq-scores">
+            {Object.entries(results.score).filter(([key]) => key !== "overallScore").map(([key, score]) => (
+              <div key={key} className={scoreTone(score)}>
+                <dt>{key.replace(/([A-Z])/g, " $1").trim()}</dt>
+                <dd>{score}</dd>
+                <i aria-hidden="true"><b style={{ width: `${Math.max(0, Math.min(score, 100))}%` }} /></i>
+                <small>{getScoreLabel(score)}</small>
               </div>
-              <div className="text-xl font-semibold text-gray-700">
-                Overall Score ({getScoreLabel(results.score.overallScore)})
-              </div>
-            </div>
-
-            {/* Detailed Scores */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(results.score).filter(([key]) => key !== 'overallScore').map(([key, score]) => (
-                <Card key={key}>
-                  <CardContent className="p-4 text-center">
-                    <div className={`text-2xl font-bold ${getScoreColor(score)}`}>
-                      {score}
-                    </div>
-                    <div className="text-sm font-medium text-gray-600 capitalize">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
-                    </div>
-                    <Badge variant={score >= 70 ? "default" : score >= 50 ? "secondary" : "destructive"}>
-                      {getScoreLabel(score)}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Recommendations */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="w-5 h-5" />
-                  Recommendations
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {results.recommendations.map((recommendation, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
-                      <span className="text-sm">{recommendation}</span>
-                    </li>
-                  ))}
+            ))}
+          </dl>
+          {results.recommendations.length > 0 && (
+            <section className="dt-field">
+              <span>Next</span>
+              <div>
+                <h3>Recommendations</h3>
+                <ul className="lx-list">
+                  {results.recommendations.map((recommendation, index) => <li key={index}>{recommendation}</li>)}
                 </ul>
-              </CardContent>
-            </Card>
-
-            {/* Startup Recommendation - Show if criteria are met */}
-            {(() => {
-              // Mock questionnaire answers for demonstration - in real implementation, 
-              // this would come from the actual form data or stored responses
-              const mockAnswers = {
-                revenueModelIdentified: "Yes, validated with customers",
-                customerWillingnessToPay: "Yes, multiple customers confirmed", 
-                marketValidationScore: 4,
-                revenueGenerated: "Yes, initial sales completed",
-                productMarketFit: "Strong evidence of product-market fit with high user retention and referrals",
-                customerBase: "25",
-                scalabilityPlan: "Detailed scaling plan with market expansion strategy and team growth roadmap"
-              };
-              
-              const criteria = evaluateStartupReadiness(mockAnswers);
-              const showRecommendation = shouldRecommendStartup(criteria);
-              
-              if (showRecommendation || results.score.overallScore >= 70) {
-                return (
-                  <StartupRecommendationCard 
-                    criteria={criteria}
-                    ideaId="demo-idea-id" // In real implementation, pass actual idea ID
-                    className="mt-6"
-                  />
-                );
-              }
-              return null;
-            })()}
-
-            <div className="flex gap-4 justify-center">
-              <Button onClick={() => window.location.reload()}>
-                Take Another Assessment
-              </Button>
-              <Button variant="outline" onClick={() => window.print()}>
-                Export Results
-              </Button>
+              </div>
+            </section>
+          )}
+          {overall >= 70 && (
+            <div className="iq-ready">
+              <span>Ready for the next step</span>
+              <p>A score of 70 or more means the idea is ready to be set up as a startup on the platform.</p>
+              <Link to="/startup-form" className="lx-cta">Create your startup ↗</Link>
             </div>
-          </CardContent>
-        </Card>
+          )}
+          <div className="iq-actions">
+            <button type="button" className="lx-cta" onClick={() => window.location.reload()}>Take another assessment ↗</button>
+            <button type="button" className="lx-textbtn" onClick={() => window.print()}>Print the results</button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl font-bold text-green-600">
-          {stageTransition ? 'Stage Transition Validation' : 'Idea Stage Validation Questionnaire'}
-        </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          {stageTransition ? 
-            `Validate your idea's readiness to move from ${stageTransition.stageLabels[stageTransition.from]} to ${stageTransition.stageLabels[stageTransition.to]}` :
-            'Validate your startup idea with our comprehensive assessment'
-          }
-        </p>
-        
-        {/* Stage Transition Info */}
-        {stageTransition && (
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 max-w-md mx-auto">
-            <div className="flex items-center justify-center gap-3">
-              <Badge variant="outline" className="bg-blue-100 text-blue-800">
-                {stageTransition.from + 1}. {stageTransition.stageLabels[stageTransition.from]}
-              </Badge>
-              <ArrowRight className="w-4 h-4 text-blue-600" />
-              <Badge variant="outline" className="bg-green-100 text-green-800">
-                {stageTransition.to + 1}. {stageTransition.stageLabels[stageTransition.to]}
-              </Badge>
-            </div>
-          </div>
-        )}
-        
-        {/* Progress Bar */}
-        <div className="space-y-2">
-          <Progress value={progress} className="w-full" />
-          <p className="text-sm text-gray-500">
-            Step {currentStep + 1} of {steps.length}
-          </p>
+    <div className="iq fm" data-accent="lime">
+      <div className="iq-head">
+        <div className="lx-sec-head">
+          <span>Step {pad(currentStep + 1)} / {pad(steps.length)}</span>
+          <h2>{stageTransition ? "Stage transition check" : "Validate your idea"}</h2>
         </div>
+        <p>
+          {stageTransition
+            ? `Check your idea is ready to move from ${stageTransition.stageLabels[stageTransition.from]} to ${stageTransition.stageLabels[stageTransition.to]}.`
+            : "Five short steps. Answer honestly; the score is only as useful as the answers."}
+        </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl font-bold text-green-600">
-                Idea Stage Validation Questionnaire
-              </CardTitle>
-              <CardDescription>
-                Validate your startup idea with our comprehensive assessment
-              </CardDescription>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-500">Step {currentStep + 1} of {steps.length}</div>
-            </div>
-          </div>
-        </CardHeader>
+      <ol className="iq-steps" aria-label="Assessment steps">
+        {steps.map((step, index) => (
+          <li key={step.title} className={index < currentStep ? "is-done" : index === currentStep ? "is-on" : ""} aria-current={index === currentStep ? "step" : undefined}>
+            <i aria-hidden="true" />
+            <span>{pad(index + 1)}</span>
+            <b>{step.title}</b>
+          </li>
+        ))}
+      </ol>
 
-        <CardContent>
-          {/* Step Navigation */}
-          <div className="flex items-center justify-between mb-8 overflow-x-auto">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              const isActive = index === currentStep;
-              const isCompleted = index < currentStep;
-              
-              return (
-                <div key={index} className="flex flex-col items-center min-w-0 flex-1">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
-                    isCompleted ? 'bg-green-500 text-white' :
-                    isActive ? 'bg-green-100 text-green-600 border-2 border-green-500' :
-                    'bg-gray-100 text-gray-400'
-                  }`}>
-                    {isCompleted ? <CheckCircle className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
-                  </div>
-                  <div className={`text-xs text-center ${isActive ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
-                    {step.title}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
+      <div className="iq-panel">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Step 0: Problem Definition */}
             {currentStep === 0 && (
               <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-semibold mb-2">Problem Definition</h3>
-                  <p className="text-gray-600">Help us understand the problem you're trying to solve</p>
+                <div className="iq-step-intro">
+                  <h3>Problem Definition</h3>
+                  <p className="text-vj-muted">Help us understand the problem you're trying to solve</p>
                 </div>
 
                 <div>
@@ -447,9 +318,9 @@ const IdeaValidationQuestionnaire = ({ stageTransition, onComplete }: IdeaValida
             {/* Step 1: Target Audience */}
             {currentStep === 1 && (
               <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-semibold mb-2">Target Audience</h3>
-                  <p className="text-gray-600">Define who your customers are</p>
+                <div className="iq-step-intro">
+                  <h3>Target Audience</h3>
+                  <p className="text-vj-muted">Define who your customers are</p>
                 </div>
 
                 <div>
@@ -498,9 +369,9 @@ const IdeaValidationQuestionnaire = ({ stageTransition, onComplete }: IdeaValida
             {/* Step 2: Value Proposition */}
             {currentStep === 2 && (
               <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-semibold mb-2">Value Proposition</h3>
-                  <p className="text-gray-600">Explain your solution and its unique value</p>
+                <div className="iq-step-intro">
+                  <h3>Value Proposition</h3>
+                  <p className="text-vj-muted">Explain your solution and its unique value</p>
                 </div>
 
                 <div>
@@ -547,9 +418,9 @@ const IdeaValidationQuestionnaire = ({ stageTransition, onComplete }: IdeaValida
             {/* Step 3: Market Analysis */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-semibold mb-2">Market Analysis</h3>
-                  <p className="text-gray-600">Analyze the market opportunity and competition</p>
+                <div className="iq-step-intro">
+                  <h3>Market Analysis</h3>
+                  <p className="text-vj-muted">Analyze the market opportunity and competition</p>
                 </div>
 
                 <div>
@@ -598,9 +469,9 @@ const IdeaValidationQuestionnaire = ({ stageTransition, onComplete }: IdeaValida
             {/* Step 4: Feasibility */}
             {currentStep === 4 && (
               <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-semibold mb-2">Feasibility Assessment</h3>
-                  <p className="text-gray-600">Evaluate the technical and resource requirements</p>
+                <div className="iq-step-intro">
+                  <h3>Feasibility Assessment</h3>
+                  <p className="text-vj-muted">Evaluate the technical and resource requirements</p>
                 </div>
 
                 <div>
@@ -664,35 +535,32 @@ const IdeaValidationQuestionnaire = ({ stageTransition, onComplete }: IdeaValida
             )}
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between pt-6">
+            <div className="iq-actions">
               <Button
                 type="button"
                 variant="outline"
                 onClick={prevStep}
                 disabled={currentStep === 0}
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Previous
+                                ← Previous
               </Button>
 
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+               
               >
                 {currentStep === steps.length - 1 ? (
                   isSubmitting ? "Analyzing..." : "Complete Assessment"
                 ) : (
                   <>
-                    Next
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    Next ↗
                   </>
                 )}
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 };

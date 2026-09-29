@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Filter, Search, ArrowUpDown, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState, type CSSProperties } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import UpvoteButton from "@/components/UpvoteButton";
 import { PageHero } from "@/components/design-system/PageHero";
+import { CardCover } from "@/components/design-system/CardCover";
+import { TitleMarquee } from "@/components/design-system/HeroSignatures";
+import { isReadableTitle } from "@/utils/readableTitle";
+import "@/components/design-system/listing.css";
 import axios from "axios";
 import { useUser } from "../pages/UserContext"; 
 
@@ -28,13 +29,14 @@ const Problems = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
+  const navigate = useNavigate();
 
   const itemsPerPage = 12; // Works well: mobile=12 rows, tablet=6 rows, desktop=4 rows
 
   // Fetch all problems at once
+  // Problems are public (every problem page already is); signing in is only needed to post,
+  // upvote or comment.
   const fetchAllProblems = async () => {
-    if (!user?.email) return;
-
     setIsLoading(true);
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/problem-api/problems?limit=1000`);
@@ -43,7 +45,7 @@ const Problems = () => {
       // Mark which problems the current user has already liked
       const updatedProblems = problemsData.map((p: any) => ({
         ...p,
-        likedByUser: p.upvotedBy.includes(user.email)
+        likedByUser: Boolean(user?.email && (p.upvotedBy || []).includes(user.email))
       }));
       
       setAllProblems(updatedProblems);
@@ -85,9 +87,9 @@ const Problems = () => {
             });
             
             // Add a highlight effect to make the card more noticeable
-            problemCard.classList.add('ring-2', 'ring-orange-400');
+            problemCard.classList.add('lx-flash');
             setTimeout(() => {
-              problemCard.classList.remove('ring-2', 'ring-orange-400');
+              problemCard.classList.remove('lx-flash');
             }, 2000); // Remove highlight after 2 seconds
           }
         }, 500); // Longer timeout to ensure everything is loaded
@@ -146,8 +148,11 @@ const Problems = () => {
       );
     }
 
-    // Apply sorting
+    // Apply sorting. Placeholder submissions ("dsa", one-word tests) still appear, but after
+    // the real problems, so the page never opens on a junk card.
     const sorted = filtered.sort((a, b) => {
+      const readable = Number(isReadableTitle(b.title || "")) - Number(isReadableTitle(a.title || ""));
+      if (readable !== 0) return readable;
       switch (sortBy) {
         case "upvotes":
           return b.upvotes - a.upvotes;
@@ -214,7 +219,10 @@ const Problems = () => {
   };
 
 const handleUpvote = async (problemId: string) => {
-  if (!user?.email) return;
+  if (!user?.email) {
+    navigate("/login");
+    return;
+  }
 
   try {
     const res = await axios.post(
@@ -241,8 +249,30 @@ const handleUpvote = async (problemId: string) => {
 };
 
 
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedTags([]);
+    setShowMyProblems(false);
+  };
+
+  const pageNumbers = (() => {
+    const current = paginationInfo.currentPage;
+    const total = paginationInfo.totalPages;
+    const pages: (number | "...")[] = [];
+    if (current > 3) {
+      pages.push(1);
+      if (current > 4) pages.push("...");
+    }
+    for (let i = Math.max(1, current - 2); i <= Math.min(total, current + 2); i++) pages.push(i);
+    if (current < total - 2) {
+      if (current < total - 3) pages.push("...");
+      pages.push(total);
+    }
+    return pages;
+  })();
+
   return (
-    <div className="page-shell bg-vj-neutral/30">
+    <div className="page-shell lx" style={{ "--lx-accent": "var(--pink)" } as CSSProperties}>
       <PageHero
         eyebrow="Problem discovery"
         title="Problems Worth Solving"
@@ -252,347 +282,177 @@ const handleUpvote = async (problemId: string) => {
           { value: String(filteredProblems.length), label: "Matching results" },
           { value: String(selectedTags.length), label: "Active tags" },
         ]}
-        backgroundClassName="bg-[hsl(var(--background-secondary))] relative min-h-[420px] md:min-h-[520px]"
+        primaryAction={{ label: "Submit a problem", to: "/submit-problem", icon: Plus }}
+        layout="center"
+        accent="pink"
+        signature={
+          <TitleMarquee
+            items={allProblems
+              .filter((p) => p.title && isReadableTitle(p.title))
+              .slice(0, 28)
+              .map((p) => ({ title: p.title.trim(), href: `/problems/${p.problemId}` }))}
+          />
+        }
       />
 
-      <section className="page-section">
-        <div className="section-container space-y-8">
-          <div className="flex justify-end">
-            <Link to="/submit-problem">
-              <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0">
-                <Plus className="w-4 h-4 mr-2" />
-                Submit Problem
-              </Button>
-            </Link>
-          </div>
-
-          {/* Filters & Search - Only show when user is logged in */}
-          {user && (
-            <div className="section-panel p-6 space-y-4">
-              <div className="flex flex-col lg:flex-row gap-4 items-center">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-vj-muted" size={20} />
-                  <Input
-                    placeholder="Search problems..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <ArrowUpDown size={16} className="text-vj-muted" />
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="bg-background border border-vj-border rounded-lg px-3 py-2 text-sm"
-                  >
-                    <option value="newest">Newest</option>
-                    <option value="upvotes">Most Upvoted</option>
-                    <option value="comments">Most Discussed</option>
-                  </select>
-                </div>
-
-                <Button
-                  variant={showMyProblems ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowMyProblems(!showMyProblems)}
-                  className="flex items-center gap-2"
-                >
-                  <Filter size={14} />
-                  My Problems
-                </Button>
-              </div>
-
-              {(searchTerm || selectedTags.length > 0 || showMyProblems) && (
-                <div className="flex items-center justify-between border-t border-vj-border/50 pt-4">
-                  <div className="flex items-center gap-2 text-sm text-vj-muted">
-                    <span>Active filters:</span>
-                    {searchTerm && <Badge variant="secondary">Search: "{searchTerm}"</Badge>}
-                    {selectedTags.length > 0 && <Badge variant="secondary">{selectedTags.length} tag(s)</Badge>}
-                    {showMyProblems && <Badge variant="secondary">My Problems</Badge>}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setSelectedTags([]);
-                      setShowMyProblems(false);
-                    }}
-                    className="text-sm"
-                  >
-                    Clear All Filters
-                  </Button>
-                </div>
+      <section className="lx-section">
+        {(
+          <div className="lx-toolbar">
+            <div className="lx-toolbar-row">
+              <label className="lx-search">
+                <Search size={18} aria-hidden="true" />
+                <input
+                  placeholder="Search problems"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  aria-label="Search problems"
+                />
+              </label>
+              <select className="lx-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)} aria-label="Sort problems">
+                <option value="newest">Newest</option>
+                <option value="upvotes">Most upvoted</option>
+                <option value="comments">Most discussed</option>
+              </select>
+              {user && (
+                <button className={`lx-toggle${showMyProblems ? " is-on" : ""}`} onClick={() => setShowMyProblems(!showMyProblems)} aria-pressed={showMyProblems}>
+                  My problems
+                </button>
               )}
+            </div>
 
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Filter size={16} className="text-vj-muted" />
-                    <span className="text-sm font-medium text-vj-primary">
-                      {showAllTags ? "All tags:" : "Top tags:"}
-                    </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowAllTags(!showAllTags)}
-                    className="text-xs"
-                  >
+            {(searchTerm || selectedTags.length > 0 || showMyProblems) && (
+              <div className="lx-active">
+                <span>
+                  Filtering
+                  {searchTerm && <> / search <b>"{searchTerm}"</b></>}
+                  {selectedTags.length > 0 && <> / <b>{selectedTags.length}</b> tag{selectedTags.length > 1 ? "s" : ""}</>}
+                  {showMyProblems && <> / <b>mine</b></>}
+                </span>
+                <button className="lx-textbtn" onClick={clearFilters}>Clear all ×</button>
+              </div>
+            )}
+
+            {tagsWithCounts.length > 0 && (
+              <div>
+                <div className="lx-tags-head">
+                  <span>{showAllTags ? "All tags" : "Top tags"}</span>
+                  <button className="lx-textbtn" onClick={() => setShowAllTags(!showAllTags)}>
                     {showAllTags ? "Show top 20" : "Show all tags"}
-                  </Button>
+                  </button>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className={`lx-tags${showAllTags ? " is-all" : ""}`}>
                   {(showAllTags ? tagsWithCounts : tagsWithCounts.slice(0, 20)).map(([tag, count]) => (
-                    <Badge
+                    <button
                       key={tag}
-                      variant={selectedTags.includes(tag) ? "default" : "outline"}
-                      className="cursor-pointer transition-all flex items-center gap-1"
+                      className={`lx-tag${selectedTags.includes(tag) ? " is-on" : ""}`}
                       onClick={() => toggleTag(tag)}
+                      aria-pressed={selectedTags.includes(tag)}
                     >
-                      {tag}
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                        selectedTags.includes(tag)
-                          ? 'bg-white/20 text-white'
-                          : 'bg-vj-neutral text-vj-muted'
-                      }`}>
-                        {count}
-                      </span>
-                    </Badge>
+                      {tag}<small>{count}</small>
+                    </button>
                   ))}
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {currentPageProblems.map(problem => (
-            <div 
-              key={problem.id || problem.problemId} 
-              id={`problem-${problem.problemId}`}
-              className="vj-card-problem group rounded-xl shadow-lg overflow-hidden transition-all duration-300">
-              {/* Problem Image */}
-              <Link to={`/problems/${problem.problemId}`} className="block cursor-pointer">
-                <div className="aspect-video relative overflow-hidden rounded-t-xl">
-                  <img 
-                    src={problem.image || '/problem_placeholder_cover1.png'}
-                    alt={problem.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                  <div className="absolute top-4 left-4">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full">
-                      <span className="w-2 h-2 bg-orange-400 rounded-full"></span>
-                      <span className="text-white text-xs font-medium">Problem</span>
+        {currentPageProblems.length > 0 && (
+          <div className="lx-grid">
+            {currentPageProblems.map((problem, i) => (
+              <article key={problem.id || problem.problemId} id={`problem-${problem.problemId}`} className="lx-card">
+                <Link to={`/problems/${problem.problemId}`} className="lx-card-link" aria-label={problem.title} />
+                <div className="lx-card-media">
+                  <CardCover title={problem.title} image={problem.image} />
+                  <span className="lx-card-kicker">{String(startIndex + i + 1).padStart(2, "0")} / Problem</span>
+                  <div className="lx-card-vote">
+                    <UpvoteButton
+                      upvotes={problem.upvotes}
+                      hasUpvoted={problem.likedByUser}
+                      onClick={(e) => {
+                        e?.preventDefault();
+                        e?.stopPropagation();
+                        handleUpvote(problem.problemId);
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="lx-card-body">
+                  {problem.tags.length > 0 && (
+                    <div className="lx-card-tags">
+                      {problem.tags.slice(0, 3).map((tag: string) => <span key={tag}>{tag}</span>)}
+                      {problem.tags.length > 3 && <span>+{problem.tags.length - 3}</span>}
                     </div>
-                  </div>
-                  <div className="absolute bottom-4 right-4">
-                  <UpvoteButton
-                    upvotes={problem.upvotes}
-                    hasUpvoted={problem.likedByUser} // this controls the highlight
-                    onClick={(e) => {
-                      e.preventDefault(); // Prevent link navigation
-                      e.stopPropagation(); // Stop event bubbling
-                      handleUpvote(problem.problemId);
-                    }}
-                  />
-                  </div>
-                </div>
-              </Link>
-
-              <div className="p-4 space-y-3">
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2">
-                  {problem.tags.slice(0, 3).map(tag => (
-                    <Badge key={tag} variant="outline" className="text-xs border-problem-primary/30 text-problem-primary">
-                      {tag}
-                    </Badge>
-                  ))}
-                  {problem.tags.length > 3 && (
-                    <Badge variant="outline" className="text-xs border-gray-300 text-gray-500">
-                      +{problem.tags.length - 3} more
-                    </Badge>
                   )}
+                  <h3 className="lx-card-title">{problem.title}</h3>
+                  <p className="lx-card-text">{problem.briefparagraph}</p>
+                  <div className="lx-card-meta">
+                    <span>{problem.addedByName ? `By ${problem.addedByName} · ` : ""}{problem.comments?.length ?? 0} comments</span>
+                    <em>Read ↗</em>
+                  </div>
                 </div>
+              </article>
+            ))}
+          </div>
+        )}
 
-                <h3 className="text-xl font-bold text-vj-primary group-hover:text-problem-primary transition-colors">
-                  <Link to={`/problems/${problem.problemId}`} className="hover:underline">
-                    {problem.title}
-                  </Link>
-                </h3>
-
-                <Link to={`/problems/${problem.problemId}`}>
-                  <p className="text-vj-muted leading-relaxed h-[168px] overflow-hidden relative cursor-pointer hover:text-vj-primary transition-colors">
-                    {problem.briefparagraph}
-                    <span className="absolute bottom-0 right-0 bg-gradient-to-l from-white via-white to-transparent w-full h-8 dark:from-[rgb(25,15,17)] dark:via-[rgb(25,15,17)]"></span>
-                    {/* Only show ellipsis if the text is actually truncated/overflowing, TODO(mkrishna): Above colors to be adjusted */}
-                    {problem.briefparagraph && problem.briefparagraph.length > 300 && (
-                      <span className="absolute bottom-0 right-0 mr-2 text-vj-muted">...</span>
-                    )}
-                  </p>
-                </Link>
-
-                <div className="flex items-center justify-between text-sm text-vj-muted pt-2 border-t border-vj-border/50">
-                  <span>by {problem.addedByName}</span>
-
-                  <span>{problem.comments.length} comments</span>
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <Link to={`/problems/${problem.problemId}`} className="flex-1">
-                  <Button 
-  size="default"
-  variant="outline"
-  className="w-full"
->
-  View Details
-</Button>
-                  </Link>
-                  {/* <Link to={`/ideas?problem=${problem.problemId}`} className="flex-1">
-                    <Button size="sm" variant="outline" className="w-full border-problem-primary/30 text-problem-primary hover:bg-problem-light">
-                      View Ideas
-                    </Button>
-                  </Link> */}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Pagination */}
-        {paginationInfo && paginationInfo.totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-12 pt-8 border-t border-vj-border/50">
-            {/* Page Info */}
-            <div className="text-sm text-vj-muted">
-              Showing {currentPageProblems.length} of {paginationInfo.totalItems} problems
-              <span className="hidden sm:inline"> (Page {paginationInfo.currentPage} of {paginationInfo.totalPages})</span>
-            </div>
-            
-            {/* Pagination Controls */}
-            <div className="flex items-center gap-2">
-              {/* Previous Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goToPrevPage}
-                disabled={!paginationInfo.hasPrevPage}
-                className="flex items-center gap-1 disabled:opacity-50"
-              >
+        {paginationInfo.totalPages > 1 && (
+          <nav className="lx-pager" aria-label="Pagination">
+            <span>Showing {currentPageProblems.length} of {paginationInfo.totalItems} / page {paginationInfo.currentPage} of {paginationInfo.totalPages}</span>
+            <div className="lx-pages">
+              <button className="lx-page" onClick={goToPrevPage} disabled={!paginationInfo.hasPrevPage} aria-label="Previous page">
                 <ChevronLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Previous</span>
-              </Button>
-
-              {/* Page Numbers */}
-              <div className="flex gap-1">
-                {(() => {
-                  const current = paginationInfo.currentPage;
-                  const total = paginationInfo.totalPages;
-                  const pages = [];
-
-                  // Always show first page
-                  if (current > 3) {
-                    pages.push(1);
-                    if (current > 4) pages.push('...');
-                  }
-
-                  // Show pages around current
-                  for (let i = Math.max(1, current - 2); i <= Math.min(total, current + 2); i++) {
-                    pages.push(i);
-                  }
-
-                  // Always show last page
-                  if (current < total - 2) {
-                    if (current < total - 3) pages.push('...');
-                    pages.push(total);
-                  }
-
-                  return pages.map((page, index) => (
-                    page === '...' ? (
-                      <span key={`ellipsis-${index}`} className="px-3 py-1 text-vj-muted">...</span>
-                    ) : (
-                      <Button
-                        key={page}
-                        variant={page === current ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => goToPage(page as number)}
-                        className={`min-w-[40px] ${page === current ? 'bg-problem-primary hover:bg-problem-primary/90' : ''}`}
-                      >
-                        {page}
-                      </Button>
-                    )
-                  ));
-                })()}
-              </div>
-
-              {/* Next Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goToNextPage}
-                disabled={!paginationInfo.hasNextPage}
-                className="flex items-center gap-1 disabled:opacity-50"
-              >
-                <span className="hidden sm:inline">Next</span>
+              </button>
+              {pageNumbers.map((page, index) =>
+                page === "..." ? (
+                  <span key={`gap-${index}`}>…</span>
+                ) : (
+                  <button
+                    key={page}
+                    className={`lx-page${page === paginationInfo.currentPage ? " is-on" : ""}`}
+                    onClick={() => goToPage(page)}
+                    aria-current={page === paginationInfo.currentPage ? "page" : undefined}
+                  >
+                    {String(page).padStart(2, "0")}
+                  </button>
+                )
+              )}
+              <button className="lx-page" onClick={goToNextPage} disabled={!paginationInfo.hasNextPage} aria-label="Next page">
                 <ChevronRight className="w-4 h-4" />
-              </Button>
+              </button>
             </div>
-          </div>
+          </nav>
         )}
 
-        {/* No problems on current page but have filtered results */}
         {currentPageProblems.length === 0 && filteredProblems.length > 0 && (
-          <div className="text-center py-16">
-            <p className="text-vj-muted text-lg">No problems on this page.</p>
-            <p className="text-vj-muted text-sm mt-2">
-              Found {filteredProblems.length} problem{filteredProblems.length !== 1 ? 's' : ''} matching your filters on {paginationInfo.totalPages} page{paginationInfo.totalPages !== 1 ? 's' : ''}.
-            </p>
-            <Button 
-              variant="outline" 
-              onClick={() => goToPage(1)}
-              className="mt-4"
-            >
-              Go to Page 1
-            </Button>
+          <div className="lx-empty">
+            <strong>Nothing on this page.</strong>
+            <button className="lx-textbtn" onClick={() => goToPage(1)}>Go to page 01</button>
           </div>
         )}
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-problem-primary"></div>
-          </div>
+        {isLoading && <div className="lx-loading">Loading problems</div>}
+
+        {!isLoading && filteredProblems.length === 0 && (
+            <div className="lx-empty">
+              <strong>{allProblems.length ? "No matches." : "No problems yet."}</strong>
+              {allProblems.length ? (
+                <button className="lx-textbtn" onClick={clearFilters}>Clear filters</button>
+              ) : (
+                <Link to="/submit-problem" className="lx-textbtn">Be the first to submit one ↗</Link>
+              )}
+            </div>
         )}
 
-{!user ? (
-  <div className="flex flex-col items-center justify-center py-20 bg-gradient-to-br from-orange-50 via-white to-orange-100 dark:from-orange-950/30 dark:via-gray-900 dark:to-orange-900/30 rounded-xl shadow-inner border border-orange-200 dark:border-orange-800/50">
-    <h2 className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-3">Join the Community 🚀</h2>
-    <p className="text-vj-muted max-w-md text-center mb-6">
-      You need to be logged in to explore community problems, upvote ideas, and submit your own challenges.  
-      Sign in and start making an impact today!
-    </p>
-    <Link to="/login">
-      <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-orange-600 dark:to-orange-700 dark:hover:from-orange-700 dark:hover:to-orange-800 text-white px-6 py-2 rounded-lg shadow-lg transition-transform hover:scale-105">
-        Login to Continue
-      </Button>
-    </Link>
-  </div>
-) : filteredProblems.length === 0 && (
-  <div className="text-center py-16">
-    <p className="text-vj-muted text-lg">No problems match your current filters.</p>
-    <Button 
-      variant="ghost" 
-      onClick={() => { setSearchTerm(""); setSelectedTags([]); setShowMyProblems(false); }}
-      className="mt-4"
-    >
-      Clear Filters
-    </Button>
-  </div>
-)}
-
-      </div>
-    </section>
+        {!user && (
+          <div className="lx-gate">
+            <span>Join in</span>
+            <h2>Seen a problem <em>worth solving?</em></h2>
+            <p>Sign in with your college Google account to post your own, upvote the ones that matter and join the discussion.</p>
+            <Link to="/login" className="lx-cta">Sign in to post ↗</Link>
+          </div>
+        )}
+      </section>
     </div>
   );
 };

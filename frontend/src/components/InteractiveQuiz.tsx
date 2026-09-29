@@ -1,7 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, HelpCircle, Lightbulb } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 
 interface QuizOption {
   text: string;
@@ -252,9 +249,9 @@ const InteractiveQuiz: React.FC<InteractiveQuizProps> = ({
 
     const percentage = (totalCorrect / filteredQuestions.length) * 100;
 
-    if (percentage >= 80) return { message: "Excellent! You have a strong understanding!", color: "text-green-600" };
-    if (percentage >= 60) return { message: "Good job! Keep learning and growing!", color: "text-blue-600" };
-    return { message: "Keep practicing! Every expert was once a beginner.", color: "text-orange-600" };
+    if (percentage >= 80) return { message: "Excellent. You have a strong understanding.", tone: "is-high" };
+    if (percentage >= 60) return { message: "Good. Review the requirements and try again for 70%.", tone: "is-mid" };
+    return { message: "Not yet. Every expert was once a beginner.", tone: "is-low" };
   };
 
   const question = filteredQuestions[currentQuestion];
@@ -263,104 +260,45 @@ const InteractiveQuiz: React.FC<InteractiveQuizProps> = ({
   if (quizComplete) {
     const scoreMsg = getScoreMessage();
     return (
-      <Card className="p-6 text-center">
-        <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="w-8 h-8 text-white" />
-        </div>
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Quiz Complete! 🎉</h3>
-        <p className={`text-lg mb-4 ${scoreMsg.color}`}>{scoreMsg.message}</p>
-        <div className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-          Continue exploring the platform to deepen your knowledge!
-        </div>
-        <div className="flex gap-2 justify-center">
-          <Button onClick={resetQuiz} variant="outline">
-            Retake Quiz
-          </Button>
-          {hasPassedQuiz && hasNextStage && (
-            <Button 
-              onClick={resetQuiz} // Just reset the current quiz, don't trigger advancement
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
-            >
-              Ready for {nextStageName} →
-            </Button>
-          )}
-        </div>
-      </Card>
+      <div className="jq jq-done">
+        <span>Quiz complete</span>
+        <p className={scoreMsg.tone}>{scoreMsg.message}</p>
+        <button type="button" className="lx-textbtn" onClick={resetQuiz}>Retake the quiz ↻</button>
+      </div>
     );
   }
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <HelpCircle className="w-5 h-5 text-blue-500" />
-          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-            Quick Quiz {currentQuestion + 1}/{filteredQuestions.length}
-          </span>
-        </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          {Math.round(((currentQuestion + 1) / filteredQuestions.length) * 100)}% Complete
-        </div>
+    <div className="jq">
+      <div className="jq-head">
+        <span>Question {currentQuestion + 1} / {filteredQuestions.length}</span>
+        <i aria-hidden="true"><b style={{ width: `${((currentQuestion + 1) / filteredQuestions.length) * 100}%` }} /></i>
       </div>
-
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-        {question.question}
-      </h3>
-
-      <div className="space-y-3">
+      <h4 key={question.id}>{question.question}</h4>
+      <div className="jq-options">
         {question.options.map((option, index) => {
-          const isSelected = selectedAnswer === index;
-          const isCorrect = option.correct;
-          const showFeedback = showResults && isSelected;
-
+          const showFeedback = showResults && selectedAnswer === index;
           return (
             <button
               key={index}
+              type="button"
               onClick={() => handleAnswerSelect(index)}
               disabled={showResults}
-              className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                showFeedback
-                  ? isCorrect
-                    ? 'bg-green-50 dark:bg-green-900/20 border-green-500 text-green-700 dark:text-green-300'
-                    : 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-300'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-900 dark:text-white'
-              }`}
+              className={showFeedback ? (option.correct ? "is-right" : "is-wrong") : ""}
             >
-              <div className="flex items-start gap-3">
-                {showFeedback && (
-                  <div className="flex-shrink-0 mt-1">
-                    {isCorrect ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-500" />
-                    )}
-                  </div>
-                )}
-                <div className="flex-1">
-                  <div className={`font-medium ${showFeedback && isCorrect ? 'text-green-700 dark:text-green-300' : showFeedback ? 'text-red-700 dark:text-red-300' : 'text-gray-900 dark:text-white'}`}>
-                    {option.text}
-                  </div>
-                  {showFeedback && option.explanation && (
-                    <div className={`text-sm mt-2 ${isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                      {option.explanation}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <em aria-hidden="true">{showFeedback ? (option.correct ? "✓" : "✕") : String.fromCharCode(65 + index)}</em>
+              <span>
+                {option.text}
+                {showFeedback && option.explanation && <small>{option.explanation}</small>}
+              </span>
             </button>
           );
         })}
       </div>
-
-      {!showResults && (
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            <Lightbulb className="w-4 h-4 inline mr-1" />
-            Tip: Think about the difference between problems and solutions!
-          </p>
-        </div>
+      {!showResults && stageId === "problem" && (
+        <p className="jq-tip">Tip: a problem describes the pain, not the fix.</p>
       )}
-    </Card>
+    </div>
   );
 };
 

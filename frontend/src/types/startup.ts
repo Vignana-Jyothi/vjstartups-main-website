@@ -1,5 +1,5 @@
 export interface StartupListItem {
-  _id: string;
+  id: string;
   startupName: string;
   tagline?: string;
   description: string;

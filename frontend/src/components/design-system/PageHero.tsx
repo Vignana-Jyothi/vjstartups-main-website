@@ -1,8 +1,9 @@
-import { ReactNode } from "react";
+import { Fragment, ReactNode, useEffect, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import "./page-hero.css";
 
 type HeroAction = {
   label: string;
@@ -27,8 +28,27 @@ interface PageHeroProps {
   secondaryAction?: HeroAction;
   backLink?: { label: string; to: string };
   backgroundClassName?: string;
-  align?: "center" | "left";
   children?: ReactNode;
+  /** Each page gets its own composition: left (default), centred, split (with `side`) or stack. */
+  layout?: "left" | "center" | "split" | "stack";
+  accent?: "lime" | "pink" | "violet";
+  /** Left column for the split layout. */
+  side?: ReactNode;
+  /** Full-bleed band under the header, built from the page's own content. */
+  signature?: ReactNode;
+  /**
+   * poster: the big uppercase statement for the main listing pages (default).
+   * document: detail pages whose title is a sentence (a problem, an idea); set readable, in
+   * sentence case, without the ghost word, so it reads as a record rather than a slogan.
+   * tool: forms and utility pages; a compact header so the work starts on the first screen.
+   */
+  kind?: "poster" | "document" | "tool";
+}
+
+function splitTitle(title: string) {
+  const words = title.trim().split(/\s+/);
+  if (words.length < 2) return { lead: title, accent: "" };
+  return { lead: words.slice(0, -1).join(" "), accent: words[words.length - 1] };
 }
 
 export function PageHero({
@@ -40,93 +60,89 @@ export function PageHero({
   secondaryAction,
   backLink,
   backgroundClassName,
-  align = "center",
   children,
+  layout = "left",
+  accent: accentColor = "lime",
+  side,
+  signature,
+  kind = "poster",
 }: PageHeroProps) {
-  const alignmentClass = align === "left" ? "text-left items-start" : "text-center items-center";
+  const { lead, accent } = kind === "document" ? { lead: title, accent: "" } : splitTitle(title);
 
-  const renderAction = (action?: HeroAction, className?: string) => {
+  useEffect(() => {
+    document.title = `${title} — VJ Startups`;
+  }, [title]);
+
+  const renderAction = (action?: HeroAction) => {
     if (!action) return null;
-
     const button = (
-      <Button size="lg" variant={action.variant || "default"} className={cn("group min-h-[44px]", className)} onClick={action.onClick}>
+      <Button size="lg" variant={action.variant || "default"} className="min-h-[44px]" onClick={action.onClick}>
         {action.icon && <action.icon className="h-4 w-4" aria-hidden="true" />}
         <span>{action.label}</span>
       </Button>
     );
-
     return action.to ? <Link to={action.to}>{button}</Link> : button;
   };
 
   return (
-    <section
-      className={cn(
-        "relative overflow-hidden border-b border-vj-border bg-[hsl(var(--background-secondary))]",
-        backgroundClassName
-      )}
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.16),transparent_55%)]" />
-      <div className="pointer-events-none absolute -left-20 top-16 h-56 w-56 rounded-full bg-vj-accent/10 blur-3xl" />
-      <div className="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-vj-accent/5 blur-3xl" />
+    <section className={cn("ph", `ph--${layout}`, `ph--${kind}`, backgroundClassName)} data-accent={accentColor}>
+      {kind === "poster" && <div className="ph-ghost" aria-hidden="true">{title.split(/\s+/)[0]}</div>}
 
-      <div className="section-container relative px-4 py-16 md:py-24">
-        <div className={cn("mx-auto flex max-w-4xl flex-col gap-6", alignmentClass)}>
-          {backLink && (
-            <Link
-              to={backLink.to}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-vj-button border border-vj-border bg-vj-surface px-4 text-sm font-medium text-vj-primary shadow-[var(--vj-shadow-subtle)] transition-all duration-200 hover:-translate-y-0.5 hover:border-vj-accent hover:text-vj-accent"
-            >
-              <span>Back</span>
-              <span className="text-vj-muted">/</span>
-              <span>{backLink.label}</span>
-            </Link>
+      <div className="ph-inner">
+        <div className="ph-meta">
+          {backLink ? (
+            <Link to={backLink.to} className="ph-back">← Back / {backLink.label}</Link>
+          ) : (
+            <span className="ph-eyebrow">{eyebrow || "VJ Startups"}</span>
           )}
-
-          {eyebrow && (
-            <div className="inline-flex items-center gap-2 rounded-full border border-vj-accent/15 bg-vj-accent-light px-4 py-2 text-sm font-medium text-vj-accent animate-scale-in">
-              <span className="h-2 w-2 rounded-full bg-vj-accent" />
-              <span>{eyebrow}</span>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <h1 className="hero-title">{title}</h1>
-            <p className="mx-auto max-w-3xl body-text text-vj-muted">{description}</p>
-          </div>
-
-          {(primaryAction || secondaryAction) && (
-            <div className="flex w-full flex-col gap-3 px-2 sm:w-auto sm:flex-row sm:px-0">
-              {renderAction(primaryAction, "w-full sm:w-auto")}
-              {renderAction(secondaryAction, secondaryAction?.variant === "ghost" ? "px-2 w-full sm:w-auto" : "w-full sm:w-auto")}
-            </div>
-          )}
-
-          {stats && stats.length > 0 && (
-            <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {stats.map((stat) => {
-                const Icon = stat.icon;
-                return (
-                  <div key={stat.label} className="vj-card-minimal p-5 text-left">
-                    <div className="flex items-center gap-3">
-                      {Icon && (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-vj-button bg-vj-accent-light text-vj-accent">
-                          <Icon className="h-5 w-5" aria-hidden="true" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-2xl font-bold text-vj-primary">{stat.value}</p>
-                        <p className="text-sm text-vj-muted">{stat.label}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {children}
+          <span>{backLink && eyebrow ? eyebrow : "VJ Startups / Hyderabad"}</span>
         </div>
+
+        <div className="ph-split">
+        {layout === "split" && <div className="ph-side">{side}</div>}
+        <div className="ph-main">
+        <h1 className="ph-title">
+          <span className="sr-only">{title}</span>
+          {lead.split(" ").map((word, i) => (
+            <Fragment key={i}>
+              <span className="ph-w" aria-hidden="true">
+                <span style={{ "--i": i } as CSSProperties}>{word}</span>
+              </span>{" "}
+            </Fragment>
+          ))}
+          {accent && (
+            <span className="ph-w" aria-hidden="true">
+              <em style={{ "--i": lead.split(" ").length } as CSSProperties}>{accent}</em>
+            </span>
+          )}
+        </h1>
+
+        <div className="ph-foot">
+          <p className="ph-desc">{description}</p>
+          {(primaryAction || secondaryAction) && (
+            <div className="ph-actions">
+              {renderAction(primaryAction)}
+              {renderAction(secondaryAction)}
+            </div>
+          )}
+        </div>
+        </div>
+        </div>
+
+        {stats && stats.length > 0 && (
+          <dl className="ph-stats">
+            {stats.map((stat, i) => (
+              <div key={stat.label}>
+                <dt><span>{String(i + 1).padStart(2, "0")}</span>{stat.label}</dt>
+                <dd>{stat.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        {children && <div className="ph-extra">{children}</div>}
       </div>
+      {signature && <div className="ph-signature">{signature}</div>}
     </section>
   );
 }

@@ -27,18 +27,20 @@ const UpvoteButton: React.FC<UpvoteButtonProps> = ({
           if (onClick) onClick(e);
         }}
         className={clsx(
-          "flex items-center gap-2 px-3 py-2 rounded-2xl shadow-md transition-all",
-          "bg-white dark:bg-gray-800",
-          "hover:scale-105"
+          "flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-2 backdrop-blur-md transition-all",
+          "hover:border-pink-400/60",
+          hasUpvoted && "border-pink-400/60"
         )}
+        aria-pressed={hasUpvoted}
+        aria-label={hasUpvoted ? "Remove upvote" : "Upvote"}
       >
         <Heart
           className={clsx(
-            "w-5 h-5 transition-colors",
-            hasUpvoted ? "fill-red-500 text-red-500" : "text-gray-600 dark:text-gray-300"
+            "w-4 h-4 transition-colors",
+            hasUpvoted ? "fill-pink-400 text-pink-400" : "text-white/70"
           )}
         />
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+        <span className="font-mono text-xs text-white">
           {upvotes}
         </span>
       </button>
@@ -46,13 +48,11 @@ const UpvoteButton: React.FC<UpvoteButtonProps> = ({
       {showDownvote && (
         <button
           className={clsx(
-            "flex items-center gap-2 px-3 py-2 rounded-2xl shadow-md transition-all",
-            "bg-white dark:bg-gray-800",
-            "hover:scale-105"
+            "flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-2 backdrop-blur-md transition-all"
           )}
         >
-          <ThumbsDown className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+          <ThumbsDown className="w-4 h-4 text-white/70" />
+          <span className="font-mono text-xs text-white">
             {downvotes}
           </span>
         </button>

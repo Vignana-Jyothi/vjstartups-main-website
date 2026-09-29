@@ -23,3 +23,5 @@ backend/uploads/images/*.jpeg
 backend/uploads/images/*.png
 backend/uploads/images/*.gif
 backend/uploads/images/*.webp
+
+.next

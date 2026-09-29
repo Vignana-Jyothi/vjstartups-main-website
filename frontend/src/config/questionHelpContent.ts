@@ -1130,7 +1130,7 @@ export const questionHelpContent: Record<string, QuestionHelp> = {
   },
 
   "problemCollaborators": {
-    importance: "Collaborators are co-developers who can edit the problem statement to add more context on the ProblemHub portal. Choose wisely as they have full editing rights.",
+    importance: "Collaborators are co-developers who can edit the problem statement to add more context on Problem Hunt. Choose wisely as they have full editing rights.",
     terminology: {
       "Co-developers": "People who work with you to refine and improve the problem statement",
       "Editing rights": "Full ability to modify, update, or delete the problem submission"

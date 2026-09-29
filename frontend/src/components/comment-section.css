@@ -1,0 +1,32 @@
+/* Discussion (CommentSection). Accent follows the page's --lx-accent. */
+.cs{--cs-accent:var(--lx-accent,var(--lime));display:grid;gap:34px}
+.cs-compose{display:grid;gap:12px;padding:18px;border:1px solid rgba(247,245,239,.1);border-radius:18px;background:hsl(var(--card));transition:border-color .25s}
+.cs-compose:focus-within{border-color:var(--cs-accent)}
+.cs-compose textarea{width:100%;min-height:96px;padding:0;border:0;outline:0;resize:vertical;background:transparent;color:var(--white,#f7f5ef);font:500 16px/1.55 var(--sans,'Manrope',sans-serif)}
+.cs-compose textarea::placeholder{color:rgba(247,245,239,.36)}
+.cs-compose.is-reply{margin-top:14px;padding:14px}
+.cs-compose.is-reply textarea{min-height:64px;font-size:14px}
+.cs-compose-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;color:hsl(var(--muted-foreground));font:12px var(--mono,'DM Mono',monospace);letter-spacing:.1em;text-transform:uppercase}
+.cs-compose.is-reply .cs-compose-foot{justify-content:flex-end}
+.cs-send{padding:11px 16px;border:0;border-radius:999px;background:var(--cs-accent);color:#080808;font:800 13px var(--sans,'Manrope',sans-serif);cursor:pointer;transition:transform .2s,opacity .2s}
+.cs-send:hover:not(:disabled){transform:translateY(-2px)}
+.cs-send:disabled{opacity:.35;cursor:default}
+.cs-quiet{padding:0;border:0;background:none;color:hsl(var(--muted-foreground));font:12px var(--mono,'DM Mono',monospace);letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.cs-quiet:hover{color:var(--white,#f7f5ef)}
+.cs-empty{margin:0;padding:28px 0;border-top:1px solid rgba(247,245,239,.08);color:hsl(var(--muted-foreground));font:12px var(--mono,'DM Mono',monospace);letter-spacing:.12em;text-transform:uppercase}
+.cs-list{display:grid;margin:0;padding:0;list-style:none}
+.cs-item{display:flex;gap:16px;padding:22px 0;border-top:1px solid rgba(247,245,239,.08)}
+.cs-item.is-reply{padding:16px 0 0;border-top:0}
+.cs-item .cs-list{margin-top:6px;padding-left:4px;border-left:1px solid rgba(247,245,239,.1)}
+.cs-item .cs-list .cs-item{padding-left:16px}
+.cs-avatar{display:grid;flex:none;place-items:center;width:40px;height:40px;overflow:hidden;border-radius:50%;background:#1c1c1a;color:var(--cs-accent);font:800 15px var(--sans,'Manrope',sans-serif)}
+.cs-item.is-reply .cs-avatar{width:30px;height:30px;font-size:14px}
+.cs-avatar img{width:100%;height:100%;object-fit:cover}
+.cs-body{min-width:0;flex:1}
+.cs-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+.cs-head b{color:var(--white,#f7f5ef);font-size:15px;font-weight:800;letter-spacing:-.02em}
+.cs-head span{color:hsl(var(--muted-foreground));font:12px var(--mono,'DM Mono',monospace);letter-spacing:.08em}
+.cs-text{margin:8px 0 10px;color:rgba(247,245,239,.82);font-size:15px;line-height:1.6;white-space:pre-line;overflow-wrap:anywhere}
+.cs-actions{display:flex;gap:18px}
+.cs-actions button{padding:0;border:0;background:none;color:hsl(var(--muted-foreground));font:12px var(--mono,'DM Mono',monospace);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:color .2s}
+.cs-actions button:hover,.cs-actions button.is-on{color:var(--cs-accent)}

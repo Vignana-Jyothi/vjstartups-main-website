@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import "@/components/design-system/forms.css";
+import { PageHero } from "@/components/design-system/PageHero";
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -515,56 +517,24 @@ const StartupForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 pt-24 pb-16 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          
-          <div className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className={`p-4 rounded-full ${
-                isEditMode 
-                  ? "bg-gradient-to-r from-blue-500 to-purple-600" 
-                  : "bg-gradient-to-r from-green-500 to-blue-600"
-              }`}>
-                {isEditMode ? (
-                  <Edit className="w-8 h-8 text-white" />
-                ) : (
-                  <Rocket className="w-8 h-8 text-white" />
-                )}
-              </div>
-            </div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              {isEditMode ? "Update Your Startup" : "Create Your Startup"}
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              {isEditMode 
-                ? "Enhance your startup profile to attract more investors, mentors, and collaborators. Keep your information current and showcase your latest achievements."
-                : "Transform your validated idea into an official startup. Join our ecosystem and get access to funding, mentorship, and growth opportunities."
-              }
-            </p>
-            
-            {ideaId && !isEditMode && (
-              <Badge className="mt-4 bg-green-100 text-green-800">
-                ✨ Pre-populated from Idea Validation
-              </Badge>
+    <div className="page-shell">
+      <PageHero
+        kind="tool"
+        accent="violet"
+        eyebrow="Startup portfolio"
+        title={isEditMode ? "Update Your Startup" : "Create Your Startup"}
+        description={isEditMode ? "Enhance your startup profile to attract more investors, mentors, and collaborators. Keep your information current and showcase your latest achievements." : "Transform your validated idea into an official startup. Join our ecosystem and get access to funding, mentorship, and growth opportunities."}
+        backLink={{ label: "Startups", to: "/startups" }}
+      >
+        {ideaId && !isEditMode && (
+              <p className="ph-tag">Pre-populated from idea validation</p>
             )}
             
             {isEditMode && (
-              <Badge className="mt-4 bg-blue-100 text-blue-800">
-                ✏️ Editing Mode - Update your startup profile
-              </Badge>
+              <p className="ph-tag">Editing mode / update your startup profile</p>
             )}
-          </div>
-        </div>
+      </PageHero>
+      <div className="form-shell fm" data-accent="violet">
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}

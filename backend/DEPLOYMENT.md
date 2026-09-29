@@ -6,6 +6,24 @@ This guide covers deploying the VJ Startups backend to production with PostgreSQ
 
 ---
 
+## Success stories table (added 2026-09-29)
+
+The `/story-api` routes (APIs/stories-api.js) need the `success_stories` table, created by
+`prisma/migrations/20260929000000_add_success_stories/migration.sql`. That migration also inserts
+Veda Nampally's Startup Challenge story, the first story on record, with the id the site's links
+already use. Until the table exists the site keeps working: the stories pages fall back to the
+built-in copy of that one story.
+
+This is automatic: the "Apply site database changes" step in `.github/workflows/deploy.yml`
+runs that file inside the backend container after every deploy. The file is safe to re-run
+(`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`), so nothing needs doing by hand and later edits to
+Veda's story are never overwritten. To apply it manually on a server instead:
+`docker compose exec -T backend npx prisma db execute --file prisma/migrations/20260929000000_add_success_stories/migration.sql --schema prisma/schema.prisma` Photo uploads for stories use the existing
+`CLOUDINARY_*` variables (folder `success_stories`). Who can write stories: accounts whose
+public role is ADMIN or WING_MASTER, at `/stories/new` on the site.
+
+---
+
 ## Prerequisites
 
 - Production PostgreSQL database (14+)

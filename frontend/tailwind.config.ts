@@ -1,6 +1,19 @@
 import type { Config } from "tailwindcss";
 import animatePlugin from 'tailwindcss-animate';
 
+const BRAND_VIOLET = {
+	50: '#f4f1ff', 100: '#ebe5ff', 200: '#d9ceff', 300: '#bfaeff', 400: '#9c88ff',
+	500: '#7f66f5', 600: '#6a4fe0', 700: '#5a3fc2', 800: '#4a359c', 900: '#3d2e7c', 950: '#251a4d',
+};
+const BRAND_PINK = {
+	50: '#fff0f7', 100: '#ffe0ef', 200: '#ffc2df', 300: '#ff94c6', 400: '#ff4aa7',
+	500: '#f02d91', 600: '#d11a78', 700: '#ab1462', 800: '#8a1552', 900: '#711646', 950: '#450526',
+};
+const WARM_NEUTRAL = {
+	50: '#f7f5ef', 100: '#efede7', 200: '#dfdcd4', 300: '#c7c3b9', 400: '#a09c92',
+	500: '#7a766d', 600: '#5a574f', 700: '#3e3c37', 800: '#262522', 900: '#161614', 950: '#0b0b0a',
+};
+
 export default {
 	darkMode: ["class"],
 	content: [
@@ -19,33 +32,70 @@ export default {
 			}
 		},
 		fontFamily: {
-			'inter': ['Inter', 'sans-serif'],
-			'playfair': ['Playfair Display', 'serif'],
-			'sans': ['Inter', 'sans-serif'],
-			'serif': ['Playfair Display', 'serif'],
+			'inter': ['Manrope', 'sans-serif'],
+			'playfair': ['Manrope', 'sans-serif'],
+			'sans': ['Manrope', 'sans-serif'],
+			'serif': ['Manrope', 'sans-serif'],
+			'mono': ['DM Mono', 'ui-monospace', 'monospace'],
 		},
+		// Full 4px scale. The half steps and 7/9/11/14… were missing before, so the ~170
+		// classes that use them (including shadcn's h-9/h-11 button and input sizes) did nothing.
 		spacing: {
 			'0': '0',
+			'0.5': '2px',
 			'1': '4px',
+			'1.5': '6px',
 			'2': '8px',
+			'2.5': '10px',
 			'3': '12px',
+			'3.5': '14px',
 			'4': '16px',
 			'5': '20px',
 			'6': '24px',
+			'7': '28px',
 			'8': '32px',
+			'9': '36px',
 			'10': '40px',
+			'11': '44px',
 			'12': '48px',
+			'14': '56px',
 			'16': '64px',
 			'20': '80px',
 			'24': '96px',
+			'28': '112px',
 			'32': '128px',
+			'36': '144px',
 			'40': '160px',
+			'44': '176px',
 			'48': '192px',
+			'52': '208px',
 			'56': '224px',
+			'60': '240px',
 			'64': '256px',
+			'72': '288px',
+			'80': '320px',
+			'96': '384px',
 		},
 		extend: {
+			// Default palettes remapped onto the brand (see landing): blue/indigo/purple/violet
+			// become the brand violet, grays become warm near-black neutrals, pink becomes brand pink.
+			// Semantic green/red/amber/orange/yellow keep Tailwind defaults.
 			colors: {
+				blue: BRAND_VIOLET,
+				indigo: BRAND_VIOLET,
+				purple: BRAND_VIOLET,
+				violet: BRAND_VIOLET,
+				pink: BRAND_PINK,
+				gray: WARM_NEUTRAL,
+				zinc: WARM_NEUTRAL,
+				slate: WARM_NEUTRAL,
+				neutral: WARM_NEUTRAL,
+				stone: WARM_NEUTRAL,
+				lime: {
+					DEFAULT: '#d7ff63',
+					50: '#fbffec', 100: '#f4ffcf', 200: '#ebffa3', 300: '#e1ff80', 400: '#d7ff63',
+					500: '#b8e63a', 600: '#8fb81f', 700: '#6b8b17', 800: '#566e18', 900: '#475b19', 950: '#253309',
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -88,6 +138,15 @@ export default {
 				'vj-neutral': 'hsl(var(--vj-neutral))',
 				'vj-border': 'hsl(var(--vj-border))',
 				'vj-surface': 'hsl(var(--vj-surface))',
+				'problem-primary': 'hsl(var(--problem-primary) / <alpha-value>)',
+				'problem-light': 'hsl(var(--problem-light) / <alpha-value>)',
+				'problem-muted': 'hsl(var(--problem-muted) / <alpha-value>)',
+				'idea-primary': 'hsl(var(--idea-primary) / <alpha-value>)',
+				'idea-light': 'hsl(var(--idea-light) / <alpha-value>)',
+				'idea-muted': 'hsl(var(--idea-muted) / <alpha-value>)',
+				'startup-primary': 'hsl(var(--startup-primary) / <alpha-value>)',
+				'startup-light': 'hsl(var(--startup-light) / <alpha-value>)',
+				'startup-muted': 'hsl(var(--startup-muted) / <alpha-value>)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

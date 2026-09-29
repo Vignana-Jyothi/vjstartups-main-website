@@ -1,33 +1,45 @@
-import { Badge } from "@/components/ui/badge";
-import { wings } from "@/data/clubInfo";
-import { ClubSectionHeader } from "./ClubSectionHeader";
-import { Layers } from "lucide-react";
+import { wings, wingDisplayName } from "@/data/clubInfo";
 
-export function WingsOverviewGrid() {
+interface WingsOverviewGridProps {
+  teamCounts: Record<string, number | undefined>;
+  onOpenWing: (wingId: string) => void;
+}
+
+export function WingsOverviewGrid({ teamCounts, onOpenWing }: WingsOverviewGridProps) {
   return (
-    <div className="vj-card-minimal animate-fade-in-up delay-100">
-      <ClubSectionHeader
-        title="Our Eight Wings"
-        description="Each wing adds different level of support to startups in our ecosystem"
-        icon={Layers}
-      />
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {wings.map((wing, index) => (
-          <div
-            key={wing.id}
-            className="group flex min-h-[180px] flex-col rounded-vj-large border border-vj-border bg-vj-surface p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--vj-shadow-card)]"
-          >
-            <div className="mb-3 inline-flex self-center rounded-full bg-vj-accent-light px-3 py-1 text-xs font-medium text-vj-accent">
-              Wing {index + 1}
-            </div>
-            <h4 className="mb-2 font-semibold text-vj-primary">{wing.name}</h4>
-            <p className="mb-4 flex-1 text-sm leading-relaxed text-vj-muted">{wing.description}</p>
-            <Badge variant="outline" className="self-center text-xs">
-              {wing.coreTeam.length + 1} Team Members
-            </Badge>
-          </div>
-        ))}
+    <section className="lx-block">
+      <div className="lx-sec-head">
+        <span>02 / Structure</span>
+        <h2>Our eight wings</h2>
       </div>
-    </div>
+      <p className="cl-sub">Each wing adds a different kind of support to the startups in our ecosystem.</p>
+      <div className="lx-grid cl-wings">
+        {wings.map((wing, index) => {
+          const count = teamCounts[wing.id];
+          return (
+            <article key={wing.id} className="lx-card">
+              <button
+                type="button"
+                className="lx-card-link"
+                aria-label={`${wingDisplayName(wing.name)} details`}
+                onClick={() => onOpenWing(wing.id)}
+              />
+              <div className="lx-card-body">
+                <div className="lx-card-status">
+                  <span>Wing {String(index + 1).padStart(2, "0")}</span>
+                  {count ? <b className="is-active">{count} on the team</b> : null}
+                </div>
+                <h3 className="lx-card-title">{wingDisplayName(wing.name)}</h3>
+                <p className="lx-card-text">{wing.description}</p>
+                <div className="lx-card-meta">
+                  <span>{wing.subWings?.length ? `${wing.subWings.length} programs` : ""}</span>
+                  <em>Details ↗</em>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }

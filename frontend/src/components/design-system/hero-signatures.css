@@ -1,0 +1,58 @@
+/* Page-header signature bands (HeroSignatures.tsx). Colours follow the hero's --ph-accent. */
+
+/* Problems: title marquee */
+.hs-marquee{display:grid;gap:14px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.hs-marquee-row{display:flex;width:max-content;animation:hs-slide 80s linear infinite}
+.hs-marquee-row.is-reverse{animation-direction:reverse}
+.hs-marquee:hover .hs-marquee-row{animation-play-state:paused}
+.hs-marquee-set{display:flex;align-items:center;flex:none}
+.hs-marquee a{padding:4px 0;color:var(--white);font-size:clamp(20px,2.2vw,34px);font-weight:800;letter-spacing:-.045em;white-space:nowrap;text-decoration:none;transition:color .25s}
+.hs-marquee-row.is-reverse a{color:rgba(247,245,239,.42)}
+.hs-marquee a:hover,.hs-marquee a:focus-visible{color:var(--ph-accent)}
+.hs-marquee i{display:inline-block;flex:none;width:6px;height:22px;margin:0 clamp(20px,2.4vw,40px);border-radius:6px;background:var(--ph-accent);transform:skewX(-15deg)}
+@keyframes hs-slide{to{transform:translate3d(-50%,0,0)}}
+
+/* Ideas: the count as the figure */
+.hs-count{display:grid;justify-items:start;gap:14px}
+.hs-count b{color:transparent;font-size:clamp(150px,22vw,380px);font-weight:800;line-height:.72;letter-spacing:-.09em;-webkit-text-stroke:2px var(--ph-accent)}
+.hs-count span{color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+
+/* Startups: readiness stages in the logo's bars */
+.hs-signal{display:flex;align-items:flex-end;gap:clamp(14px,2.4vw,40px);max-width:1600px;margin:0 auto;padding:0 7vw}
+.hs-signal-col{display:grid;justify-items:center;gap:10px}
+.hs-signal-col i{display:block;width:clamp(12px,1.4vw,22px);border-radius:999px;background:color-mix(in srgb,var(--ph-accent) 55%,transparent);transform:skewX(-15deg);transform-origin:bottom;animation:hs-grow 1.2s cubic-bezier(.2,.8,.2,1) both}
+.hs-signal-col:nth-child(n){animation-delay:.1s}
+.hs-signal-col.is-on i{background:var(--ph-accent)}
+.hs-signal-col small{min-height:14px;color:var(--white);font:12px var(--mono)}
+.hs-signal-col span{color:hsl(var(--muted-foreground));font:11px var(--mono);letter-spacing:.12em;white-space:nowrap}
+@keyframes hs-grow{from{transform:skewX(-15deg) scaleY(0)}}
+
+/* Programs: departures board */
+.hs-strip{display:flex;gap:12px;overflow-x:auto;padding:0 7vw 6px;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.hs-strip::-webkit-scrollbar{display:none}
+.hs-strip-item{display:grid;flex:none;gap:6px;min-width:220px;padding:16px 18px;border:1px solid rgba(247,245,239,.1);border-radius:16px;color:var(--white);text-decoration:none;transition:border-color .25s,transform .35s cubic-bezier(.2,.7,.2,1)}
+.hs-strip-item:hover,.hs-strip-item:focus-visible{border-color:var(--ph-accent);transform:translateY(-3px)}
+.hs-strip-item span{display:inline-flex;align-items:center;gap:8px;color:hsl(var(--muted-foreground));font:11px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.hs-strip-item span:before{content:"";width:6px;height:6px;border-radius:50%;background:hsl(var(--muted-foreground))}
+.hs-strip-item.is-active span:before{background:var(--lime);box-shadow:0 0 10px var(--lime)}
+.hs-strip-item.is-planned span:before{background:var(--violet)}
+.hs-strip-item b{font-size:17px;font-weight:800;letter-spacing:-.03em}
+.hs-strip-item small{color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.08em}
+
+/* Club: running line of wing names */
+.hs-words{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.hs-words-track{display:flex;width:max-content;animation:hs-slide 50s linear infinite}
+.hs-words:hover .hs-words-track{animation-play-state:paused}
+.hs-words-set{display:flex;flex:none}
+.hs-words button{margin:0 .35em;padding:0;border:0;background:none;color:var(--white);font:800 clamp(44px,6.4vw,104px)/1 var(--sans);letter-spacing:-.07em;text-transform:uppercase;cursor:pointer;transition:color .25s,-webkit-text-stroke-color .25s}
+.hs-words button.is-outline{color:transparent;-webkit-text-stroke:1px rgba(247,245,239,.55)}
+.hs-words button:hover,.hs-words button:focus-visible{color:var(--ph-accent);-webkit-text-stroke-color:var(--ph-accent)}
+
+@media(prefers-reduced-motion:reduce){
+  .hs-marquee-row,.hs-words-track{animation:none}
+  .hs-marquee,.hs-words{overflow-x:auto}
+  .hs-signal-col i{animation:none}
+}
+@media(max-width:700px){.hs-signal,.hs-strip{padding-left:18px;padding-right:18px}}
+/* The count is the Ideas page's figure, not a wall: it also follows the screen's height. */
+.hs-count b{font-size:clamp(120px,min(24vw,40vh),380px)}

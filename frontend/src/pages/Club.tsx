@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building, Layers, Users, UserPlus } from "lucide-react";
-import { wings } from "@/data/clubInfo";
+import { useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { wings, wingDisplayName } from "@/data/clubInfo";
 import { useTeamMembersFromSheet } from "@/hooks/useTeamMembersFromSheet";
 import { ClubHero } from "@/components/club/ClubHero";
 import { ClubAboutSection } from "@/components/club/ClubAboutSection";
@@ -9,69 +9,99 @@ import { WingsOverviewGrid } from "@/components/club/WingsOverviewGrid";
 import { WingDetailCard } from "@/components/club/WingDetailCard";
 import { TeamDirectorySection } from "@/components/club/TeamDirectorySection";
 import { JoinClubSection } from "@/components/club/JoinClubSection";
-import { cn } from "@/lib/utils";
+import "@/components/design-system/listing.css";
+import "@/components/club/club.css";
 
-const tabTriggerClass =
-  "min-h-[44px] flex-1 gap-2 rounded-vj-button px-3 py-2.5 text-sm font-medium transition-all duration-200 data-[state=active]:bg-vj-accent data-[state=active]:text-white data-[state=active]:shadow-[var(--vj-shadow-subtle)]";
+const TABS = [
+  { value: "overview", label: "Overview" },
+  { value: "wings", label: "Wings" },
+  { value: "team", label: "Team" },
+  { value: "join", label: "Get involved" },
+];
+
+// Team-sheet wing names that differ from the wing list's (none since Core became Infra).
+const SHEET_ALIASES: Record<string, string> = {};
+const wingKey = (name: string) => wingDisplayName(name).split(/\s+/)[0].toLowerCase();
 
 const ClubPage = () => {
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [selectedWing, setSelectedWing] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const { groups, wings: sheetWings, isLoading, error, isEmpty, refetch } = useTeamMembersFromSheet({
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const { groups, allGroups, wings: sheetWings, isLoading, error, isEmpty, refetch } = useTeamMembersFromSheet({
     selectedWing,
   });
 
+  const teamCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    allGroups.forEach((group) => {
+      counts[wingKey(group.wing)] = (group.wingMaster ? 1 : 0) + group.coreTeam.length;
+    });
+    return Object.fromEntries(
+      wings.map((wing) => {
+        const key = wingKey(wing.name);
+        return [wing.id, counts[SHEET_ALIASES[key] ?? key]];
+      })
+    );
+  }, [allGroups]);
+
+  const goTo = (tab: string, anchorId?: string) => {
+    setActiveTab(tab);
+    requestAnimationFrame(() => {
+      const target = anchorId ? document.getElementById(anchorId) : tabsRef.current;
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-vj-neutral to-background">
+    <div className="page-shell lx cl" style={{ "--lx-accent": "var(--lime)" } as CSSProperties}>
       <ClubHero
-        onExploreWings={() => setActiveTab("wings")}
-        onGetInvolved={() => setActiveTab("join")}
+        onExploreWings={() => goTo("wings")}
+        onGetInvolved={() => goTo("join")}
+        onOpenWing={(id) => goTo("wings", `wing-${id}`)}
       />
 
-      <div className="container mx-auto px-4 py-10 md:py-14">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-10">
-          <div className="sticky top-16 z-20 -mx-4 bg-background/85 px-4 py-3 backdrop-blur-md md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
-            <TabsList
-              className={cn(
-                "flex h-auto w-full gap-1.5 overflow-x-auto rounded-vj-large border border-vj-border bg-vj-surface p-1.5 shadow-[var(--vj-shadow-subtle)]",
-                "md:grid md:grid-cols-4 md:overflow-visible"
-              )}
-              aria-label="Club page sections"
-            >
-              <TabsTrigger value="overview" className={tabTriggerClass}>
-                <Building className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>Overview</span>
-              </TabsTrigger>
-              <TabsTrigger value="wings" className={tabTriggerClass}>
-                <Layers className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span className="hidden min-[480px]:inline">Wings Structure</span>
-                <span className="min-[480px]:hidden">Wings</span>
-              </TabsTrigger>
-              <TabsTrigger value="team" className={tabTriggerClass}>
-                <Users className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span className="hidden sm:inline">Team Directory</span>
-                <span className="sm:hidden">Team</span>
-              </TabsTrigger>
-              <TabsTrigger value="join" className={tabTriggerClass}>
-                <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>Get Involved</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="overview" className="space-y-10 focus-visible:outline-none">
-            <ClubAboutSection />
-            <WingsOverviewGrid />
-          </TabsContent>
-
-          <TabsContent value="wings" className="space-y-8 focus-visible:outline-none">
-            {wings.map((wing, index) => (
-              <WingDetailCard key={wing.id} wing={wing} index={index} />
+      <TabsPrimitive.Root value={activeTab} onValueChange={setActiveTab}>
+        {/* Scroll target sits outside the sticky bar: a stuck element can't be scrolled to reliably. */}
+        <div ref={tabsRef} className="cl-anchor" />
+        <div className="cl-tabs-bar">
+          <TabsPrimitive.List className="cl-tabs" aria-label="Club page sections">
+            {TABS.map((tab, i) => (
+              <TabsPrimitive.Trigger key={tab.value} value={tab.value} className="cl-tab">
+                <span>{String(i + 1).padStart(2, "0")}</span>
+                {tab.label}
+              </TabsPrimitive.Trigger>
             ))}
-          </TabsContent>
+          </TabsPrimitive.List>
+        </div>
 
-          <TabsContent value="team" className="focus-visible:outline-none">
+        <div className="lx-section">
+          <TabsPrimitive.Content value="overview" className="cl-panel">
+            <ClubAboutSection />
+            <WingsOverviewGrid
+              teamCounts={teamCounts}
+              onOpenWing={(id) => goTo("wings", `wing-${id}`)}
+            />
+          </TabsPrimitive.Content>
+
+          <TabsPrimitive.Content value="wings" className="cl-panel">
+            {wings.map((wing, index) => (
+              <WingDetailCard
+                key={wing.id}
+                wing={wing}
+                index={index}
+                teamCount={teamCounts[wing.id]}
+                onMeetTeam={() => {
+                  const key = wingKey(wing.name);
+                  const sheetWing = sheetWings.find((w) => wingKey(w) === (SHEET_ALIASES[key] ?? key));
+                  setSelectedWing(sheetWing ?? "all");
+                  goTo("team");
+                }}
+              />
+            ))}
+          </TabsPrimitive.Content>
+
+          <TabsPrimitive.Content value="team" className="cl-panel">
             <TeamDirectorySection
               groups={groups}
               sheetWings={sheetWings}
@@ -84,13 +114,13 @@ const ClubPage = () => {
               isEmpty={isEmpty}
               onRetry={refetch}
             />
-          </TabsContent>
+          </TabsPrimitive.Content>
 
-          <TabsContent value="join" className="focus-visible:outline-none">
-            <JoinClubSection onApplyNow={() => setActiveTab("team")} />
-          </TabsContent>
-        </Tabs>
-      </div>
+          <TabsPrimitive.Content value="join" className="cl-panel">
+            <JoinClubSection onMeetTeam={() => goTo("team")} />
+          </TabsPrimitive.Content>
+        </div>
+      </TabsPrimitive.Root>
     </div>
   );
 };

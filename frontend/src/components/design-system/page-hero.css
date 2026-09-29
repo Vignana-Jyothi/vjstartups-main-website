@@ -1,0 +1,164 @@
+/* Editorial page header shared by the platform pages, echoing the landing's section heads. */
+.ph{--ph-accent:var(--lime);position:relative;overflow:hidden;border-bottom:1px solid hsl(var(--border));background:hsl(var(--background))}
+.ph[data-accent="pink"]{--ph-accent:var(--pink)}
+.ph[data-accent="violet"]{--ph-accent:var(--violet)}
+.ph:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 12% 0%,color-mix(in srgb,var(--ph-accent) 8%,transparent),transparent 42%)}
+.ph-ghost{position:absolute;right:-2vw;bottom:-4vw;color:rgba(247,245,239,.028);font-size:clamp(140px,22vw,360px);font-weight:800;line-height:.7;letter-spacing:-.12em;text-transform:uppercase;white-space:nowrap;pointer-events:none;user-select:none}
+/* The header extends up beneath the transparent site header, so there is no seam between them. */
+.ph{margin-top:calc(var(--sc-nav-h) * -1)}
+.ph-inner{position:relative;z-index:1;max-width:1600px;margin:0 auto;padding:calc(clamp(56px,8vw,112px) + var(--sc-nav-h)) 7vw clamp(40px,5vw,64px)}
+
+.ph-meta{display:flex;justify-content:space-between;gap:24px;color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.ph-eyebrow{display:inline-flex;align-items:center;gap:10px;color:var(--white)}
+.ph-eyebrow:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ph-accent)}
+.ph-back{color:var(--white);text-decoration:none;transition:color .2s}
+.ph-back:hover{color:var(--ph-accent)}
+
+.ph .ph-title{margin:28px 0 0;color:var(--white);font-size:clamp(52px,8.2vw,136px);font-weight:800;line-height:.84;letter-spacing:-.085em;text-transform:uppercase;overflow-wrap:anywhere}
+.ph-title em{font-style:normal;color:var(--ph-accent)}
+
+.ph-foot{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:32px;margin-top:36px}
+.ph-desc{max-width:460px;margin:0;color:hsl(var(--muted-foreground));font-size:14px;line-height:1.55}
+.ph-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px}
+
+.ph-stats{display:flex;flex-wrap:wrap;margin:48px 0 0;border-top:1px solid hsl(var(--border))}
+.ph-stats>div{flex:1 1 180px;padding:18px 24px 0 0}
+.ph-stats dt{display:flex;gap:10px;color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.ph-stats dt span{color:var(--ph-accent)}
+.ph-stats dd{margin:8px 0 0;color:var(--white);font-size:clamp(28px,3.4vw,48px);font-weight:800;line-height:1;letter-spacing:-.06em}
+.ph-extra{margin-top:32px}
+
+@media(max-width:700px){
+  .ph-inner{padding:calc(48px + var(--sc-nav-h)) 18px 36px}
+  .ph-meta span:last-child{display:none}
+  .ph-foot{grid-template-columns:1fr}
+  .ph-actions{justify-content:flex-start}
+  .ph-stats>div{flex-basis:45%}
+}
+.ph-note{display:inline-flex;align-items:center;gap:10px;margin:0;padding:10px 14px;border:1px solid rgba(251,191,36,.35);border-radius:999px;color:#fcd34d;font:12px var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.ph-note:before{content:"!";display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#fcd34d;color:#080808;font-weight:700}
+.ph-tag{display:inline-flex;margin:0;padding:10px 14px;border:1px solid var(--lime);border-radius:999px;color:var(--lime);font:12px var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.form-shell{max-width:1600px;margin:0 auto;padding:48px 7vw 110px}.form-shell>*{max-width:56rem}@media(max-width:700px){.form-shell{padding:32px 18px 80px}}
+
+/* Sign-in */
+.auth{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(320px,.7fr);align-items:end;gap:6vw;min-height:100svh;margin-top:calc(var(--sc-nav-h) * -1);padding:calc(clamp(56px,8vw,112px) + var(--sc-nav-h)) 7vw clamp(56px,8vw,112px);background:radial-gradient(circle at 12% 10%,rgba(215,255,99,.07),transparent 40%),hsl(var(--background))}
+.auth-meta{color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.auth .auth-statement h1{margin:28px 0 0;color:var(--white);font-size:clamp(64px,10vw,168px);font-weight:800;line-height:.82;letter-spacing:-.085em;text-transform:uppercase}
+.auth-statement h1 em{font-style:normal;color:var(--lime)}
+.auth-statement p{max-width:440px;margin:32px 0 0;color:hsl(var(--muted-foreground));font-size:14px;line-height:1.55}
+.auth-panel{display:grid;gap:22px;justify-items:start;padding:36px;border:1px solid rgba(247,245,239,.08);border-radius:28px;background:hsl(var(--card))}
+.auth-lede{margin:0;color:var(--white);font-size:22px;font-weight:800;line-height:1.05;letter-spacing:-.045em}
+.auth-google{min-height:44px}
+.auth-legal{margin:0;color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.08em;line-height:1.7;text-transform:uppercase}
+.auth-legal a{color:var(--lime);text-decoration:none}
+@media(max-width:900px){.auth{grid-template-columns:1fr;align-items:start;gap:40px;padding:calc(48px + var(--sc-nav-h)) 18px 80px}}
+
+/* Entrance: title words rise out of a mask, then the details follow. Held while the route
+   curtain is down (html.pt-busy) so it plays as the curtain lifts. */
+/* Right padding (cancelled by the margin) keeps the last glyph's overhang, which the tight
+   letter-spacing pushes past the word box, inside the mask. */
+.ph-w{display:inline-block;overflow:hidden;margin:-.12em -.14em -.06em 0;padding:.12em .14em .06em 0;vertical-align:top}
+.ph-w>span,.ph-w>em{display:inline-block;transform:translate3d(0,108%,0);animation:ph-rise 1s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(.1s + var(--i,0)*.07s)}
+@keyframes ph-rise{to{transform:none}}
+.ph-meta,.ph-desc,.ph-actions,.ph-stats>div,.ph-extra,.ph-note{opacity:0;animation:ph-fade .8s cubic-bezier(.2,.7,.2,1) forwards}
+.ph-meta{animation-delay:.05s}
+.ph-desc,.ph-note{animation-delay:.4s}
+.ph-actions,.ph-extra{animation-delay:.5s}
+.ph-stats>div:nth-child(1){animation-delay:.5s}
+.ph-stats>div:nth-child(2){animation-delay:.57s}
+.ph-stats>div:nth-child(3){animation-delay:.64s}
+.ph-stats>div:nth-child(4){animation-delay:.71s}
+.ph-ghost{animation:ph-ghost 1.6s cubic-bezier(.2,.7,.2,1) both}
+@keyframes ph-fade{from{opacity:0;transform:translate3d(0,18px,0)}to{opacity:1;transform:none}}
+@keyframes ph-ghost{from{opacity:0;transform:translate3d(4%,0,0)}to{opacity:1;transform:none}}
+.pt-busy .ph *,.pt-busy .ph{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){
+  .ph-w>span,.ph-w>em,.ph-meta,.ph-desc,.ph-actions,.ph-stats>div,.ph-extra,.ph-note,.ph-ghost{animation:none;opacity:1;transform:none}
+}
+
+
+/* --- Per-page compositions ---------------------------------------------------------------- */
+.ph-signature{position:relative;z-index:1;padding-bottom:clamp(32px,4vw,56px);opacity:0;animation:ph-fade 1s cubic-bezier(.2,.7,.2,1) .55s forwards}
+.pt-busy .ph-signature{animation-play-state:paused}
+
+/* Centre: a statement, not a document header. */
+.ph--center .ph-title{text-align:center}
+.ph--center .ph-foot{grid-template-columns:1fr;justify-items:center;text-align:center}
+.ph--center .ph-desc{max-width:520px}
+.ph--center .ph-actions{justify-content:center}
+.ph--center .ph-stats{justify-content:center}
+.ph--center .ph-stats>div{flex:0 0 auto;padding:18px clamp(20px,3vw,48px) 0;text-align:center}
+.ph--center .ph-stats dd{white-space:nowrap}
+.ph--center .ph-extra{display:flex;justify-content:center}
+.ph--center .ph-extra .lx-gate-actions{justify-content:center}
+.ph--center .ph-stats dt{justify-content:center}
+.ph--center .ph-ghost{left:50%;right:auto;bottom:-6vw;translate:-50% 0}
+
+/* Split: the page's own figure on the left, the title answering it on the right. */
+.ph--split .ph-split{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:5vw;align-items:end;margin-top:28px}
+.ph--split .ph .ph-title,.ph--split .ph-title{margin-top:0;text-align:right}
+.ph--split .ph-foot{grid-template-columns:1fr;justify-items:end;text-align:right}
+.ph--split .ph-actions{justify-content:flex-end}
+.ph--split .ph-ghost{right:auto;left:-3vw}
+
+/* Stack: one oversized word that owns the page. */
+.ph--stack .ph-title{font-size:clamp(84px,15vw,250px);line-height:.78}
+.ph--stack .ph-ghost{display:none}
+
+@media(max-width:800px){
+  .ph--split .ph-split{grid-template-columns:1fr;gap:28px}
+  .ph--split .ph-title,.ph--split .ph-foot{text-align:left;justify-items:start}
+  .ph--split .ph-actions{justify-content:flex-start}
+}
+@media(prefers-reduced-motion:reduce){.ph-signature{animation:none;opacity:1}}
+
+/* --- Header kinds (see PageHero `kind`) ---------------------------------------------------- */
+/* document: detail pages. Their title is a sentence ("Road blockages during monsoon go
+   unreported"), so it is set in sentence case at a reading size, with a short accent rule
+   instead of a coloured last word and no ghost word behind it. */
+.ph--document .ph-inner{padding-bottom:clamp(32px,4vw,52px)}
+.ph--document .ph-title{max-width:20ch;font-size:clamp(38px,4.8vw,78px);line-height:1;letter-spacing:-.055em;text-transform:none;overflow-wrap:break-word}
+.ph--document .ph-title:after{content:"";display:block;width:72px;height:4px;margin-top:26px;border-radius:4px;background:var(--ph-accent);transform-origin:left;animation:ph-rule .9s cubic-bezier(.2,.8,.2,1) .35s both}
+.ph--document .ph-foot{margin-top:22px}
+.ph--document .ph-desc{max-width:640px;color:rgba(247,245,239,.72);font-size:16px;line-height:1.6}
+.ph--document .ph-stats{margin-top:30px}
+.ph--document .ph-stats dd{font-size:clamp(22px,2.3vw,34px)}
+@keyframes ph-rule{from{transform:scaleX(0)}to{transform:none}}
+
+/* tool: forms and utility pages. Same voice as the posters, a third of the height, so the
+   form, list or board starts on the first screen. */
+.ph--tool .ph-inner{padding-top:calc(clamp(30px,4vw,60px) + var(--sc-nav-h));padding-bottom:clamp(24px,3vw,36px)}
+.ph--tool .ph-title{margin-top:16px;font-size:clamp(34px,4vw,62px);line-height:.9}
+.ph--tool .ph-foot{margin-top:16px}
+.ph--tool .ph-stats{margin-top:22px}
+.ph--tool .ph-stats>div{padding-top:12px}
+.ph--tool .ph-stats dd{font-size:clamp(20px,2vw,28px)}
+.ph--tool .ph-extra{margin-top:16px}
+@media(prefers-reduced-motion:reduce){.ph--document .ph-title:after{animation:none}}
+
+/* No seams: the ghost word fades out before the header's edge instead of being sliced by it,
+   and the header flows into the page without a hard rule. */
+.ph{border-bottom:0}
+.ph-ghost{-webkit-mask-image:linear-gradient(180deg,#000 35%,transparent 88%);mask-image:linear-gradient(180deg,#000 35%,transparent 88%)}
+.auth .auth-statement h1{font-size:clamp(56px,min(10vw,19vh),168px)}
+/* Phones: the stack header's 84px minimum was wider than a 360px screen for words like
+   "STARTUPS", which then broke mid-word. */
+@media(max-width:700px){
+  .ph .ph-title{overflow-wrap:break-word}
+  .ph--stack .ph-title{font-size:16vw}
+}
+/* Phones: centred stats sit side by side (three across, or two by two) instead of one per row. */
+@media(max-width:700px){
+  .ph--center .ph-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 0;margin-top:32px}
+  .ph--center .ph-stats:has(>div:nth-child(3):last-child){grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ph--center .ph-stats>div{padding:16px 6px 0}
+  .ph--center .ph-stats dt{flex-wrap:wrap;gap:4px 8px;font-size:11px;letter-spacing:.1em;line-height:1.35}
+  .ph--center .ph-stats dd{font-size:30px}
+}
+/* No seam under the header: it takes the page's own colour, and its corner glow fades out
+   before the header ends instead of being clipped by it (that clipped edge read as a hard cut). */
+.ph{background:transparent}
+.ph:before{-webkit-mask-image:linear-gradient(180deg,#000 35%,transparent 92%);mask-image:linear-gradient(180deg,#000 35%,transparent 92%)}
+/* The ghost word hangs below the header's bottom edge, which clipped it flat; it is fully faded
+   before that edge now. */
+.ph-ghost{-webkit-mask-image:linear-gradient(180deg,#000 12%,transparent 56%);mask-image:linear-gradient(180deg,#000 12%,transparent 56%)}

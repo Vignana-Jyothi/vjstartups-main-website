@@ -18,6 +18,12 @@ app.use(cors({
     'http://localhost:4001', // admin dev
     'http://localhost:4002', // plane dev
     'https://hub.vjstartup.com',
+    // The site's live domains (www.vjstartup.com reaches this API same-origin through /be, but
+    // the others call it cross-origin) and the Vercel preview of the redesign.
+    'https://www.vjstartup.com',
+    'https://vjstartup.com',
+    'https://dev-vj.vjstartup.com',
+    'https://vjstartups-main-website.vercel.app',
     'https://vjstartups.com',
     'https://www.vjstartups.com',
     'https://admin.vjstartups.com',
@@ -59,6 +65,8 @@ app.use('/admin-api', require('./APIs/admin-api'));
 // system after the Postgres merge - every route in that file 500s.
 
 app.use('/announcements-api', require('./APIs/announcements-api'));
+app.use('/story-api', require('./APIs/stories-api'));
+app.use('/leaderboard-api', require('./APIs/leaderboard-api'));
 
 // TEMPORARY - for diagnosing the admin proxy's persistent 401. Echoes back
 // exactly what this server received, no auth involved, to rule in/out

@@ -188,7 +188,7 @@ const UpdateProblemForm = () => {
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="max-w-2xl md:max-w-2xl w-full max-h-[90vh] overflow-y-auto p-3 md:p-6 m-0 md:m-4 rounded-none md:rounded-lg h-full md:h-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-orange-600">
+          <DialogTitle className="text-2xl font-extrabold text-vj-primary">
             Update Problem
           </DialogTitle>
         </DialogHeader>
@@ -421,7 +421,7 @@ const UpdateProblemForm = () => {
           <div className="flex gap-3 pt-4">
             <Button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white border-0"
+              className="flex-1"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Updating..." : "Update Problem"}

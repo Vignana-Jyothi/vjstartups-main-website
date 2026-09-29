@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHero } from '@/components/design-system/PageHero';
 import { useUser } from './UserContext';
-import { Megaphone, ArrowLeft } from 'lucide-react';
+import '@/components/design-system/listing.css';
+import '@/components/design-system/forms.css';
 import { toast } from '@/components/ui/use-toast';
 
 const PostAnnouncement = () => {
@@ -20,17 +21,21 @@ const PostAnnouncement = () => {
   // Check if user has permission (admin or wing_master)
   if (!user || (user.role !== 'admin' && user.role !== 'wing_master')) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-vj-neutral">
-        <div className="text-center p-8 bg-zinc-900 rounded-xl border border-zinc-700 max-w-md">
-          <h2 className="text-2xl font-bold text-white mb-4">Access Denied</h2>
-          <p className="text-zinc-400 mb-6">
-            You need admin or wing master privileges to post announcements.
-          </p>
-          <Button onClick={() => navigate('/')} className="bg-purple-600 hover:bg-purple-700">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Go Home
-          </Button>
-        </div>
+      <div className="page-shell lx">
+        <PageHero
+        kind="tool"
+          eyebrow="Admin portal"
+          title="Post Announcement"
+          description="Share important news and updates with the VJ Startups community."
+          backLink={{ label: "Home", to: "/" }}
+        />
+        <section className="lx-section">
+          <div className="lx-empty">
+            <strong>Admins and wing masters only</strong>
+            {user ? "Your account can't post announcements." : "Log in with an admin or wing master account to post."}
+            <Link to={user ? "/" : "/login"} className="lx-cta">{user ? "Back home ↗" : "Log in ↗"}</Link>
+          </div>
+        </section>
       </div>
     );
   }
@@ -88,94 +93,59 @@ const PostAnnouncement = () => {
   };
 
   return (
-    <div className="page-shell bg-vj-neutral/30">
+    <div className="page-shell lx">
       <PageHero
-        eyebrow="Admin Portal"
+        kind="tool"
+        eyebrow="Admin portal"
         title="Post Announcement"
         description="Share important news and updates with the VJ Startups community."
-        backgroundClassName="bg-[hsl(var(--background-secondary))] relative min-h-[320px]"
+        backLink={{ label: "Home", to: "/" }}
       />
-
-      <section className="page-section">
-        <div className="max-w-3xl mx-auto px-4">
-          <form onSubmit={handleSubmit} className="section-panel p-6 sm:p-8 space-y-6">
-            {/* Title Field */}
-            <div className="space-y-2">
-              <label htmlFor="title" className="block text-sm font-medium text-vj-primary">
-                Announcement Title <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="title"
-                type="text"
-                placeholder="e.g., Upcoming Hackathon Registration Open"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full min-h-[44px]"
-                required
-              />
+      <div className="form-shell fm" data-accent="lime">
+        <form onSubmit={handleSubmit}>
+          <div className="vj-card">
+            <div>
+              <h3>Announcement</h3>
+              <p>Shown on the landing page with your name. Keep it short and specific.</p>
             </div>
-
-            {/* Content Field */}
-            <div className="space-y-2">
-              <label htmlFor="content" className="block text-sm font-medium text-vj-primary">
-                Content <span className="text-red-500">*</span>
-              </label>
-              <Textarea
-                id="content"
-                placeholder="Write your announcement content here..."
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                className="w-full min-h-[200px] resize-none"
-                required
-              />
-              <p className="text-xs text-vj-muted">
-                Keep it concise and informative. This will be displayed on the landing page.
-              </p>
+            <div>
+              <div>
+                <label htmlFor="title">Title *</label>
+                <Input
+                  id="title"
+                  type="text"
+                  placeholder="e.g., Upcoming Hackathon Registration Open"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="mt-2 w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="content">Content *</label>
+                <Textarea
+                  id="content"
+                  placeholder="Write your announcement content here..."
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  rows={8}
+                  className="mt-2 w-full resize-y"
+                  required
+                />
+              </div>
+              <p className="text-xs">Posting as {user.name} ({user.email}).</p>
             </div>
-
-            {/* Poster Info Display */}
-            <div className="p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
-              <p className="text-sm text-zinc-400">
-                <span className="font-medium">Posted by:</span> {user.name} ({user.email})
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">
-                Your name will be visible on the announcement.
-              </p>
-            </div>
-
-            {/* Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/')}
-                className="w-full sm:w-auto min-h-[44px] order-2 sm:order-1"
-                disabled={isSubmitting}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="w-full sm:flex-1 bg-purple-600 hover:bg-purple-700 text-white min-h-[44px] order-1 sm:order-2"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="animate-spin mr-2">⏳</span>
-                    Posting...
-                  </>
-                ) : (
-                  <>
-                    <Megaphone className="mr-2 h-4 w-4" />
-                    Post Announcement
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </section>
+          </div>
+          <div>
+            <Button type="button" variant="outline" onClick={() => navigate('/')} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Posting…' : 'Post announcement ↗'}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

@@ -1,0 +1,133 @@
+/* Virtual startup journey (/journey). Builds on listing.css + detail.css. The page accent follows
+   the tier of the stage in view: pink for problems, lime for ideas, violet for startups. */
+.jh .lx-section{transition:none}
+.jh-board{padding-top:56px}
+.jh-board-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px 32px;margin-bottom:34px}
+.jh-board-head .lx-sec-head{margin:0}
+.jh-controls{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px}
+
+/* Stage track: seven segments, each one a button */
+.jh-track{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:0 0 64px;padding:0;list-style:none}
+.jh-track button{position:relative;display:grid;align-content:start;gap:8px;width:100%;min-height:132px;padding:18px 14px 16px;border:1px solid rgba(247,245,239,.08);border-radius:16px;background:transparent;color:var(--white);text-align:left;font:inherit;cursor:pointer;transition:border-color .3s,background .3s,transform .4s cubic-bezier(.2,.7,.2,1)}
+.jh-track button:hover:not(:disabled){border-color:color-mix(in srgb,var(--tier) 55%,transparent);transform:translateY(-2px)}
+.jh-track button:focus-visible{outline:2px solid var(--tier);outline-offset:2px}
+.jh-track i{display:block;height:4px;margin-bottom:6px;border-radius:4px;background:rgba(247,245,239,.12);transform:skewX(-15deg);transition:background .4s}
+.jh-track span{color:hsl(var(--muted-foreground));font:11px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.jh-track b{font-size:15px;font-weight:800;line-height:1.1;letter-spacing:-.03em}
+.jh-track small{margin-top:auto;color:hsl(var(--muted-foreground));font:11px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.jh-track li.is-done i{background:color-mix(in srgb,var(--tier) 60%,transparent)}
+.jh-track li.is-done small{color:var(--tier)}
+.jh-track li.is-on button{border-color:var(--tier);background:color-mix(in srgb,var(--tier) 9%,transparent)}
+.jh-track li.is-on i{background:var(--tier);box-shadow:0 0 14px color-mix(in srgb,var(--tier) 60%,transparent)}
+.jh-track li.is-on span{color:var(--tier)}
+.jh-track li.is-locked button{cursor:not-allowed;opacity:.42}
+.jh-track li.is-arriving button{animation:jh-arrive 1s ease-in-out infinite}
+.jh-me{position:absolute;right:12px;top:14px;width:28px;height:28px;border:2px solid var(--tier);border-radius:50%;object-fit:cover}
+@keyframes jh-arrive{50%{border-color:var(--tier);box-shadow:0 0 0 4px color-mix(in srgb,var(--tier) 25%,transparent)}}
+
+/* Stage in view */
+.jh-stage-head{display:grid;gap:12px;animation:jh-in .6s cubic-bezier(.2,.7,.2,1)}
+.jh-stage-head>span{color:var(--lx-accent);font:12px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.lx .jh-stage-head h3{margin:0;color:var(--white);font-size:clamp(40px,4.6vw,76px);font-weight:800;line-height:.92;letter-spacing:-.06em;text-transform:uppercase}
+@keyframes jh-in{from{opacity:0;transform:translateY(18px)}}
+
+.jh-checks{display:grid;gap:8px}
+.jh-checks-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:6px;color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.jh-checks-head b{color:var(--lx-accent);font-weight:400}
+.jh-check{position:relative;display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:16px;padding:16px 18px;border:1px solid rgba(247,245,239,.08);border-radius:14px;cursor:pointer;transition:border-color .25s,background .25s}
+.jh-check:hover{border-color:color-mix(in srgb,var(--lx-accent) 45%,transparent)}
+.jh-check.is-off{cursor:default}
+.jh-check.is-off:hover{border-color:rgba(247,245,239,.08)}
+.jh-check input{position:absolute;opacity:0;pointer-events:none}
+.jh-check i{display:grid;place-items:center;width:22px;height:22px;border:1.5px solid rgba(247,245,239,.3);border-radius:7px;transition:background .2s,border-color .2s}
+.jh-check i:after{content:"";width:10px;height:6px;border-left:2px solid #080808;border-bottom:2px solid #080808;transform:translateY(-1px) rotate(-45deg) scale(0);transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.jh-check.is-on{border-color:color-mix(in srgb,var(--lx-accent) 40%,transparent);background:color-mix(in srgb,var(--lx-accent) 6%,transparent)}
+.jh-check.is-on i{border-color:var(--lx-accent);background:var(--lx-accent)}
+.jh-check.is-on i:after{transform:translateY(-1px) rotate(-45deg) scale(1)}
+.jh-check input:focus-visible+i{outline:2px solid var(--lx-accent);outline-offset:3px}
+.jh-check span{color:var(--white);font-size:16px;font-weight:600;line-height:1.35}
+.jh-check small{color:hsl(var(--muted-foreground));font:11px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.jh-rule{margin:10px 0 0;color:hsl(var(--muted-foreground));font-size:14px;line-height:1.55}
+.jh-rule a{color:var(--lx-accent)}
+
+/* Sidebar */
+.jh-side{display:grid;gap:16px}
+.jh-quiz-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.jh-quiz-head span{color:var(--white)}
+.jh-quiz-head b{font-weight:400}
+.jh-quiz-head b.is-pass{color:var(--lx-accent)}
+.jh-lock{display:grid;gap:12px}
+.jh-lock p{margin:0;color:rgba(247,245,239,.8);font-size:14px;line-height:1.5}
+.jh-meter{height:6px;overflow:hidden;border-radius:6px;background:rgba(247,245,239,.1)}
+.jh-meter i{display:block;height:100%;border-radius:inherit;background:var(--lx-accent);transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.jh-lock small,.jh-score{margin:0;color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.jh-next{gap:16px}
+.jh-next>span{color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.jh-next .lx-cta{justify-content:center}
+.jh-next-links{display:flex;flex-wrap:wrap;gap:12px 20px}
+
+/* Quiz */
+.jq{display:grid;gap:16px}
+.jq-head{display:grid;gap:10px}
+.jq-head span{color:var(--lx-accent);font:12px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.jq-head i{display:block;height:3px;border-radius:3px;background:rgba(247,245,239,.1)}
+.jq-head b{display:block;height:100%;border-radius:inherit;background:var(--lx-accent);transition:width .4s}
+.lx .jq h4{margin:0;color:var(--white);font-size:18px;font-weight:800;line-height:1.25;letter-spacing:-.02em;animation:jh-in .45s cubic-bezier(.2,.7,.2,1)}
+.jq-options{display:grid;gap:8px}
+.jq-options button{display:grid;grid-template-columns:26px minmax(0,1fr);gap:12px;align-items:start;padding:13px 14px;border:1px solid rgba(247,245,239,.1);border-radius:12px;background:transparent;color:var(--white);text-align:left;font:inherit;font-size:14px;line-height:1.4;cursor:pointer;transition:border-color .2s,background .2s}
+.jq-options button:hover:not(:disabled){border-color:var(--lx-accent)}
+.jq-options button:disabled{cursor:default}
+.jq-options em{display:grid;place-items:center;width:24px;height:24px;border:1px solid rgba(247,245,239,.2);border-radius:50%;font:12px var(--mono);font-style:normal}
+.jq-options small{display:block;margin-top:6px;color:rgba(247,245,239,.7);font-size:14px}
+.jq-options .is-right{border-color:var(--lime);background:color-mix(in srgb,var(--lime) 10%,transparent)}
+.jq-options .is-right em{border-color:var(--lime);background:var(--lime);color:#080808}
+.jq-options .is-wrong{border-color:#ff6b6b;background:rgba(255,107,107,.08)}
+.jq-options .is-wrong em{border-color:#ff6b6b;background:#ff6b6b;color:#080808}
+.jq-tip{margin:0;color:hsl(var(--muted-foreground));font-size:14px}
+.jq-done span{color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.jq-done p{margin:0;font-size:18px;font-weight:800;line-height:1.25}
+.jq-done .is-high{color:var(--lime)}
+.jq-done .is-mid{color:var(--white)}
+.jq-done .is-low{color:#ff8f8f}
+
+/* Community */
+.jh-community{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(32px,5vw,80px);padding-top:0}
+.jh-col{display:grid;align-content:start;gap:22px;padding-top:40px;border-top:1px solid rgba(247,245,239,.1)}
+.jh-col .lx-sec-head{margin:0}
+.jh-empty{margin:0;padding:22px 0;color:hsl(var(--muted-foreground));font-size:15px}
+.jh-feed{display:grid;margin:0;padding:0;list-style:none}
+.jh-feed li+li{border-top:1px solid rgba(247,245,239,.07)}
+.jh-feed a,.jh-feed li>div{display:grid;grid-template-columns:auto 38px minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 0;color:var(--white);text-decoration:none}
+.jh-feed a{grid-template-columns:38px minmax(0,1fr) auto}
+.jh-feed a:hover b{color:var(--tier,var(--lx-accent))}
+.jh-feed img,.jh-feed i{width:38px;height:38px;border-radius:50%;object-fit:cover}
+.jh-feed i{display:grid;place-items:center;background:#1c1c1a;color:var(--tier,var(--lx-accent));font:800 14px var(--sans);font-style:normal}
+.jh-feed b{display:block;font-size:15px;transition:color .2s}
+.jh-feed small{display:block;overflow:hidden;color:hsl(var(--muted-foreground));font-size:14px;text-overflow:ellipsis;white-space:nowrap}
+.jh-feed em,.jh-feed strong{color:hsl(var(--muted-foreground));font:12px var(--mono);font-style:normal;font-weight:400;letter-spacing:.1em}
+.jh-leaders strong{color:var(--lx-accent)}
+
+/* Pop-ups */
+.jh-pop{display:grid;gap:14px;width:min(480px,100%);padding:32px}
+.jh-pop>span{color:var(--lx-accent);font:12px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.lx .jh-pop h3{margin:0;color:var(--white);font-size:clamp(28px,3vw,40px);font-weight:800;line-height:1;letter-spacing:-.05em}
+.jh-pop p{margin:0;color:rgba(247,245,239,.8);font-size:15px;line-height:1.5}
+.jh-pop-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px;margin-top:6px}
+.jh-pop-me{width:56px;height:56px;border:3px solid var(--lx-accent);border-radius:50%;object-fit:cover;animation:jh-arrive 1s ease-in-out infinite}
+.jh-arrive .jh-pop{animation:jh-in .5s cubic-bezier(.2,.7,.2,1)}
+
+@media(max-width:1100px){
+  .jh-track{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+  .jh-track::-webkit-scrollbar{display:none}
+}
+@media(max-width:1000px){.jh-side{order:0}}
+@media(max-width:760px){
+  .jh-community{grid-template-columns:1fr}
+  .jh-check{grid-template-columns:24px minmax(0,1fr)}
+  .jh-check small{grid-column:2}
+}
+@media(prefers-reduced-motion:reduce){
+  .jh-stage-head,.jq h4,.jh-arrive .jh-pop{animation:none}
+  .jh-track li.is-arriving button,.jh-pop-me{animation:none}
+}
+.jh-col .lx-sec-head{padding-top:0;border-top:0}

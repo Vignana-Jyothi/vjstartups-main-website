@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,50 +6,44 @@
 
 @layer base {
   :root {
-    /* Premium Black Theme - Global tokens */
-    --background: 0 0% 0%; /* #000000 */
-    --background-secondary: 0 0% 4%; /* #0A0A0A approx */
-    --card-bg: 0 0% 7%; /* #111111 approx */
-    --foreground: 0 0% 100%; /* #FFFFFF */
-    --text-muted: 0 0% 75%; /* rgba white 0.75 */
+    /* Brand palette, matching the landing: ink #080808, off-white #f7f5ef,
+       lime #d7ff63, pink #ff4aa7, violet #9c88ff. The app always runs with .dark,
+       so these values are mirrored in the .dark block below. */
+    --background: 0 0% 3%;
+    --background-secondary: 60 3% 5%;
+    --card-bg: 60 3% 7%;
+    --foreground: 45 38% 95%;
+    --text-muted: 43 6% 62%;
 
-    /* Brand / Accent (preserve existing accents) */
-    --vj-accent: 217 92% 59%;
-    --vj-accent-foreground: 0 0% 100%;
+    --vj-accent: 76 100% 69%;
+    --vj-accent-foreground: 0 0% 3%;
 
-    /* Shadcn / component mappings tuned for black theme */
-    --primary: 217 92% 59%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 4%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 7%;
-    --muted-foreground: 0 0% 75%;
-    --accent: 217 92% 59%;
-    --accent-foreground: 0 0% 100%;
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 100%;
-    --border: 0 0% 100%; /* use with alpha via hsl(var(--border) / 0.08) */
-    --input: 0 0% 10%;
-    --ring: 217 92% 59%;
+    --primary: 76 100% 69%;
+    --primary-foreground: 0 0% 3%;
+    --secondary: 60 3% 8%;
+    --secondary-foreground: 45 38% 95%;
+    --muted: 60 3% 8%;
+    --muted-foreground: 43 6% 62%;
+    --accent: 76 100% 69%;
+    --accent-foreground: 0 0% 3%;
+    --card: 60 3% 7%;
+    --card-foreground: 45 38% 95%;
+    --popover: 60 3% 7%;
+    --popover-foreground: 45 38% 95%;
+    --border: 45 5% 15%;
+    --input: 45 5% 15%;
+    --ring: 76 100% 69%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     --radius: 0.75rem;
 
-    /* Theme gradients (subtle, tuned for dark surfaces) */
-    --vj-gradient-primary: linear-gradient(135deg, hsl(217 92% 59%), hsl(217 92% 69%));
-    --vj-gradient-subtle: linear-gradient(135deg, hsl(0 0% 6%), hsl(0 0% 8%));
+    --vj-gradient-primary: linear-gradient(135deg, hsl(76 100% 69%), hsl(76 100% 80%));
+    --vj-gradient-subtle: linear-gradient(135deg, hsl(60 3% 7%), hsl(60 4% 9%));
 
-    /* Semantic tokens for components */
-    --vj-shadow-subtle: 0 6px 24px -8px rgba(0,0,0,0.6);
-    --vj-shadow-card: 0 12px 48px -12px rgba(0,0,0,0.7);
-    --vj-shadow-innovation: 0 20px 80px -20px rgba(0,0,0,0.75);
-    --vj-shadow-glow: 0 0 40px rgba(34,197,94,0.06);
     --vj-radius-base: 16px;
-    --vj-radius-button: 12px;
-    --vj-radius-large: 24px;
-    --vj-radius-xl: 32px;
+    --vj-radius-button: 999px;
+    --vj-radius-large: 22px;
+    --vj-radius-xl: 28px;
     --vj-section-gap: 5rem;
     --vj-section-gap-sm: 3rem;
 
@@ -64,83 +56,69 @@
     --type-small: 14px;
   }
 
+  :root,
   .dark {
-    /* Core Dark Mode Colors */
-    --background: 220 10% 4%;
-    --foreground: 0 0% 95%;
-    
-    /* VJ Startups Brand Colors - Dark Mode */
-    --vj-primary: 0 0% 95%;
-    --vj-primary-foreground: 220 10% 9%;
-    --vj-muted: 220 5% 65%;
-    --vj-muted-foreground: 220 5% 50%;
-    --vj-accent: 217 92% 65%;
-    --vj-accent-foreground: 220 10% 9%;
-    --vj-accent-light: 217 92% 15%;
-    --vj-neutral: 220 10% 8%;
-    --vj-border: 220 10% 15%;
-    --vj-surface: 220 10% 6%;
-    
-    /* Problem-specific colors - Dark Mode */
-    --problem-primary: 25 95% 63%;
-    --problem-light: 25 95% 10%;
-    --problem-muted: 25 30% 50%;
-    
-    /* Idea-specific colors - Dark Mode */
-    --idea-primary: 142 76% 46%;
-    --idea-light: 142 76% 10%;
-    --idea-muted: 142 30% 45%;
-    
-    /* Startup-specific colors - Dark Mode */
-    --startup-primary: 263 85% 66%;
-    --startup-light: 263 85% 12%;
-    --startup-muted: 263 30% 55%;
-    
-    /* Dark mode gradients */
-    --vj-gradient-primary: linear-gradient(135deg, hsl(217, 92%, 65%), hsl(217, 92%, 75%));
-    --vj-gradient-subtle: linear-gradient(135deg, hsl(220, 10%, 8%), hsl(220, 10%, 12%));
-    --vj-gradient-innovation: linear-gradient(135deg, hsl(217, 92%, 65%) 0%, hsl(280, 92%, 75%) 100%);
-    --vj-gradient-problem: linear-gradient(135deg, hsl(25, 95%, 63%) 0%, hsl(45, 95%, 70%) 100%);
-    --vj-gradient-idea: linear-gradient(135deg, hsl(142, 76%, 46%) 0%, hsl(120, 76%, 55%) 100%);
-    --vj-gradient-startup: linear-gradient(135deg, hsl(263, 85%, 66%) 0%, hsl(280, 85%, 75%) 100%);
-    
-    /* Dark mode shadcn mappings */
-    --primary: 217 92% 65%;
-    --primary-foreground: 220 10% 9%;
-    --secondary: 220 10% 12%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 220 10% 12%;
-    --muted-foreground: 220 5% 65%;
-    --accent: 217 92% 65%;
-    --accent-foreground: 220 10% 9%;
-    --card: 220 10% 6%;
-    --card-foreground: 0 0% 95%;
-    --popover: 220 10% 6%;
-    --popover-foreground: 0 0% 95%;
-    --border: 220 10% 15%;
-    --input: 220 10% 15%;
-    --ring: 217 92% 65%;
+    --background: 0 0% 3%;
+    --foreground: 45 38% 95%;
+
+    --vj-primary: 45 38% 95%;
+    --vj-primary-foreground: 0 0% 3%;
+    --vj-muted: 43 6% 62%;
+    --vj-muted-foreground: 43 5% 48%;
+    --vj-accent: 76 100% 69%;
+    --vj-accent-foreground: 0 0% 3%;
+    --vj-accent-light: 76 35% 11%;
+    --vj-neutral: 60 4% 8%;
+    --vj-border: 45 5% 15%;
+    --vj-surface: 60 3% 6%;
+
+    /* Categories on the brand palette: problems pink, ideas lime, startups violet */
+    --problem-primary: 329 100% 65%;
+    --problem-light: 329 45% 11%;
+    --problem-muted: 329 35% 55%;
+    --idea-primary: 76 100% 69%;
+    --idea-light: 76 35% 11%;
+    --idea-muted: 76 30% 50%;
+    --startup-primary: 250 100% 77%;
+    --startup-light: 250 40% 13%;
+    --startup-muted: 250 30% 60%;
+
+    --vj-gradient-primary: linear-gradient(135deg, hsl(76 100% 69%), hsl(76 100% 80%));
+    --vj-gradient-subtle: linear-gradient(135deg, hsl(60 3% 7%), hsl(60 4% 9%));
+    --vj-gradient-innovation: linear-gradient(135deg, hsl(76 100% 69%) 0%, hsl(250 100% 77%) 100%);
+    --vj-gradient-problem: linear-gradient(135deg, hsl(329 100% 65%) 0%, hsl(329 100% 78%) 100%);
+    --vj-gradient-idea: linear-gradient(135deg, hsl(76 100% 69%) 0%, hsl(76 100% 80%) 100%);
+    --vj-gradient-startup: linear-gradient(135deg, hsl(250 100% 77%) 0%, hsl(250 100% 86%) 100%);
+
+    --primary: 76 100% 69%;
+    --primary-foreground: 0 0% 3%;
+    --secondary: 60 3% 8%;
+    --secondary-foreground: 45 38% 95%;
+    --muted: 60 3% 8%;
+    --muted-foreground: 43 6% 62%;
+    --accent: 76 100% 69%;
+    --accent-foreground: 0 0% 3%;
+    --card: 60 3% 6%;
+    --card-foreground: 45 38% 95%;
+    --popover: 60 3% 7%;
+    --popover-foreground: 45 38% 95%;
+    --border: 45 5% 15%;
+    --input: 45 5% 15%;
+    --ring: 76 100% 69%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
   }
-    
-  /* Premium shadows & effects */
+
   :root {
-    --vj-shadow-subtle: 0 2px 24px -4px rgba(20, 68, 185, 0.08);
-    --vj-shadow-card: 0 8px 32px -8px rgba(20, 68, 185, 0.12);
-    --vj-shadow-innovation: 0 16px 64px -12px rgba(20, 68, 185, 0.15);
-    --vj-shadow-glow: 0 0 40px rgba(20, 68, 185, 0.15);
-    --vj-radius-base: 16px;
-    --vj-radius-button: 12px;
-    --vj-radius-large: 24px;
-    --vj-radius-xl: 32px;
-    --vj-section-gap: 5rem;
-    --vj-section-gap-sm: 3rem;
+    --vj-shadow-subtle: 0 6px 24px -8px rgba(0, 0, 0, 0.6);
+    --vj-shadow-card: 0 12px 48px -12px rgba(0, 0, 0, 0.7);
+    --vj-shadow-innovation: 0 20px 80px -20px rgba(0, 0, 0, 0.75);
+    --vj-shadow-glow: 0 0 40px rgba(215, 255, 99, 0.08);
   }
 
   /* Typography */
   body {
-    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    font-family: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
     background: hsl(var(--background));
     color: hsl(var(--foreground));
     -webkit-font-smoothing: antialiased;
@@ -156,6 +134,13 @@
   h1, h2, h3, h4, h5, h6 {
     color: hsl(var(--foreground));
     margin: 0 0 0.5rem 0;
+    letter-spacing: -0.035em;
+  }
+
+  h1, h2 {
+    font-weight: 800;
+    letter-spacing: -0.055em;
+    line-height: 0.95;
   }
 
   /* Typography utility classes */
@@ -370,14 +355,14 @@
 
   /* Modern Buttons */
   .btn-primary {
-    @apply relative overflow-hidden rounded-vj-button px-8 py-4 font-semibold text-white transition-all duration-300;
-    background: var(--vj-gradient-primary);
-    box-shadow: var(--vj-shadow-subtle);
+    @apply relative overflow-hidden rounded-vj-button px-8 py-4 font-extrabold transition-all duration-300;
+    color: hsl(var(--primary-foreground));
+    background: hsl(var(--primary));
   }
 
   .btn-primary:hover {
-    @apply transform scale-105;
-    box-shadow: var(--vj-shadow-innovation);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px -10px rgba(215, 255, 99, 0.45);
   }
 
   .btn-secondary {
@@ -509,3 +494,20 @@
     transform: scale(1) translateY(0);
   }
 }
+
+/* Site-wide details: selection, focus, scrollbar, skip link, route loading bar. */
+::selection{background:#d7ff63;color:#080808}
+:focus-visible{outline:2px solid #d7ff63;outline-offset:3px}
+html{scrollbar-color:rgba(247,245,239,.22) #080808}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:#080808}
+::-webkit-scrollbar-thumb{border:3px solid #080808;border-radius:999px;background:rgba(247,245,239,.22)}
+::-webkit-scrollbar-thumb:hover{background:#d7ff63}
+.skip-link{position:fixed;left:16px;top:12px;z-index:4000;padding:12px 16px;border-radius:999px;background:#d7ff63;color:#080808;font:800 12px 'Manrope',sans-serif;text-decoration:none;transform:translateY(-160%);transition:transform .2s}
+.skip-link:focus{transform:none}
+main:focus{outline:none}
+/* Keeps the footer below the fold while a route or its data loads (it was the page's main layout shift). */
+#main{min-height:100svh}
+.route-loading{position:relative;min-height:100svh}
+.route-loading span{position:absolute;left:0;top:0;height:2px;width:36%;background:#d7ff63;animation:route-loading 1.1s cubic-bezier(.6,0,.3,1) infinite}
+@keyframes route-loading{from{transform:translateX(-100%)}to{transform:translateX(280%)}}

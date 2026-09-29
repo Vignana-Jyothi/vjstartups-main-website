@@ -1,8 +1,9 @@
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { BrandMark } from "@/components/site/SiteChrome";
+import "@/components/design-system/page-hero.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "./UserContext";
-import GalaxyBackground from "@/components/GalaxyBackground";
-import vjLogo from "@/assets/vj-logo.png";
+import { GOOGLE_CLIENT_ID } from "@/config/google";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -39,46 +40,43 @@ const Login = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-4">
-      <GalaxyBackground />
-      <div className="absolute inset-0 bg-gradient-to-br from-vj-surface/95 via-black/90 to-purple-950/40" />
+    <section className="auth">
+      <div className="auth-statement">
+        <span className="auth-meta">VJ Startups / Member access</span>
+        <h1>Sign in.<br /><em>Start building.</em></h1>
+        <p>One Google sign-in opens the whole platform: problems worth solving, ideas in progress, the startup journey and the people building alongside you.</p>
+      </div>
 
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-zinc-700 bg-zinc-900/80 p-8 text-center shadow-2xl backdrop-blur-md">
-        <img
-          src={vjLogo}
-          alt="VJ Startups"
-          className="mx-auto mb-4 h-20 w-auto"
-        />
-        <h1 className="font-playfair text-2xl font-bold text-white md:text-3xl">
-          VJ Startups
-        </h1>
-        <p className="mb-8 mt-2 text-sm text-zinc-400">
-          Join the innovation ecosystem
-        </p>
-
-        <div className="flex justify-center">
+      <div className="auth-panel">
+        <BrandMark />
+        <p className="auth-lede">Join the innovation ecosystem at VNRVJIET.</p>
+        <div className="auth-google">
           <GoogleLogin
             onSuccess={handleGoogleLogin}
             onError={() => {
               console.log("Google OAuth error — check client ID in .env");
               alert("Google login failed. Check that VITE_GOOGLE_CLIENT is set correctly in frontend/.env");
             }}
+            theme="filled_black"
+            shape="pill"
+            size="large"
+            text="continue_with"
           />
         </div>
-
-        <p className="mt-8 text-sm text-zinc-500">
-          By continuing, you agree to our{" "}
-          <Link to="/terms" className="text-vj-accent hover:underline">
-            Terms
-          </Link>{" "}
-          &{" "}
-          <Link to="/privacy" className="text-vj-accent hover:underline">
-            Privacy Policy
-          </Link>
+        <p className="auth-legal">
+          By continuing, you agree to our <Link to="/terms">Terms</Link> and <Link to="/privacy">Privacy Policy</Link>.
         </p>
       </div>
-    </div>
+    </section>
   );
 };
 
-export default Login;
+// The Google Identity script is ~100 KB and only this page needs it, so the provider lives
+// here instead of wrapping the whole app.
+const LoginPage = () => (
+  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+    <Login />
+  </GoogleOAuthProvider>
+);
+
+export default LoginPage;

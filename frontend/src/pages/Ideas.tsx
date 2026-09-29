@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Search, Filter, Users, MessageCircle, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect, type CSSProperties } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Search, Plus } from "lucide-react";
 import IdeaCard from "@/components/IdeaCardCompact";
 import { PageHero } from "@/components/design-system/PageHero";
+import { BigCount } from "@/components/design-system/HeroSignatures";
+import "@/components/design-system/listing.css";
 import axios from "axios";
 import { useUser } from "./UserContext";
 
@@ -21,15 +20,12 @@ const Ideas = () => {
   const [relatedProblem, setRelatedProblem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useUser();
+  const navigate = useNavigate();
   
   // Fetch ideas from backend
   useEffect(() => {
+    // Ideas are public to read; signing in is only needed to post or upvote.
     const fetchIdeas = async () => {
-      if (!user?.email) {
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
       try {
         let endpoint = `${import.meta.env.VITE_API_BASE_URL}/idea-api/ideas`;
@@ -75,7 +71,7 @@ const Ideas = () => {
         // Mark which ideas the current user has already liked and attach problem info
         const updatedIdeas = res.data.map((i: any) => ({
           ...i,
-          likedByUser: i.upvotedBy.includes(user.email),
+          likedByUser: Boolean(user?.email && (i.upvotedBy || []).includes(user.email)),
           relatedProblemId: i.relatedProblemId,
           relatedProblemTitle: i.relatedProblemId && problemMap[i.relatedProblemId]
             ? problemMap[i.relatedProblemId].title
@@ -148,7 +144,10 @@ const Ideas = () => {
   
   // Handle upvoting an idea
   const handleUpvote = async (ideaId: string) => {
-    if (!user?.email) return;
+    if (!user?.email) {
+      navigate("/login");
+      return;
+    }
 
     try {
       const res = await axios.post(
@@ -228,8 +227,13 @@ const Ideas = () => {
       }
     });
   
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStageFilter("");
+  };
+
   return (
-    <div className="page-shell bg-vj-neutral/30">
+    <div className="page-shell lx" style={{ "--lx-accent": "var(--lime)" } as CSSProperties}>
       <PageHero
         eyebrow="Idea validation"
         title={problemFilter && relatedProblem ? `Ideas for: ${relatedProblem.title}` : "Innovative Ideas"}
@@ -238,146 +242,107 @@ const Ideas = () => {
           : "Discover innovative solutions being developed by student entrepreneurs across all problem areas"
         }
         stats={[
-          { value: String(ideas.length), label: "Ideas total" },
           { value: String(filteredIdeas.length), label: "Visible ideas" },
           { value: String(tagsWithCounts.length), label: "Popular tags" },
         ]}
-        backgroundClassName="bg-[hsl(var(--background-secondary))] relative min-h-[420px] md:min-h-[520px]"
+        primaryAction={user ? { label: "Submit an idea", to: "/submit-idea", icon: Plus } : undefined}
+        layout="split"
+        side={<BigCount value={ideas.length} label={ideas.length === 1 ? "Idea taking shape" : "Ideas taking shape"} />}
       />
 
-      <section className="page-section">
-        <div className="section-container space-y-8">
-          {user && (
-            <div className="flex justify-end">
-              <Link to="/submit-idea">
-                <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-0">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Submit Idea
-                </Button>
-              </Link>
+      <section className="lx-section">
+        {(
+          <div className="lx-toolbar">
+            <div className="lx-toolbar-row">
+              <label className="lx-search">
+                <Search size={18} aria-hidden="true" />
+                <input
+                  placeholder="Search ideas"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  aria-label="Search ideas"
+                />
+              </label>
+              <select className="lx-select" value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} aria-label="Filter by stage">
+                <option value="">All stages</option>
+                <option value="1">Idea & concept</option>
+                <option value="2">Research & feasibility</option>
+                <option value="3">Validation</option>
+                <option value="4">Prototype</option>
+                <option value="5">MVP</option>
+                <option value="6">Testing & iteration</option>
+                <option value="7">Launch & early growth</option>
+                <option value="8">Scaling</option>
+                <option value="9">Maturity & exit</option>
+              </select>
+              <select className="lx-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)} aria-label="Sort ideas">
+                <option value="newest">Latest added</option>
+                <option value="upvotes">Highest rated</option>
+                <option value="stage">Most advanced</option>
+                <option value="comments">Most discussed</option>
+              </select>
             </div>
-          )}
 
-          {user && (
-            <div className="section-panel p-6 space-y-4">
-              <div className="flex flex-col lg:flex-row gap-4 items-center">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-vj-muted" size={20} />
-                  <Input
-                    placeholder="Search ideas..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Filter size={16} className="text-vj-muted" />
-                  <select
-                    value={stageFilter}
-                    onChange={(e) => setStageFilter(e.target.value)}
-                    className="bg-background border border-vj-border rounded-lg px-3 py-2 text-sm"
-                  >
-                    <option value="">All Stages</option>
-                    <option value="1">Idea & concept</option>
-                    <option value="2">Research & Feasability</option>
-                    <option value="3">Validation</option>
-                    <option value="4">Prototype</option>
-                    <option value="5">MVP</option>
-                    <option value="6">Testing & Iteration</option>
-                    <option value="7">Launch & Early Growth</option>
-                    <option value="8">Scaling</option>
-                    <option value="9">Maturity & Exit</option>
-                  </select>
-                </div>
-
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-background border border-vj-border rounded-lg px-3 py-2 text-sm"
-                >
-                  <option value="newest">Latest Added</option>
-                  <option value="upvotes">Highest Rated</option>
-                  <option value="stage">Most Advanced</option>
-                  <option value="comments">Most Discussed</option>
-                </select>
+            {(searchTerm || stageFilter) && (
+              <div className="lx-active">
+                <span>
+                  Filtering
+                  {searchTerm && <> / search <b>"{searchTerm}"</b></>}
+                  {stageFilter && <> / stage <b>{stageFilter}</b></>}
+                </span>
+                <button className="lx-textbtn" onClick={clearFilters}>Clear all ×</button>
               </div>
+            )}
 
-              {tagsWithCounts.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-vj-border">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm text-vj-muted">Popular Tags:</span>
-                    {tagsWithCounts.slice(0, showAllTags ? tagsWithCounts.length : 20).map(([tag, count]) => (
-                      <Badge key={tag} className="bg-idea-light text-idea-primary hover:bg-idea-light/80 cursor-pointer">
-                        {tag} ({count})
-                      </Badge>
-                    ))}
-                    {tagsWithCounts.length > 20 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs text-idea-primary hover:text-idea-primary/80"
-                        onClick={() => setShowAllTags(!showAllTags)}
-                      >
-                        {showAllTags ? "Show Less" : `Show All (${tagsWithCounts.length})`}
-                      </Button>
-                    )}
-                  </div>
+            {tagsWithCounts.length > 0 && (
+              <div>
+                <div className="lx-tags-head">
+                  <span>Popular tags</span>
+                  {tagsWithCounts.length > 20 && (
+                    <button className="lx-textbtn" onClick={() => setShowAllTags(!showAllTags)}>
+                      {showAllTags ? "Show less" : `Show all (${tagsWithCounts.length})`}
+                    </button>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
-
-          {!user ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-gradient-to-br from-green-50 via-white to-green-100 dark:from-green-950/30 dark:via-gray-900 dark:to-green-900/30 rounded-xl shadow-inner border border-green-200 dark:border-green-800/50">
-              <h2 className="text-2xl font-bold text-green-600 dark:text-green-400 mb-3">Join the Community 🚀</h2>
-              <p className="text-vj-muted max-w-md text-center mb-6">
-                You need to be logged in to explore innovative ideas, upvote solutions, and submit your own creative concepts.
-                Sign in and start building the future today!
-              </p>
-              <Link to="/login">
-                <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 text-white px-6 py-2 rounded-lg shadow-lg transition-transform hover:scale-105">
-                  Login to Continue
-                </Button>
-              </Link>
-            </div>
-          ) : loading ? (
-            <div className="flex justify-center py-16">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-idea-primary"></div>
-            </div>
-          ) : filteredIdeas.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-vj-muted text-lg">
-                {problemFilter ? "No ideas found for this problem yet." : "No ideas match your current filters."}
-              </p>
-              <div className="flex gap-4 justify-center mt-4">
-                {problemFilter && (
-                  <Button className="btn-primary" onClick={() => {}}>
-                    Submit First Idea
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  onClick={() => { setSearchTerm(""); setStageFilter(""); }}
-                >
-                  Clear Filters
-                </Button>
+                <div className={`lx-tags${showAllTags ? " is-all" : ""}`}>
+                  {tagsWithCounts.slice(0, showAllTags ? tagsWithCounts.length : 20).map(([tag, count]) => (
+                    <span key={tag} className="lx-tag is-static">{tag}<small>{count}</small></span>
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredIdeas.map((idea) => (
-                <div key={idea.ideaId} id={`idea-${idea.ideaId}`}>
-                  <IdeaCard
-                    idea={idea}
-                    onUpvote={handleUpvote}
-                    onStageUpdate={handleStageUpdate}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="lx-loading">Loading ideas</div>
+        ) : filteredIdeas.length === 0 ? (
+          <div className="lx-empty">
+            <strong>{problemFilter ? "No ideas for this problem yet." : ideas.length ? "No matches." : "No ideas yet."}</strong>
+            {problemFilter || !ideas.length ? (
+              <Link to={user ? "/submit-idea" : "/login"} className="lx-textbtn">Submit the first idea ↗</Link>
+            ) : (
+              <button className="lx-textbtn" onClick={clearFilters}>Clear filters</button>
+            )}
+          </div>
+        ) : (
+          <div className="lx-grid">
+            {filteredIdeas.map((idea) => (
+              <div key={idea.ideaId} id={`idea-${idea.ideaId}`} className="flex">
+                <IdeaCard idea={idea} onUpvote={handleUpvote} onStageUpdate={handleStageUpdate} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!user && (
+          <div className="lx-gate">
+            <span>Join in</span>
+            <h2>Have a way <em>to solve one?</em></h2>
+            <p>Sign in with your college Google account to post your idea, back the ones you believe in and follow how they move through the stages.</p>
+            <Link to="/login" className="lx-cta">Sign in to post ↗</Link>
+          </div>
+        )}
       </section>
     </div>
   );

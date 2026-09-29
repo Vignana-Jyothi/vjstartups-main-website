@@ -1,0 +1,120 @@
+/* Shared site chrome (nav + footer) in the landing's design language. */
+:root{--ink:#070707;--paper:#f0eee8;--white:#f7f5ef;--pink:#ff4aa7;--lime:#d7ff63;--violet:#9c88ff;--sans:'Manrope',sans-serif;--mono:'DM Mono',monospace}
+
+.magnetic{display:inline-flex;align-items:center;gap:4px;transform:translate3d(var(--tx,0px),var(--ty,0px),0);transition:transform .18s ease}
+.arrow{display:inline-block;margin-left:3px}
+
+/* Nav */
+:root{--sc-nav-h:76px}
+@media(max-width:700px){:root{--sc-nav-h:68px}}
+/* No hard line under the header: at the very top it is transparent over the page's own header
+   (which extends up beneath it); once scrolled it is a blurred bar with a soft shadow. */
+.sc-nav{position:sticky;top:0;z-index:100;padding:0 30px;background:rgba(7,7,7,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 14px 36px -22px rgba(0,0,0,.95);color:var(--white);font-family:var(--sans);transition:transform .45s cubic-bezier(.2,.7,.2,1),background .4s ease,box-shadow .4s ease}
+.sc-nav.is-top:not(.is-overlay){background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.sc-nav.is-overlay{position:fixed;left:0;right:0;background:linear-gradient(180deg,rgba(7,7,7,.78),transparent);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+/* Landing: over the white hero or a light scene the header drops its dark band and turns to ink. */
+:is(.vj-landing[data-hero-light="1"],.vj-landing[data-top="paper"],.vj-landing[data-top="pink"]) .sc-nav.is-overlay{background:transparent;color:#080808}
+:is(.vj-landing[data-hero-light="1"],.vj-landing[data-top="paper"],.vj-landing[data-top="pink"]) .sc-nav.is-overlay .sc-brand{color:#080808;--logo-rocket:#080808}
+:is(.vj-landing[data-hero-light="1"],.vj-landing[data-top="paper"],.vj-landing[data-top="pink"]) .sc-nav.is-overlay .sc-links a{color:rgba(8,8,8,.58)}
+:is(.vj-landing[data-hero-light="1"],.vj-landing[data-top="paper"],.vj-landing[data-top="pink"]) .sc-nav.is-overlay .sc-links a:hover{color:#080808}
+:is(.vj-landing[data-hero-light="1"],.vj-landing[data-top="paper"],.vj-landing[data-top="pink"]) .sc-nav.is-overlay .sc-right{color:rgba(8,8,8,.42)}
+:is(.vj-landing[data-hero-light="1"],.vj-landing[data-top="paper"],.vj-landing[data-top="pink"]) .sc-nav.is-overlay .sc-text{color:rgba(8,8,8,.7)}
+:is(.vj-landing[data-hero-light="1"],.vj-landing[data-top="paper"],.vj-landing[data-top="pink"]) .sc-nav.is-overlay .sc-menu span{background:#080808}
+.sc-nav .sc-brand,.sc-nav .sc-links a,.sc-nav .sc-right,.sc-nav .sc-text{transition:color .4s ease}
+.sc-nav.is-hidden{transform:translateY(-100%)}
+.sc-nav-inner{max-width:1600px;height:76px;margin:auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+.sc-nav a{text-decoration:none}
+.sc-brand,:is(.sc-nav,.sc-footer) .sc-brand{display:inline-flex;align-items:center;gap:10px;color:var(--white);font-family:var(--sans);font-size:13px;font-weight:800;letter-spacing:-.04em;text-decoration:none}
+.sc-brand .sc-logo{display:block;flex:none;width:auto;height:30px;transition:color .4s ease}
+.sc-brand .logo-rocket{transition:fill .4s ease}
+.sc-brand .sc-wordmark{font-size:17px;font-weight:800;letter-spacing:-.035em}
+.sc-links{display:flex;gap:23px;font:11px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.sc-nav .sc-links a{position:relative;padding:6px 0;color:rgba(255,255,255,.53);transition:color .2s}
+.sc-nav .sc-links a:hover,.sc-nav .sc-links a.active{color:#fff}
+.sc-nav .sc-links a.active:after{content:"";position:absolute;left:50%;bottom:-3px;width:4px;height:4px;border-radius:50%;background:var(--lime);transform:translateX(-50%)}
+.sc-right{justify-self:end;display:flex;align-items:center;gap:17px;color:rgba(255,255,255,.28);font:11px var(--mono);letter-spacing:.1em}
+.sc-right .sc-text{padding:0;border:0;background:none;color:rgba(255,255,255,.62);font:inherit;letter-spacing:inherit;cursor:pointer}
+.sc-right .sc-text:hover{color:#fff}
+.sc-user{display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,.82)}
+.sc-nav .sc-user img{display:block;width:22px;height:22px;max-width:none;border-radius:50%;object-fit:cover;box-shadow:0 0 0 1px rgba(215,255,99,.4)}
+.sc-nav .sc-pill{padding:10px 15px;border-radius:999px;background:var(--lime);color:#080808;font:800 12px var(--sans);letter-spacing:0}
+.sc-menu{display:none;padding:5px;border:0;background:none;cursor:pointer}
+.sc-menu span{display:block;width:22px;height:1px;background:#fff;transition:transform .25s}
+.sc-menu[aria-expanded="true"] span:first-child{transform:translateY(3px) rotate(45deg)}
+.sc-menu[aria-expanded="true"] span:last-child{transform:translateY(-3px) rotate(-45deg)}
+
+.sc-sheet{position:fixed;inset:0;z-index:99;display:grid;align-content:space-between;padding:110px 18px 28px;background:#080808;font-family:var(--sans)}
+.sc-sheet nav{display:grid;gap:8px}
+.sc-sheet nav a{color:var(--white);font-size:42px;line-height:.95;letter-spacing:-.07em;font-weight:800;text-decoration:none}
+.sc-sheet nav a:hover,.sc-sheet nav a.active{color:var(--lime)}
+.sc-sheet-foot{display:flex;justify-content:space-between;color:rgba(255,255,255,.4);font:11px var(--mono);letter-spacing:.12em}
+.sc-sheet .sc-sheet-foot a,.sc-sheet .sc-sheet-foot button{padding:0;border:0;background:none;color:var(--lime);font:inherit;letter-spacing:inherit;text-decoration:none;cursor:pointer}
+
+@media(max-width:1050px){.sc-links{gap:14px}.sc-place,.sc-user>span{display:none}}
+@media(max-width:700px){
+  .sc-nav{padding:0 18px}
+  .sc-nav-inner{height:68px;grid-template-columns:1fr auto}
+  .sc-links,.sc-right{display:none}
+  .sc-menu{display:grid;gap:5px}
+}
+
+/* Footer */
+.sc-footer{position:relative;overflow:hidden;padding:78px 7vw 25px;background:#080808;color:#fff;font-family:var(--sans)}
+[data-tone].sc-footer{background:none}
+.sc-footer a{text-decoration:none}
+.sc-footer-word{position:relative;z-index:4;display:flex;justify-content:center;align-items:baseline;gap:2vw;font-size:clamp(100px,17vw,290px);line-height:.64;letter-spacing:-.14em;font-weight:800;text-align:center}
+.sc-footer-word i{font-style:normal;color:var(--lime)}
+.sc-footer-orbits{position:absolute;z-index:1;left:50%;top:5%;width:65vw;height:46vw;max-width:1000px;max-height:710px;opacity:.75;transform:translateX(-50%) rotate(-11deg);pointer-events:none}
+.sc-footer-orbits span{position:absolute;inset:0;border:1px solid rgba(255,255,255,.08);border-radius:53% 47% 43% 57%/46% 54% 46% 54%}
+.sc-footer-orbits span:nth-child(2){inset:10%;border-color:rgba(215,255,99,.14);transform:rotate(-24deg)}
+.sc-footer-orbits span:nth-child(3){inset:20%;border-color:rgba(255,74,167,.13);transform:rotate(31deg)}
+.sc-footer-grid{position:relative;z-index:4;max-width:1050px;margin:100px auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:50px;padding-bottom:50px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sc-footer-brand{grid-column:1/-1;display:grid;justify-items:center;margin-bottom:8px;text-align:center}
+.sc-footer-brand p{max-width:280px;margin:14px 0 0;color:rgba(255,255,255,.62);font-size:14px;line-height:1.5}
+.sc-footer-grid>div:not(.sc-footer-brand){display:grid;justify-items:center;align-content:start;gap:10px;text-align:center}
+.sc-footer-grid b{color:rgba(255,255,255,.52);font:12px var(--mono);letter-spacing:.12em}
+.sc-footer .sc-footer-grid a{color:rgba(255,255,255,.72);font-size:14px;transition:color .2s}
+.sc-footer .sc-footer-grid a:hover{color:var(--lime)}
+.sc-footer-grid span{color:rgba(255,255,255,.6);font-size:14px}
+.sc-footer-bottom{position:relative;z-index:4;display:flex;justify-content:space-between;padding-top:20px;color:rgba(255,255,255,.52);font:12px var(--mono)}
+.sc-footer .sc-footer-bottom a{color:inherit}
+.sc-footer .sc-footer-bottom a:hover{color:#fff}
+.sc-footer-legal{display:flex;gap:18px}
+@media(max-width:700px){
+  .sc-footer{padding:55px 18px 22px}
+  .sc-footer-word{gap:3vw;font-size:17vw}
+  .sc-footer-orbits{top:15%;width:118vw;height:86vw}
+  .sc-footer-grid{grid-template-columns:1fr 1fr;gap:30px 18px;margin-top:75px}
+  .sc-footer-bottom{flex-direction:column;gap:9px}
+}
+/* Tablets: the full link row, sign-in and "Start building" no longer fit (the button broke
+   onto two lines), so the links move into the menu and the main button stays. */
+@media(min-width:701px) and (max-width:900px){
+  .sc-nav-inner{grid-template-columns:1fr auto auto;gap:20px}
+  .sc-links{display:none}
+  .sc-right>:not(.sc-pill){display:none}
+  .sc-pill{white-space:nowrap}
+  .sc-menu{display:grid;gap:5px}
+}
+/* Touch screens: small text controls keep their look but get a finger-sized hit area. */
+@media(pointer:coarse){
+  .sc-menu{padding:18px 11px;margin:-18px -11px}
+  .lx-textbtn,.ph-back{position:relative}
+  .lx-textbtn:after,.ph-back:after{content:"";position:absolute;inset:-14px -8px}
+  .sc-footer .sc-footer-grid>div:not(.sc-footer-brand){gap:2px}
+  .sc-footer .sc-footer-grid a{padding:7px 10px}
+}
+/* Scrolled header: its dark glass fades out below the bar instead of ending in a straight edge
+   across the page (that edge read as a hard cut over lighter content). */
+.sc-nav:not(.is-overlay){background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.sc-nav:not(.is-overlay):before{content:"";position:absolute;inset:0 0 -40px;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(7,7,7,.9),rgba(7,7,7,.62) 58%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);-webkit-mask-image:linear-gradient(180deg,#000 50%,transparent);mask-image:linear-gradient(180deg,#000 50%,transparent);transition:opacity .4s}
+.sc-nav.is-top:not(.is-overlay):before{opacity:0}
+/* Touch screens wide enough for the inline menu (iPad landscape): finger-sized targets for the
+   header links, same look. */
+@media(pointer:coarse){
+  .sc-nav .sc-links a,.sc-nav .sc-text{position:relative}
+  .sc-nav .sc-links a:before,.sc-nav .sc-text:before{content:"";position:absolute;inset:-14px -8px}
+}
+/* Admins get two extra header links (announcements, admin panel); the place line gives way to
+   them below wide screens instead of running into "Admin panel". */
+@media(max-width:1500px){.sc-nav:has(a[href="/announcements/new"]) .sc-place{display:none}}
