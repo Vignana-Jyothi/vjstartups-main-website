@@ -2,9 +2,16 @@
 .vj-landing .network-v16{--net-pad:7vw}
 
 /* The weave runs edge to edge and dissolves into both sides instead of stopping inside a
-   1240px frame, which read as a box on wide screens. */
-.vj-landing .network-v16 .network-v16-map{left:calc(var(--net-pad) * -1);right:calc(var(--net-pad) * -1);max-width:none}
-.vj-landing .network-v16 .network-v16-svg{-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+   1240px frame, which read as a box on wide screens.
+   The pinned frame itself used to sit inside the section's side padding with overflow hidden,
+   so the strands were sliced off in straight lines a little way in from each edge: the "box".
+   Now the frame is full-bleed (the padding moves inside it) and the weave fades out on all four
+   sides through a mask, so it never ends on an edge. */
+.vj-landing section.network-v16{padding:0}
+.vj-landing .network-v16 .network-v16-sticky{padding-left:var(--net-pad);padding-right:var(--net-pad)}
+.vj-landing .network-v16 .network-v16-map{left:0;right:0;max-width:none}
+.vj-landing .network-v16 .network-v16-bottom{left:var(--net-pad);right:var(--net-pad)}
+.vj-landing .network-v16 .network-v16-svg{-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent),linear-gradient(180deg,transparent,#000 14%,#000 86%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent),linear-gradient(180deg,transparent,#000 14%,#000 86%,transparent);mask-composite:intersect}
 .vj-landing .network-v16 .network-v16-glow{width:86%}
 /* V18's vertical centre axis ran down through the stats row; the drawn weave carries the section now. */
 .vj-landing .network-v16 .network-v16-map:after{display:none}
@@ -17,7 +24,7 @@
 .vj-landing .network-v16 :is(.network-v16-line,.network-v16-blur){stroke-dasharray:1 1;stroke-dashoffset:calc(1 - var(--weave-draw,1))}
 .vj-landing .network-v16 :is(.network-v16-ribbon,.network-v16-ribbon-thin,.network-v16-dotted){stroke-opacity:var(--weave-draw,1)}
 .vj-landing .network-v16 .network-v16-center-thread{stroke-opacity:calc((1 - var(--network-open)) * var(--weave-draw,1))}
-/* "Keep going" peaks while the weave opens and is gone before the panel lands on it. */
+/* The line in the opening peaks while the weave opens and is gone before the panel lands on it. */
 .vj-landing .network-v16 .network-v16-opening{opacity:calc((.18 + var(--network-open) * .82) * (1 - var(--network-open)) * var(--weave-draw,1))}
 
 @media(max-width:700px){

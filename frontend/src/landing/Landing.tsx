@@ -190,7 +190,7 @@ function Intro() {
 
       <div className="intro-v16-top">
         <span>VJ STARTUPS / HYDERABAD</span>
-        <span>SYSTEM / 00 — INITIALISING</span>
+        <span>VNRVJIET / STUDENT FOUNDERS</span>
       </div>
 
       <div className="intro-v16-side intro-side-left">
@@ -413,11 +413,11 @@ function Hero() {
       </div>
 
       <div className="hero-v12-side hero-side-left">00 — QUESTION</div>
-      <div className="hero-v12-side hero-side-right">MOVE YOUR CURSOR</div>
+      <div className="hero-v12-side hero-side-right">FIVE STARTUPS A YEAR</div>
 
       <div className="hero-v12-bottom">
-        <span>SCROLL TO BEGIN ↓</span>
-        <span>VJ / 00 → 01</span>
+        <span>A STUDENT STARTUP COMMUNITY AT VNRVJIET</span>
+        <span>PROBLEMS → IDEAS → STARTUPS</span>
       </div>
 
       <div className="opening-ribbon" ref={ribbon} aria-hidden="true">
@@ -448,13 +448,13 @@ function Morph() {
   const wordsList=["PROBLEM","EVIDENCE","BUILD","IMPACT"];
   return <section className="morph-v13 light" data-tone="paper" ref={ref}>
     <div className="morph-v13-sticky">
-      <div className="morph-v13-top"><span>01 / FLUID → FORM</span><span>AN IDEA HAS NO SHAPE.</span></div>
+      <div className="morph-v13-top"><span>01 / HOW A VENTURE FORMS</span><span>AN IDEA HAS NO SHAPE.</span></div>
       <div className="morph-v13-intro"><span className="chapter-label dark">FROM A THOUGHT</span><h2>MAKE IT<br/><i>REAL.</i></h2></div>
       <div className="morph-v13-stage">
         <div className="morph-v13-ripple r1"/><div className="morph-v13-ripple r2"/><div className="morph-v13-ripple r3"/>
         {wordsList.map((word,i)=><div className="morph-v13-word" key={word} ref={n=>{words.current[i]=n}}><span className="morph-v13-liquid">{word}</span><span className="morph-v13-clean">{word}</span></div>)}
       </div>
-      <div className="morph-v13-bottom"><span>SCROLL IT INTO FOCUS.</span><span>VJ / 01</span></div>
+      <div className="morph-v13-bottom"><span>THE PROBLEM COMES FIRST. THE IDEA FOLLOWS.</span><span>VJ / 01</span></div>
     </div>
   </section>;
 }
@@ -556,7 +556,7 @@ function Sphere() {
   });
   return <section className="sphere" data-tone="ink" ref={ref}>
     <div className="sphere-sticky">
-      <div className="sphere-top"><span>03 / THREE LENSES</span><span>SCROLL — THE SYSTEM ROTATES WITH YOU</span></div>
+      <div className="sphere-top"><span>03 / THREE LENSES</span><span>ASKED OF EVERY VENTURE</span></div>
       <div className="sphere-background" ref={bg}>
         <svg viewBox="0 0 1000 700" preserveAspectRatio="none" aria-hidden="true">
           <defs>
@@ -637,7 +637,7 @@ function WorkField() {
     const leave=()=>{target.x=0;target.y=0;kick()};
     el.addEventListener("pointermove",move,{passive:true});el.addEventListener("pointerleave",leave);
     return()=>{el.removeEventListener("pointermove",move);el.removeEventListener("pointerleave",leave);cancelAnimationFrame(raf)};
-  },[]);return <section className="work-field light" data-tone="paper" ref={ref}><div className="work-top"><span>05 / THE WORK</span><span>THE MESSY MIDDLE</span></div><div className="work-word">BUILD</div>{WORK_SLOTS.map(([slot,depth,img],i)=>{const w=work?.[i];return <div key={slot} className={`work-pic ${slot}${w?" is-card":""}`} data-depth={depth}>{w?<Link to={w.href!} className={`work-card is-${w.kind}`}><span>{w.kind==="problem"?"Problem":"Idea"}<small>{w.kind==="problem"?" / posted by a student":" / answering a problem"}</small></span><b>{w.title}</b><em>Open ↗</em></Link>:<img src={img} alt="" loading="lazy" decoding="async"/>}</div>})}<span className="work-note wn-a" data-depth="25">question → evidence</span><span className="work-note wn-b" data-depth="-18">prototype / 04</span><span className="work-note wn-c" data-depth="33">iteration / 07</span><div className="work-rule"/><div className="work-caption"><span>THE THING THAT LOOKS LIKE A STARTUP<br/>IS USUALLY A COLLECTION OF ITERATIONS.</span><span>{work?"VJ / WORK LOG / LIVE FROM THE PLATFORM":"VJ / WORK LOG"}</span></div></section>;
+  },[]);return <section className="work-field light" data-tone="paper" ref={ref}><div className="work-top"><span>05 / THE WORK</span><span>{work?"POSTED BY STUDENTS":"WORK IN PROGRESS"}</span></div><div className="work-word">BUILD</div>{WORK_SLOTS.map(([slot,depth,img],i)=>{const w=work?.[i];return <div key={slot} className={`work-pic ${slot}${w?" is-card":""}`} data-depth={depth}>{w?<Link to={w.href!} className={`work-card is-${w.kind}`}><span>{w.kind==="problem"?"Problem":"Idea"}<small>{w.kind==="problem"?" / posted by a student":" / answering a problem"}</small></span><b>{w.title}</b><em>Open ↗</em></Link>:<img src={img} alt="" loading="lazy" decoding="async"/>}</div>})}<span className="work-note wn-a" data-depth="25">question → evidence</span><span className="work-note wn-b" data-depth="-18">prototype / 04</span><span className="work-note wn-c" data-depth="33">iteration / 07</span><div className="work-rule"/><div className="work-caption"><span>THE THING THAT LOOKS LIKE A STARTUP<br/>IS USUALLY A COLLECTION OF ITERATIONS.</span><span>{work?"VJ / WORK LOG / LIVE FROM THE PLATFORM":"VJ / WORK LOG"}</span></div></section>;
 }
 
 function Ventures() {
@@ -793,7 +793,7 @@ function Network() {
           </svg>
 
           <div className="network-v16-opening">
-            <span>KEEP GOING</span>
+            <span>NOBODY BUILDS ALONE</span>
             <i/>
           </div>
 
@@ -921,9 +921,9 @@ function StartHere(){
   ];
   return <section className="start-here dark" data-tone="ink" id="start-here">
     <Reveal className="start-here-head">
-      <span className="chapter-label">START HERE</span>
+      <span className="chapter-label">FOR EVERY STUDENT</span>
       <h2>WHAT&apos;S ON.<br/><i>WHERE TO BEGIN.</i></h2>
-      <p>What's happening, the support you can get, and your first step. The whole story is further down.</p>
+      <p>What's happening on campus, the support you can get, and your first step.</p>
     </Reveal>
     <div className="start-here-grid" data-reveal>
       <div className="start-col">
