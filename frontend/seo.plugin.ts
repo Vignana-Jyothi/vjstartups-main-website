@@ -1,8 +1,9 @@
 import type { Plugin } from "vite";
-import { startupPrograms } from "./src/data/startupPrograms";
+import builtInContent from "./src/data/builtInContent.json";
 
 // Generates sitemap.xml and robots.txt at build time, so search engines find every public page.
-// Program pages come from the same data the site renders, so the sitemap can't drift from it.
+// Program pages come from the built-in copy of the site content; programs added later at /manage
+// are found through the links on /programs.
 // The site's address comes from VITE_SITE_URL (default: the live site).
 const PUBLIC_PAGES = [
   "/",
@@ -27,7 +28,7 @@ export function seoFiles(siteUrl = process.env.VITE_SITE_URL || "https://www.vjs
     name: "vj-seo-files",
     apply: "build",
     generateBundle() {
-      const paths = [...PUBLIC_PAGES, ...startupPrograms.map((p) => `/programs/${p.id}`)];
+      const paths = [...PUBLIC_PAGES, ...builtInContent.programs.map((p) => `/programs/${p.id}`)];
       const today = new Date().toISOString().slice(0, 10);
       const urls = paths
         .map((p) => `  <url><loc>${escapeXml(base + p)}</loc><lastmod>${today}</lastmod></url>`)
@@ -40,7 +41,7 @@ export function seoFiles(siteUrl = process.env.VITE_SITE_URL || "https://www.vjs
       this.emitFile({
         type: "asset",
         fileName: "robots.txt",
-        source: `User-agent: *\nAllow: /\nDisallow: /submit-problem\nDisallow: /submit-idea\nDisallow: /startup-form\nDisallow: /update-problem/\nDisallow: /stories/new\nDisallow: /announcements/new\n\nSitemap: ${base}/sitemap.xml\n`,
+        source: `User-agent: *\nAllow: /\nDisallow: /submit-problem\nDisallow: /submit-idea\nDisallow: /startup-form\nDisallow: /update-problem/\nDisallow: /stories/new\nDisallow: /announcements/new\nDisallow: /manage\n\nSitemap: ${base}/sitemap.xml\n`,
       });
     },
   };

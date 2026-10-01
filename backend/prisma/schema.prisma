@@ -719,6 +719,23 @@ model SuccessStory {
   @@map("success_stories")
 }
 
+// The site's editable content: programs, funded ventures, wings, the club's text and numbers,
+// and the home page's Signals. One row per item; config/siteContent.js defines each kind's shape.
+model SiteContent {
+  kind           String
+  slug           String
+  data           Json     @default("{}")
+  sortOrder      Int      @default(0)
+  isPublished    Boolean  @default(true)
+  updatedByName  String   @default("")
+  updatedByEmail String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@id([kind, slug])
+  @@map("site_content")
+}
+
 // ============================================================================
 // NOTIFICATIONS
 // ============================================================================

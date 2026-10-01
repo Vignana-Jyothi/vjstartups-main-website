@@ -4,7 +4,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { formatStoryDate, Participant } from "@/data/successStories";
 import { canWriteStories, hideStory, useStory } from "@/data/storiesApi";
 import { useUser } from "./UserContext";
-import { startupPrograms } from "@/data/startupPrograms";
+import { useSiteContent } from "@/data/siteContent";
 import { usePdfAvailable } from "@/hooks/usePdfAvailable";
 import { PageHero } from "@/components/design-system/PageHero";
 import "@/components/design-system/listing.css";
@@ -22,7 +22,7 @@ function participantLinks(p: Participant) {
 const SuccessStoryDetail = () => {
   const { programId, storyId } = useParams();
   const { story, status } = useStory(storyId);
-  const program = startupPrograms.find((p) => p.id === (story?.programId ?? programId));
+  const program = useSiteContent().programs.find((p) => p.id === (story?.programId ?? programId));
   const pdfLive = usePdfAvailable(story?.pdfUrl);
   const { user } = useUser();
   const navigate = useNavigate();

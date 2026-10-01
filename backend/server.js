@@ -59,6 +59,7 @@ app.use('/announcements-api', publicApi, require('./APIs/announcements-api'));
 app.use('/story-api', require('./APIs/stories-api'));
 app.use('/leaderboard-api', require('./APIs/leaderboard-api'));
 app.use('/stats-api', require('./APIs/stats-api'));
+app.use('/content-api', require('./APIs/content-api'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 

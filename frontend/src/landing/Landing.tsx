@@ -3,8 +3,7 @@ import { Link } from "react-router-dom";
 import Lenis from "lenis";
 import { useUser } from "@/pages/UserContext";
 import { useSiteStats } from "@/data/siteStats";
-import { FUNDED_VENTURES } from "@/data/ventures";
-import { startupPrograms, type StartupProgram } from "@/data/startupPrograms";
+import { siteContentNow, useSiteContent, type Venture } from "@/data/siteContent";
 import { successStories } from "@/data/successStories";
 import { getIdeaNavigationSlug } from "@/utils/slugUtils";
 import { isReadableTitle } from "@/utils/readableTitle";
@@ -63,7 +62,12 @@ const HUBS = [
   ["Startups", "SCALE", "Take evidence, make it traction, and keep going.", IMG.founders, "/startups"],
 ] as const;
 
-const VENTURES = FUNDED_VENTURES.map((v, i) => [String(i + 1).padStart(2, "0"), v.sector, v.name, v.description, IMG[v.photo]] as const);
+// Funded ventures come from the site's content (edited at /manage). A venture's own photo wins;
+// the first three have stock stand-ins until theirs arrive (a file named after the venture's id
+// in src/assets/photos also works); any other falls back to the founders photo.
+const VENTURE_STOCK: Record<string, string> = { atlast: IMG.energy, salcit: IMG.health, alltronics: IMG.iot };
+const ventureImage = (v: Venture) => v.imageUrl || localPhoto(v.id) || VENTURE_STOCK[v.id] || IMG.founders;
+const ventureNames = () => siteContentNow().ventures.map((v) => v.name);
 
 function Reveal({ children, className="" }: { children: ReactNode; className?: string }) { return <div data-reveal className={className}>{children}</div>; }
 
@@ -280,13 +284,14 @@ function Hero() {
   const { user }=useUser();
   const news=useLatestAnnouncement();
   const stats=useSiteStats();
+  const {ventures}=useSiteContent();
   // Counted from the database (never typed in); zero or unknown figures are left out.
   const ribbonRows:[number|undefined,string,string][]=[
     [stats?.problems,"PROBLEM POSTED","PROBLEMS POSTED"],
     [stats?.ideas,"IDEA","IDEAS"],
     [stats?.builders,"BUILDER","BUILDERS"],
     [stats?.startups,"STARTUP","STARTUPS"],
-    [FUNDED_VENTURES.length,"FUNDED VENTURE","FUNDED VENTURES"],
+    [ventures.length,"FUNDED VENTURE","FUNDED VENTURES"],
   ];
   const ribbonStats=ribbonRows
     .filter((row):row is [number,string,string]=>typeof row[0]==="number"&&row[0]>0)
@@ -617,7 +622,7 @@ function useRealWork(ref:RefObject<HTMLElement>){
     const io=new IntersectionObserver(([entry])=>{
       if(!entry.isIntersecting)return;
       io.disconnect();
-      loadNetworkData(API_BASE,VENTURE_NAMES).then(data=>{
+      loadNetworkData(API_BASE,ventureNames()).then(data=>{
         if(cancelled||!data)return;
         const pick=(kind:NetItem["kind"])=>data.items.filter(i=>i.kind===kind&&i.readable&&i.href&&i.title.length<=90).slice(0,2);
         const problems=pick("problem"),ideas=pick("idea");
@@ -710,11 +715,23 @@ function OneStudent(){
   </section>;
 }
 
-function Ventures() {
-  const [active,setActive]=useState(0), v=VENTURES[active];return <section className="ventures light" data-tone="paper" id="ventures"><Reveal className="ventures-head"><span className="chapter-label dark">08 / PROOF</span><h2>IDEAS THAT<br/><i>MOVED.</i></h2><p>Selected ventures and technologies already moving through the ecosystem.</p></Reveal><div className="venture-stage" data-reveal><div className="venture-menu">{VENTURES.map((x,i)=><button key={x[0]} className={i===active?"active":""} onClick={()=>setActive(i)}><span>{x[0]}</span><div><small>{x[1]}</small><b>{x[2]}</b></div><Arrow/></button>)}</div><div className="venture-image"><img src={v[4]} alt="" key={v[0]} loading="lazy" decoding="async"/><div><span>{v[1]}</span><span>{v[0]} / 03</span></div></div><div className="venture-copy"><span className="kicker dark">{v[1]}</span><h3>{v[2]}</h3><p>{v[3]}</p><Link to="/startups">Explore the build <Arrow/></Link></div></div></section>;
+// Awards and funding milestones are edited at /manage; the funded-startup count is the ventures list.
+function Signals() {
+  const {signals,ventures}=useSiteContent();
+  return <section className="recognition dark" data-tone="ink"><Reveal><span className="chapter-label">11 / SIGNALS</span><h2>PROOF IS A<br/><i>MILESTONE.</i></h2><p>Recognition and funding are signals along the journey, not the destination.</p></Reveal><div className="recognition-list">
+    {signals.map(s=><div key={s.id}><span>{s.value}</span><b>{s.title}</b>{s.note&&<small>{s.note}</small>}</div>)}
+    {ventures.length>0&&<div><span>{String(ventures.length).padStart(2,"0")}</span><b>Funded startups</b><small>Ventures that moved beyond the idea stage</small></div>}
+  </div></section>;
 }
 
-const VENTURE_NAMES=VENTURES.map(v=>v[2]);
+function Ventures() {
+  const {ventures}=useSiteContent();
+  const VENTURES=ventures.map((x,i)=>[String(i+1).padStart(2,"0"),x.sector,x.name,x.description,ventureImage(x)] as const);
+  const [active,setActive]=useState(0), v=VENTURES[active]??VENTURES[0];
+  if(!v)return null;
+  return <section className="ventures light" data-tone="paper" id="ventures"><Reveal className="ventures-head"><span className="chapter-label dark">08 / PROOF</span><h2>IDEAS THAT<br/><i>MOVED.</i></h2><p>Selected ventures and technologies already moving through the ecosystem.</p></Reveal><div className="venture-stage" data-reveal><div className="venture-menu">{VENTURES.map((x,i)=><button key={x[0]} className={i===active?"active":""} onClick={()=>setActive(i)}><span>{x[0]}</span><div><small>{x[1]}</small><b>{x[2]}</b></div><Arrow/></button>)}</div><div className="venture-image"><img src={v[4]} alt="" key={v[0]} loading="lazy" decoding="async"/><div><span>{v[1]}</span><span>{v[0]} / {String(VENTURES.length).padStart(2,"0")}</span></div></div><div className="venture-copy"><span className="kicker dark">{v[1]}</span><h3>{v[2]}</h3><p>{v[3]}</p><Link to="/startups">Explore the build <Arrow/></Link></div></div></section>;
+}
+
 // Where each force sits on the weave: [strand, position along it].
 const FORCE_PINS:[("upperLine"|"upperRibbon"|"lowerLine"|"lowerRibbon"),number][]=[
   ["upperLine",.1],    // 01 Students
@@ -927,7 +944,7 @@ function usePlatformRecord(ref:RefObject<HTMLElement>){
     const io=new IntersectionObserver(([entry])=>{
       if(!entry.isIntersecting)return;
       io.disconnect();
-      loadNetworkData(API_BASE,VENTURE_NAMES).then(data=>{
+      loadNetworkData(API_BASE,ventureNames()).then(data=>{
         if(cancelled)return;
         if(!data){setRecord(false);return;}
         const dated=data.items.filter(i=>i.kind!=="venture"&&i.createdAt&&i.href);
@@ -950,7 +967,6 @@ const recordDate=(iso:string)=>new Date(iso).toLocaleDateString("en-IN",{day:"nu
 // the story to find it. What's happening (real posts), what support exists (programs running
 // now), and the first step. The story continues below for anyone who wants it.
 type StartPost={key:string;kind:"problem"|"idea";title:string;href:string;date:string};
-const SUPPORT_IDS=["startup-challenge-2","mentorship-program-1","innovation-internship-1","monthly-connect-4"];
 
 function useLatestPosts(){
   const [posts,setPosts]=useState<StartPost[]|null|false>(null);
@@ -976,9 +992,10 @@ function useLatestPosts(){
 function StartHere(){
   const {user}=useUser();
   const posts=useLatestPosts();
-  const support=SUPPORT_IDS.map(id=>startupPrograms.find(p=>p.id===id)).filter((p):p is StartupProgram=>Boolean(p));
-  const running=startupPrograms.filter(p=>p.status==="active").length;
-  const mentors=startupPrograms.find(p=>p.id==="mentorship-program-1")?.mentors?.length??0;
+  const {programs}=useSiteContent();
+  // The programs marked "on the home page" at /manage, in their listed order.
+  const support=programs.filter(p=>p.onHomePage);
+  const running=programs.filter(p=>p.status==="active").length;
   const need=(to:string)=>user?to:"/login";
   const steps:[string,string,string][]=[
     ["Post a problem you've noticed","On campus, at home, anywhere. Problems are where ventures start.",need("/submit-problem")],
@@ -1000,7 +1017,7 @@ function StartHere(){
             <b>{post.title}</b>
           </Link></li>):<li className="start-empty">{posts===false?"Couldn't load the latest posts.":"Loading the latest posts…"}</li>}
         </ul>
-        <p className="start-note">{running} programs are running right now.</p>
+        {running>0&&<p className="start-note">{running===1?"1 program is":`${running} programs are`} running right now.</p>}
         <Link className="start-more" to="/problems">See every problem <Arrow/></Link>
       </div>
       <div className="start-col">
@@ -1009,10 +1026,10 @@ function StartHere(){
           {support.map(p=><li key={p.id}><Link to={`/programs/${p.id}`}>
             <small>{p.duration}</small>
             <b>{p.title}</b>
-            <span>{p.id==="mentorship-program-1"&&mentors?`${mentors} faculty mentors, one-on-one, by appointment`:p.subtitle}</span>
+            <span>{p.mentors?.length?`${p.mentors.length} faculty mentors, one-on-one, by appointment`:p.subtitle}</span>
           </Link></li>)}
         </ul>
-        <Link className="start-more" to="/programs">All {startupPrograms.length} programs <Arrow/></Link>
+        <Link className="start-more" to="/programs">All {programs.length} programs <Arrow/></Link>
       </div>
       <div className="start-col is-journey">
         <span className="start-col-label"><b>03</b>Start your journey</span>
@@ -1195,7 +1212,7 @@ export default function Landing(){
     schedule();
     return()=>{stop();window.removeEventListener("scroll",schedule);cancelAnimationFrame(raf)};
   },[]);
-  return <div className="vj-landing"><Intro/><Cursor/><SmoothScroll/><PageField/><ActRail/><div className="global-progress"><span ref={progressRef}/></div><a href="#main" className="skip-link">Skip to content</a><SiteNav overlay brandHref="#top"/><main id="main" tabIndex={-1}><Hero/><StartHere/><section className="statement dark" data-tone="ink"><Reveal><span className="chapter-label">00 / THE PREMISE</span><h2>DON&apos;T START<br/><span>WITH THE IDEA.</span></h2><p>Start with the thing that keeps breaking.</p></Reveal></section><Morph/><Starting/><Journey/><Sphere/><Hubs/><WorkField/><OneStudent/><Ventures/><Network/><Community/><section className="recognition dark" data-tone="ink"><Reveal><span className="chapter-label">11 / SIGNALS</span><h2>PROOF IS A<br/><i>MILESTONE.</i></h2><p>Recognition and funding are signals along the journey, not the destination.</p></Reveal><div className="recognition-list"><div><span>2024</span><b>Best Innovation Award</b><small>National Startup Competition</small></div><div><span>₹2.8Cr</span><b>Total funding raised</b><small>Across the current funded portfolio</small></div><div><span>{String(FUNDED_VENTURES.length).padStart(2,"0")}</span><b>Funded startups</b><small>Ventures that moved beyond the idea stage</small></div></div></section><FAQ/><section className="contact-v13 dark" data-tone="pink" id="contact">
+  return <div className="vj-landing"><Intro/><Cursor/><SmoothScroll/><PageField/><ActRail/><div className="global-progress"><span ref={progressRef}/></div><a href="#main" className="skip-link">Skip to content</a><SiteNav overlay brandHref="#top"/><main id="main" tabIndex={-1}><Hero/><StartHere/><section className="statement dark" data-tone="ink"><Reveal><span className="chapter-label">00 / THE PREMISE</span><h2>DON&apos;T START<br/><span>WITH THE IDEA.</span></h2><p>Start with the thing that keeps breaking.</p></Reveal></section><Morph/><Starting/><Journey/><Sphere/><Hubs/><WorkField/><OneStudent/><Ventures/><Network/><Community/><Signals/><FAQ/><section className="contact-v13 dark" data-tone="pink" id="contact">
   <div className="contact-v13-back" aria-hidden="true">
     <span>QUESTION</span><span>BUILD</span><span>PROVE</span><span>IMPACT</span>
   </div>

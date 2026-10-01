@@ -1,4 +1,5 @@
-import { wings, wingDisplayName } from "@/data/clubInfo";
+import { countWord, wingDisplayName } from "@/data/clubInfo";
+import { useSiteContent } from "@/data/siteContent";
 
 interface WingsOverviewGridProps {
   teamCounts: Record<string, number | undefined>;
@@ -6,11 +7,12 @@ interface WingsOverviewGridProps {
 }
 
 export function WingsOverviewGrid({ teamCounts, onOpenWing }: WingsOverviewGridProps) {
+  const { wings } = useSiteContent();
   return (
     <section className="lx-block">
       <div className="lx-sec-head">
         <span>02 / Structure</span>
-        <h2>Our eight wings</h2>
+        <h2>Our {countWord(wings.length)} wings</h2>
       </div>
       <p className="cl-sub">Each wing adds a different kind of support to the startups in our ecosystem.</p>
       <div className="lx-grid cl-wings">

@@ -3,12 +3,14 @@ import type { CSSProperties } from "react";
 import { useUser } from "@/pages/UserContext";
 import "@/components/design-system/listing.css";
 import "@/components/design-system/programs.css";
-import { startupPrograms, StartupProgram, PROGRAM_CATEGORIES, PROGRAM_STATUS } from "@/data/startupPrograms";
+import { StartupProgram, PROGRAM_CATEGORIES, PROGRAM_STATUS } from "@/data/startupPrograms";
+import { useSiteContent } from "@/data/siteContent";
 import { PageHero } from "@/components/design-system/PageHero";
 import { ProgramStrip } from "@/components/design-system/HeroSignatures";
 
 const Programs = () => {
   const { user } = useUser();
+  const { programs: startupPrograms } = useSiteContent();
 
   const groups = startupPrograms.reduce((acc, program) => {
     (acc[program.category] ||= []).push(program);
@@ -26,7 +28,7 @@ const Programs = () => {
         stats={[
           { value: String(startupPrograms.length), label: "Programs" },
           { value: String(startupPrograms.filter((p) => p.status === "active").length), label: "Running now" },
-          { value: "1 hour to 2 months", label: "Program duration" },
+          { value: String(Object.keys(groups).length), label: Object.keys(groups).length === 1 ? "Category" : "Categories" },
         ]}
         signature={
           <ProgramStrip

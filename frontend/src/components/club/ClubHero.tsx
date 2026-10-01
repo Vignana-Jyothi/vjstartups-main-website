@@ -1,4 +1,5 @@
-import { clubInfo, wings, wingDisplayName } from "@/data/clubInfo";
+import { countWord, wingDisplayName } from "@/data/clubInfo";
+import { useSiteContent } from "@/data/siteContent";
 import { WordLine } from "@/components/design-system/HeroSignatures";
 import { PageHero } from "@/components/design-system/PageHero";
 
@@ -9,19 +10,14 @@ interface ClubHeroProps {
 }
 
 export function ClubHero({ onExploreWings, onGetInvolved, onOpenWing }: ClubHeroProps) {
-  const stats = [
-    { value: `${clubInfo.totalMembers}+`, label: "Active members" },
-    { value: `${clubInfo.totalStartups}+`, label: "Potential startups" },
-    { value: clubInfo.totalFunding, label: "Funding raise target" },
-    { value: clubInfo.outReach, label: "Members outreach" },
-  ];
+  const { club, wings } = useSiteContent();
 
   return (
     <PageHero
       eyebrow="Club"
-      title={clubInfo.name}
-      description={clubInfo.tagline}
-      stats={stats}
+      title={club.name}
+      description={club.tagline}
+      stats={club.stats}
       layout="center"
       signature={<WordLine words={wings.map((w) => ({ id: w.id, label: wingDisplayName(w.name).replace(/ Wing$/, "") }))} onPick={onOpenWing} />}
     >
@@ -30,7 +26,7 @@ export function ClubHero({ onExploreWings, onGetInvolved, onOpenWing }: ClubHero
           Get involved ↗
         </button>
         <button type="button" className="lx-textbtn" onClick={onExploreWings}>
-          Explore the eight wings ↗
+          Explore the {countWord(wings.length)} wings ↗
         </button>
       </div>
     </PageHero>

@@ -53,7 +53,8 @@ function useAccount() {
     navigate("/login");
   };
   const roleLinks = <>
-    {(user?.role === "wing_master" || user?.role === "admin") && <NavLink to="/announcements/new">Post announcement</NavLink>}
+    {/* Site content, announcements and stories are all reached from /manage. */}
+    {(user?.role === "wing_master" || user?.role === "admin") && <NavLink to="/manage">Manage</NavLink>}
     {user?.role === "admin" && <a href={PLANE_ADMIN_URL} target="_blank" rel="noopener noreferrer">Admin panel</a>}
   </>;
   return { user, logout, roleLinks };

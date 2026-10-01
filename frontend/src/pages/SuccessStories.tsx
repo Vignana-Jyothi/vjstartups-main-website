@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Plus } from "lucide-react";
-import { startupPrograms } from "@/data/startupPrograms";
+import { useSiteContent } from "@/data/siteContent";
 import { canWriteStories, useStories } from "@/data/storiesApi";
 import SuccessStoryCard from "@/components/SuccessStoryCard";
 import { PageHero } from "@/components/design-system/PageHero";
@@ -13,7 +13,7 @@ import "@/components/design-system/listing.css";
 const SuccessStories = () => {
   const { programId } = useParams();
   const { user } = useUser();
-  const program = startupPrograms.find((p) => p.id === programId);
+  const program = useSiteContent().programs.find((p) => p.id === programId);
   const { stories, status } = useStories(programId);
   const people = stories.reduce((acc, s) => acc + s.participants.length, 0);
   const write = canWriteStories(user?.role) ? { label: "Write up a story", to: "/stories/new", icon: Plus } : undefined;

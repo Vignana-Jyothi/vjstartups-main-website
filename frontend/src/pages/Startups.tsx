@@ -13,10 +13,11 @@ import {
 } from "@/utils/startupFormatters";
 import { useUser } from "@/pages/UserContext";
 import { CardCover } from "@/components/design-system/CardCover";
-import { FUNDED_VENTURES } from "@/data/ventures";
+import { useSiteContent } from "@/data/siteContent";
 
 const Startups = () => {
   const { user } = useUser();
+  const { ventures: FUNDED_VENTURES } = useSiteContent();
   const [searchTerm, setSearchTerm] = useState("");
   const [startups, setStartups] = useState<StartupListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,9 +129,9 @@ const Startups = () => {
           </div>
           <div className="lx-grid">
             {FUNDED_VENTURES.map((venture) => (
-              <article key={venture.name} className="lx-card">
+              <article key={venture.id} className="lx-card">
                 <div className="lx-card-media">
-                  <CardCover title={venture.name} />
+                  <CardCover title={venture.name} image={venture.imageUrl} />
                   <span className="lx-card-kicker">{venture.sector}</span>
                 </div>
                 <div className="lx-card-body">

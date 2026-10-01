@@ -36,6 +36,7 @@ const AllChanges = lazy(() => import("./pages/AllChanges"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const PostAnnouncement = lazy(() => import("./pages/PostAnnouncement"));
+const ManageContent = lazy(() => import("./pages/ManageContent"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const SITE_TITLE = "VJ Startups — Turn questions into ventures";
@@ -101,6 +102,7 @@ const App = () => (
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/announcements/new" element={<PostAnnouncement />} />
+                <Route path="/manage" element={<ManageContent />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Route>

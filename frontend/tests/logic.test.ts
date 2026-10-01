@@ -63,3 +63,16 @@ test("only admins and wing masters may write stories", () => {
   assert.equal(canWriteStories("student"), false);
   assert.equal(canWriteStories(undefined), false);
 });
+
+test("the built-in site content holds only published contacts (no student emails, no placeholder numbers)", async () => {
+  const { builtInContent } = await import("@/data/siteContent");
+  const text = JSON.stringify(builtInContent);
+  const emails = text.match(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g) ?? [];
+  // Program inboxes and faculty mentors only: none of them is a roll-number address.
+  assert.ok(emails.length > 0);
+  for (const email of emails) assert.match(email, /@vnrvjiet\.in$/, email);
+  for (const email of emails) assert.doesNotMatch(email, /^\d{2}071a/i, email);
+  assert.doesNotMatch(text, /9876543210|dr-anil-krishnan/);
+  assert.equal(new Set(builtInContent.programs.map((p) => p.id)).size, builtInContent.programs.length);
+  assert.ok(builtInContent.programs.some((p) => p.onHomePage));
+});
