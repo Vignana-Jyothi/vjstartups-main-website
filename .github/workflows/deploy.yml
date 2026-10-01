@@ -28,14 +28,25 @@ jobs:
           PORT=${{ secrets.PORT || 6220 }}
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           ADMIN_EMAILS=${{ secrets.ADMIN_EMAILS }}
-          PLANE_API_URL=${{ vars.PLANE_API_URL || 'https://vjos.vjstartup.com' }}
+          PLANE_API_URL=${{ vars.PLANE_API_URL }}
           PLANE_INTERNAL_TOKEN=${{ secrets.PLANE_INTERNAL_TOKEN }}
           CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+          NODE_ENV=${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
           EOF
-          if [ -z "${{ secrets.PLANE_INTERNAL_TOKEN }}" ]; then
-            echo "::warning::PLANE_INTERNAL_TOKEN secret is not set - the internal auth bridge to Plane (Google login user creation, admin proxy, startup project provisioning) will not work. It must exactly match PUBLIC_SITE_INTERNAL_TOKEN in Plane's own deploy secrets."
+
+          # Name every required setting that is empty (names only, never values): the backend
+          # starts without them but the features that need them answer 503 "not set up". The
+          # full list, and which environment each belongs in, is SETTINGS.md.
+          for name in GOOGLE_CLIENT_ID ADMIN_EMAILS PLANE_API_URL PLANE_INTERNAL_TOKEN \
+                      CLOUDINARY_CLOUD_NAME CLOUDINARY_API_KEY CLOUDINARY_API_SECRET; do
+            if ! grep -Eq "^${name}=.+" backend/.env; then
+              echo "::warning::${name} is not set for this environment - the feature that needs it will not work (see SETTINGS.md)."
+            fi
+          done
+          if ! grep -Eq "^PLANE_INTERNAL_TOKEN=.+" backend/.env; then
+            echo "::warning::PLANE_INTERNAL_TOKEN must exactly match PUBLIC_SITE_INTERNAL_TOKEN in Plane's own deploy secrets (Google login user creation, admin proxy and startup project provisioning use it)."
           fi
 
           # Optional settings - only written when the repository variable is set,
@@ -46,9 +57,14 @@ jobs:
           if [ -n "${CORS_ORIGINS}" ]; then
             echo "CORS_ORIGINS=${CORS_ORIGINS}" >> backend/.env
           fi
+          # The VJOS admin-panel link shown to site admins; hidden when unset.
+          if [ -n "${PLANE_ADMIN_URL}" ]; then
+            echo "PLANE_ADMIN_URL=${PLANE_ADMIN_URL}" >> backend/.env
+          fi
         env:
           INSTITUTIONAL_EMAIL_DOMAINS: ${{ vars.INSTITUTIONAL_EMAIL_DOMAINS }}
           CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+          PLANE_ADMIN_URL: ${{ vars.PLANE_ADMIN_URL }}
 
       - name: Set the database connection for docker compose
         env:
