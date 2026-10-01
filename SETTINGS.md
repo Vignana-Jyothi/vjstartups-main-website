@@ -9,6 +9,28 @@ Values are never written in this repository (it's public). Set them in GitHub un
 
 The deploy workflow (`.github/workflows/deploy.yml`) writes them into the backend's `.env` and the frontend build.
 
+## Set these now (checked 2026-10-01)
+
+Today `vj-production` holds only `PLANE_DATABASE_URL` and `VITE_API_BASE_URL`, and has no variables. `GOOGLE_CLIENT_ID` and `PLANE_INTERNAL_TOKEN` exist as **repository** secrets, which every environment can read. An environment secret with the same name **overrides** a repository secret.
+
+Add to **`vj-production`**:
+
+| Add as | Name | Value | Without it |
+|---|---|---|---|
+| variable | `PLANE_API_URL` | `https://vjos.vjstartup.com`, unless Pavani gives an internal address gamma should use | Login, the leaderboard and startup workspaces stop working. **Set this before PR #30 merges**: that PR removes the deploy's built-in default. |
+| secret | `ADMIN_EMAILS` | The admins' emails, comma separated | Nobody can become a site admin by signing in. |
+| secret | `CLOUDINARY_CLOUD_NAME` | The team's Cloudinary cloud name | Uploads fail (startup files, story and venture photos). |
+| secret | `CLOUDINARY_API_KEY` | From the Cloudinary dashboard | Uploads fail. |
+| secret | `CLOUDINARY_API_SECRET` | From the Cloudinary dashboard | Uploads fail. |
+| variable | `PLANE_ADMIN_URL` | `https://vjos.vjstartup.com/god-mode/` | No "Admin panel" link for admins. |
+
+Add `PLANE_API_URL` (variable) to **`vj-development`** as well. Its other settings are already there or come from the repository secrets.
+
+Already fine:
+- `GOOGLE_CLIENT_ID` and `PLANE_INTERNAL_TOKEN`: repository secrets.
+- `PLANE_DATABASE_URL` and `VITE_API_BASE_URL`: environment secrets.
+- `CORS_ORIGINS`: the built-in list covers www, the bare domain and dev-vj.
+
 ## Backend (runtime)
 
 | Name | Secret or variable | Needed? | What it is |
@@ -21,11 +43,11 @@ The deploy workflow (`.github/workflows/deploy.yml`) writes them into the backen
 | `CLOUDINARY_API_KEY` | secret | **required** for uploads | |
 | `CLOUDINARY_API_SECRET` | secret | **required** for uploads | |
 | `ADMIN_EMAILS` | secret | recommended | Comma-separated emails that become admins when they sign in (`a@x.com,b@y.com`, no brackets or spaces). |
-| `PLANE_ADMIN_URL` | variable | optional | VJOS's admin page (e.g. `https://vjos.vjstartup.com/god-mode/`), linked in the nav for admins. If unset, there is no link. *The deploy workflow doesn't pass it yet.* |
+| `PLANE_ADMIN_URL` | variable | optional | VJOS's admin page (e.g. `https://vjos.vjstartup.com/god-mode/`), linked in the nav for admins. If unset, there is no link. |
 | `CORS_ORIGINS` | variable | optional | Comma-separated browser origins allowed to call the API. If set, it replaces the built-in list (`https://www.vjstartup.com`, `https://vjstartup.com`, `https://hub.vjstartup.com`, `https://dev-vj.vjstartup.com`). |
 | `INSTITUTIONAL_EMAIL_DOMAINS` | variable | optional | The college email domains. Default `vnrvjiet.in`. |
 
-`NODE_ENV=production` should also be set on the production backend, so the localhost origins are dropped from the CORS list. *The deploy workflow doesn't set it yet.*
+The deploy sets `NODE_ENV` itself (`production` on main, after PR #30), which drops the localhost origins from the CORS list. It also prints a warning naming every required setting that is empty. It prints names only.
 
 ## Frontend (build time, baked into the build)
 
