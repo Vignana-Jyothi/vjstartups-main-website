@@ -1,8 +1,5 @@
-const DEFAULT_SPREADSHEET_ID = "1tybveSRWbe3swoZ1dUB8bd20Hb63rx65_xAsQJCveC0";
-
-export function extractSpreadsheetId(
-  value: string = import.meta.env.VITE_GOOGLE_SPREADSHEET_ID || DEFAULT_SPREADSHEET_ID
-): string {
+/** A sheet id from an id or a sheet link (the team sheet is set by VITE_TEAM_SHEET_ID). */
+export function extractSpreadsheetId(value: string): string {
   const trimmed = value.trim();
 
   const urlMatch = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);

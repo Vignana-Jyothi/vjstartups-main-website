@@ -1,14 +1,29 @@
 const express = require('express');
 const { OAuth2Client } = require('google-auth-library');
 const router = express.Router();
+const { planeApiUrl, publicConfig } = require('../config/appConfig');
 
 const TOKEN_ROLES = ['ADMIN', 'WING_MEMBER', 'WING_MASTER'];
+
+// GET /auth/config - the login page's Google client id (the same one tokens are checked against
+// below, so the two can't disagree) and the VJOS admin link. Public values only.
+router.get('/config', (req, res) => {
+  // Not cached by browsers: a fixed setting should show at once, and pages ask only once a visit.
+  res.set('Cache-Control', 'no-cache');
+  res.json({ success: true, ...publicConfig() });
+});
 
 router.post('/google', async (req, res) => {
   const { token } = req.body;
 
   if (!token) {
     return res.status(400).json({ success: false, message: 'Token is required' });
+  }
+
+  const plane = planeApiUrl();
+  if (!process.env.GOOGLE_CLIENT_ID || !plane || !process.env.PLANE_INTERNAL_TOKEN) {
+    console.error('Login is not set up: GOOGLE_CLIENT_ID, PLANE_API_URL and PLANE_INTERNAL_TOKEN are all required.');
+    return res.status(503).json({ success: false, message: 'Login is not set up on this server yet' });
   }
 
   // Create client inside the handler so it always reads the env var at runtime
@@ -36,7 +51,7 @@ router.post('/google', async (req, res) => {
     // touch directly). We've already verified the Google ID token above, so
     // this internal call is trusted purely by the shared secret, not a user
     // session - it must never be reachable from a browser.
-    const planeResponse = await fetch(`${process.env.PLANE_API_URL}/api/vj-startups/public-auth/upsert-user/`, {
+    const planeResponse = await fetch(`${plane}/api/vj-startups/public-auth/upsert-user/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

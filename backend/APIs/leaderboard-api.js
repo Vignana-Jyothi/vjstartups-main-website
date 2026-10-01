@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { planeApiUrl } = require('../config/appConfig');
 
 // The members leaderboard lives in VJOS (Plane). The site's pages can't read it straight from the
 // browser (VJOS sends no CORS headers for the site), so this route fetches it server-to-server
@@ -8,7 +9,8 @@ const CACHE_MS = 60 * 1000;
 let cache = { at: 0, members: null };
 
 async function loadMembers() {
-  const base = process.env.PLANE_API_URL || 'https://vjos.vjstartup.com';
+  const base = planeApiUrl();
+  if (!base) throw new Error('PLANE_API_URL is not set');
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
   try {

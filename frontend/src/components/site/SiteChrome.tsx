@@ -2,12 +2,10 @@ import { LogoMark } from "./LogoMark";
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useUser } from "@/pages/UserContext";
+import { useSiteConfig } from "@/data/siteConfig";
+import { useSiteContent } from "@/data/siteContent";
 import "./site.css";
 
-// The production deploy doesn't set VITE_PLANE_ADMIN_URL, so the default is the live VJOS admin;
-// local development sets it in frontend/.env.
-const PLANE_ADMIN_URL = import.meta.env.VITE_PLANE_ADMIN_URL || "https://vjos.vjstartup.com/god-mode/";
-const MENTOR_NETWORK = "/programs/mentorship-program-1?tab=mentors#faculty-mentor-panel";
 export const PLATFORM_LINKS = [
   ["Problems", "/problems"],
   ["Ideas", "/ideas"],
@@ -48,6 +46,8 @@ export function BrandMark({ href = "/" }: { href?: string }) {
 function useAccount() {
   const { user, setUser } = useUser();
   const navigate = useNavigate();
+  // VJOS's admin page; set by PLANE_ADMIN_URL on the backend, no link when it isn't.
+  const adminUrl = useSiteConfig()?.planeAdminUrl;
   const logout = () => {
     setUser(null);
     navigate("/login");
@@ -55,7 +55,7 @@ function useAccount() {
   const roleLinks = <>
     {/* Site content, announcements and stories are all reached from /manage. */}
     {(user?.role === "wing_master" || user?.role === "admin") && <NavLink to="/manage">Manage</NavLink>}
-    {user?.role === "admin" && <a href={PLANE_ADMIN_URL} target="_blank" rel="noopener noreferrer">Admin panel</a>}
+    {user?.role === "admin" && adminUrl && <a href={adminUrl} target="_blank" rel="noopener noreferrer">Admin panel</a>}
   </>;
   return { user, logout, roleLinks };
 }
@@ -138,6 +138,8 @@ export function SiteNav({ overlay = false, brandHref = "/" }: { overlay?: boolea
 }
 
 export function SiteFooter({ tone, topHref }: { tone?: string; topHref?: string }) {
+  // The program that lists faculty mentors (programs are edited at /manage).
+  const mentors = useSiteContent().programs.find((p) => p.mentors?.length);
   return (
     <footer className="sc-footer" data-tone={tone}>
       <div className="sc-footer-word" aria-hidden="true"><span>VJ</span><i>STARTUPS</i></div>
@@ -145,7 +147,7 @@ export function SiteFooter({ tone, topHref }: { tone?: string; topHref?: string 
       <div className="sc-footer-grid">
         <div className="sc-footer-brand">
           <BrandMark />
-          <p>Empowering college entrepreneurs to build the future, five great startups every year.</p>
+          <p>Empowering college entrepreneurs to build the future.</p>
         </div>
         <div>
           <b>EXPLORE</b>
@@ -155,7 +157,7 @@ export function SiteFooter({ tone, topHref }: { tone?: string; topHref?: string 
           <b>COMMUNITY</b>
           <Link to="/journey">Startup journey</Link>
           <Link to="/leaderboard">Leaderboard</Link>
-          <Link to={MENTOR_NETWORK}>Mentor network</Link>
+          {mentors && <Link to={`/programs/${mentors.id}?tab=mentors#faculty-mentor-panel`}>Mentor network</Link>}
           <Link to="/changes">What&apos;s new</Link>
         </div>
         <div>
