@@ -108,11 +108,17 @@ jobs:
       # the CLI plus its schema engine on top of the running server was being killed with exit
       # 137 on the production host. If it still fails, the container state and its recent logs
       # (emails masked - this repo's logs are public) are printed so the cause is visible.
+      #
+      # The files are listed explicitly, oldest first, on purpose: prisma/migrations/ also holds
+      # older Prisma-generated folders (a legacy "users" table among them) that must never be
+      # run against this database. To add a change, append its file here in the same PR that
+      # adds it. Every file must be safe to re-run (IF NOT EXISTS, ON CONFLICT DO NOTHING).
       - name: Apply site database changes
         run: |
           set +e
           docker compose exec -T backend node scripts/apply-sql.js \
-            prisma/migrations/20260929000000_add_success_stories/migration.sql
+            prisma/migrations/20260929000000_add_success_stories/migration.sql \
+            prisma/migrations/20260930000000_add_site_content/migration.sql
           rc=$?
           set -e
           if [ "$rc" -ne 0 ]; then
