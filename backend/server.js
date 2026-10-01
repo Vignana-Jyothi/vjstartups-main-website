@@ -3,7 +3,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const prisma = require('./config/prisma');
-const { corsOrigins } = require('./config/appConfig');
+const { corsOrigins, missingSettings } = require('./config/appConfig');
 
 dotenv.config();
 const app = express();
@@ -64,7 +64,10 @@ app.use('/content-api', require('./APIs/content-api'));
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 6220;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  for (const [name, needs] of missingSettings()) console.warn(`⚠️  ${name} is not set: ${needs} won't work.`);
+});
 
 // Graceful shutdown
 process.on('SIGINT', async () => {

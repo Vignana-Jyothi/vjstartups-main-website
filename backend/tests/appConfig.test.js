@@ -58,3 +58,23 @@ test('CORS_ORIGINS replaces the defaults entirely', () => {
   const origins = corsOrigins({ CORS_ORIGINS: 'https://a.example, https://b.example ,', NODE_ENV: 'production' });
   assert.deepEqual(origins, ['https://a.example', 'https://b.example']);
 });
+
+test('the Plane address has no built-in default and loses its trailing slash', () => {
+  const { planeApiUrl } = require('../config/appConfig');
+  assert.equal(planeApiUrl({}), '');
+  assert.equal(planeApiUrl({ PLANE_API_URL: ' https://vjos.example.test/ ' }), 'https://vjos.example.test');
+});
+
+test('missing settings are reported by name, blank counts as missing', () => {
+  const { missingSettings, REQUIRED_SETTINGS } = require('../config/appConfig');
+  const all = Object.fromEntries(Object.keys(REQUIRED_SETTINGS).map((k) => [k, 'x']));
+  assert.deepEqual(missingSettings(all), []);
+  assert.deepEqual(missingSettings({ ...all, PLANE_API_URL: '  ' }).map(([name]) => name), ['PLANE_API_URL']);
+});
+
+test('the public config holds only the Google client id and the admin link', () => {
+  const { publicConfig } = require('../config/appConfig');
+  const env = { GOOGLE_CLIENT_ID: 'id.apps', PLANE_ADMIN_URL: 'https://vjos.example.test/god-mode/', PLANE_INTERNAL_TOKEN: 'secret', CLOUDINARY_API_SECRET: 'secret' };
+  assert.deepEqual(publicConfig(env), { googleClientId: 'id.apps', planeAdminUrl: 'https://vjos.example.test/god-mode/' });
+  assert.deepEqual(publicConfig({}), { googleClientId: null, planeAdminUrl: null });
+});

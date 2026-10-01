@@ -5,6 +5,7 @@ const upload = require('../middlewares/upload');
 const { storeUploads } = upload;
 const userAuth = require('../middlewares/userAuth');
 const { actingUser } = require('../middlewares/actingUser');
+const { planeApiUrl } = require('../config/appConfig');
 
 router.use(express.json());
 
@@ -336,7 +337,9 @@ router.post('/', userAuth, upload.fields([
         // succeeds - see InternalProvisionStartupEndpoint on the Plane side
         // for why a retry later is safe (it's idempotent).
         try {
-            const provisionResponse = await fetch(`${process.env.PLANE_API_URL}/api/vj-startups/internal/provision-startup/`, {
+            const plane = planeApiUrl();
+            if (!plane || !process.env.PLANE_INTERNAL_TOKEN) throw new Error('PLANE_API_URL and PLANE_INTERNAL_TOKEN are required to provision the startup workspace');
+            const provisionResponse = await fetch(`${plane}/api/vj-startups/internal/provision-startup/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -3,40 +3,52 @@ import { BrandMark } from "@/components/site/SiteChrome";
 import "@/components/design-system/page-hero.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "./UserContext";
-import { GOOGLE_CLIENT_ID } from "@/config/google";
 import { API_BASE } from "@/config/api";
+import { useSiteConfig } from "@/data/siteConfig";
+import { toast } from "@/components/ui/use-toast";
 
-const Login = () => {
+const failed = (description: string) => toast({ title: "Couldn't sign you in", description, variant: "destructive" });
+
+function GoogleButton() {
   const navigate = useNavigate();
   const { setUser } = useUser();
 
   const handleGoogleLogin = async (credentialResponse: any) => {
     if (!credentialResponse.credential) return;
-
     try {
       const res = await fetch(`${API_BASE}/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: credentialResponse.credential }),
       });
-
-      const data = await res.json();
-
+      const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success || !data.user) {
-        console.error("Login failed:", data.message || "Unknown error");
-        alert("Login failed: " + (data.message || "Please try again."));
+        failed(data.message || "Please try again.");
         return;
       }
-
-      console.log("Logged in user:", data.user);
       setUser(data.user);
       navigate("/");
-
-    } catch (err) {
-      console.error("Network error during login:", err);
-      alert("Could not reach the server. Make sure the backend is running on port 6220.");
+    } catch {
+      failed("The server couldn't be reached. Check your connection and try again.");
     }
   };
+
+  return (
+    <GoogleLogin
+      onSuccess={handleGoogleLogin}
+      onError={() => failed("Google sign-in didn't complete. Please try again.")}
+      theme="filled_black"
+      shape="pill"
+      size="large"
+      text="continue_with"
+    />
+  );
+}
+
+// The Google Identity script is ~100 KB and only this page needs it, so the provider lives
+// here instead of wrapping the whole app. Its client id comes from the backend (see siteConfig).
+const Login = () => {
+  const config = useSiteConfig();
 
   return (
     <section className="auth">
@@ -50,17 +62,15 @@ const Login = () => {
         <BrandMark />
         <p className="auth-lede">Join the innovation ecosystem at VNRVJIET.</p>
         <div className="auth-google">
-          <GoogleLogin
-            onSuccess={handleGoogleLogin}
-            onError={() => {
-              console.log("Google OAuth error — check client ID in .env");
-              alert("Google login failed. Check that VITE_GOOGLE_CLIENT is set correctly in frontend/.env");
-            }}
-            theme="filled_black"
-            shape="pill"
-            size="large"
-            text="continue_with"
-          />
+          {!config ? (
+            <p className="auth-lede">Loading sign-in…</p>
+          ) : config.googleClientId ? (
+            <GoogleOAuthProvider clientId={config.googleClientId}>
+              <GoogleButton />
+            </GoogleOAuthProvider>
+          ) : (
+            <p className="auth-lede">Sign-in isn't available right now. Please try again later.</p>
+          )}
         </div>
         <p className="auth-legal">
           By continuing, you agree to our <Link to="/terms">Terms</Link> and <Link to="/privacy">Privacy Policy</Link>.
@@ -70,12 +80,4 @@ const Login = () => {
   );
 };
 
-// The Google Identity script is ~100 KB and only this page needs it, so the provider lives
-// here instead of wrapping the whole app.
-const LoginPage = () => (
-  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-    <Login />
-  </GoogleOAuthProvider>
-);
-
-export default LoginPage;
+export default Login;

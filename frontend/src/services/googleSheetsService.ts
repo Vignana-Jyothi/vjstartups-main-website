@@ -5,7 +5,6 @@ import {
   buildSheetsApiMetadataUrl,
   buildSpreadsheetZipUrl,
   buildWorksheetCsvUrl,
-  extractSpreadsheetId,
   formatWingName,
 } from "@/utils/spreadsheetUtils";
 import { compareWings } from "@/utils/teamMemberTransforms";
@@ -199,7 +198,7 @@ async function discoverWorksheetsViaZip(
 }
 
 export async function discoverWorksheets(
-  spreadsheetId: string = extractSpreadsheetId()
+  spreadsheetId: string
 ): Promise<WorksheetInfo[]> {
   const apiKey = import.meta.env.VITE_GOOGLE_SHEETS_API_KEY;
 
@@ -252,7 +251,7 @@ export async function fetchWorksheetMembers(
 }
 
 export async function fetchTeamMembersFromGoogleSheet(
-  spreadsheetId: string = extractSpreadsheetId()
+  spreadsheetId: string
 ): Promise<SheetTeamMember[]> {
   const worksheets = await discoverWorksheets(spreadsheetId);
 
