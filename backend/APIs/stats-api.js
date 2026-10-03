@@ -13,8 +13,9 @@ async function countStats() {
   const [problems, ideas, startups, fundedStartups, people] = await Promise.all([
     prisma.problem.count(),
     prisma.idea.count(),
-    prisma.startup.count(),
-    prisma.startup.count({ where: { fundingStatus: { in: FUNDED, mode: 'insensitive' } } }),
+    // Startups are soft-deleted (deletedAt), so a deleted one must not be counted.
+    prisma.startup.count({ where: { deletedAt: null } }),
+    prisma.startup.count({ where: { deletedAt: null, fundingStatus: { in: FUNDED, mode: 'insensitive' } } }),
     // Builders: everyone who has posted a problem or idea, or is on an idea's team or a
     // problem's / idea's collaborator list. Emails are only used to de-duplicate, here.
     prisma.$queryRawUnsafe(`
@@ -44,3 +45,4 @@ router.get('/', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.countStats = countStats;
