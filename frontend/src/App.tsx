@@ -32,6 +32,7 @@ const StartupDetail = lazy(() => import("./pages/StartupDetail"));
 const StartupForm = lazy(() => import("./pages/StartupForm"));
 const Login = lazy(() => import("./pages/Login"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const MemberProfile = lazy(() => import("./pages/MemberProfile"));
 const AllChanges = lazy(() => import("./pages/AllChanges"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
@@ -97,6 +98,7 @@ const App = () => (
                 <Route path="/startups/:id" element={<StartupDetail />} />
                 <Route path="/startup-form" element={<StartupForm />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/u/:handle" element={<MemberProfile />} />
                 <Route path="/changes" element={<AllChanges />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
