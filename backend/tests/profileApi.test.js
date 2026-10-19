@@ -3,7 +3,7 @@
 // Run with: npm test   (uses Node's built-in test runner, no extra packages)
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { isValidHandle, normalizeHandle, createProfileLoader } = require('../APIs/profile-api');
+const { isValidHandle, normalizeHandle, createProfileLoader } = require('../lib/profileLoader');
 
 const ok = (body) => ({ ok: true, status: 200, json: async () => body });
 const status = (code) => ({ ok: code >= 200 && code < 300, status: code, json: async () => ({}) });

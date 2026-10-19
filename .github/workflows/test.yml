@@ -1,9 +1,9 @@
 name: Tests
 
 # Runs the backend and frontend unit tests on every pull request that touches them.
-# Both suites use Node's built-in test runner. The backend needs no packages or
-# database; the frontend needs its dependencies installed (its test runner bundles
-# with esbuild, which ships with Vite). Runs on GitHub's own runners, not the
+# Both suites use Node's built-in test runner and both need their dependencies installed
+# (the backend's route modules load express; the frontend's test runner bundles with esbuild,
+# which ships with Vite). Neither needs a database. Runs on GitHub's own runners, not the
 # self-hosted deploy machines.
 
 on:
@@ -32,6 +32,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      # No database, but the route modules some tests load (stats-api) require express at the top,
+      # so the backend's dependencies must be installed. There is no lockfile, so `npm ci` cannot be used.
+      - name: Install the backend dependencies
+        working-directory: backend
+        run: npm install --no-audit --no-fund
 
       - name: Run the backend tests
         working-directory: backend
