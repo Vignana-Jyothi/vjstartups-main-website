@@ -813,52 +813,6 @@
         "Backup & Disaster Recovery Setup"
       ],
       "id": "infra-wing"
-    },
-    {
-      "name": "Digital Wing",
-      "description": "Works on enabling digitisation at campus and streamlines applications for startup activities",
-      "purpose": "To digitize campus processes and create digital solutions for startup ecosystem management",
-      "focusAreas": [
-        "Campus Digitization Projects",
-        "Student Data Management",
-        "Faculty Portal Development",
-        "Alumni Network Platform",
-        "Startup Activity Automation"
-      ],
-      "achievements": [
-        "15+ manual processes digitized",
-        "Integrated student-faculty-alumni data",
-        "Automated startup activity tracking"
-      ],
-      "currentProjects": [
-        "Complete Campus Digital Ecosystem",
-        "AI-powered Startup Matching",
-        "Centralized Data Platform"
-      ],
-      "id": "digital-wing"
-    },
-    {
-      "name": "Flying Wing",
-      "description": "Builds actual applications and digital solutions for the startup ecosystem",
-      "purpose": "To develop and maintain all software applications required for VJ Startups operations",
-      "focusAreas": [
-        "Web Application Development",
-        "Mobile App Development",
-        "AI & ML Solutions",
-        "Database Management",
-        "System Integration"
-      ],
-      "achievements": [
-        "20+ applications developed",
-        "100+ active developers",
-        "AI-powered automation implemented"
-      ],
-      "currentProjects": [
-        "VJ Hub Platform Enhancement",
-        "Mobile App for Startup Tracking",
-        "AI Assistant for Entrepreneurs"
-      ],
-      "id": "flying-wing"
     }
   ],
   "signals": [
