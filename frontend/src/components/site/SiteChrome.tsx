@@ -43,6 +43,14 @@ export function BrandMark({ href = "/" }: { href?: string }) {
   return <Link className="sc-brand" to={href} aria-label="VJ Startups home">{content}</Link>;
 }
 
+// The VJ Startups ecosystem site (set by ECOSYSTEM_URL on the backend), opened in a new tab next
+// to Club. No link when it isn't set.
+function EcosystemLink() {
+  const url = useSiteConfig()?.ecosystemUrl;
+  if (!url) return null;
+  return <a href={url} target="_blank" rel="noopener noreferrer">Ecosystem</a>;
+}
+
 function useAccount() {
   const { user, setUser } = useUser();
   const navigate = useNavigate();
@@ -99,6 +107,7 @@ export function SiteNav({ overlay = false, brandHref = "/" }: { overlay?: boolea
           <BrandMark href={brandHref} />
           <div className="sc-links">
             {PLATFORM_LINKS.map(([label, to]) => <NavLink key={to} to={to}>{label}</NavLink>)}
+            <EcosystemLink />
             {roleLinks}
           </div>
           <div className="sc-right">
@@ -123,6 +132,7 @@ export function SiteNav({ overlay = false, brandHref = "/" }: { overlay?: boolea
         <div className="sc-sheet" onClick={(e) => { if ((e.target as HTMLElement).closest("a,button")) setMenuOpen(false); }}>
           <nav aria-label="Mobile">
             {PLATFORM_LINKS.map(([label, to]) => <NavLink key={to} to={to}>{label}</NavLink>)}
+            <EcosystemLink />
             <NavLink to="/journey">Journey</NavLink>
             <NavLink to="/leaderboard">Leaderboard</NavLink>
             {roleLinks}
@@ -152,6 +162,7 @@ export function SiteFooter({ tone, topHref }: { tone?: string; topHref?: string 
         <div>
           <b>EXPLORE</b>
           {PLATFORM_LINKS.map(([label, to]) => <Link key={to} to={to}>{label}</Link>)}
+          <EcosystemLink />
         </div>
         <div>
           <b>COMMUNITY</b>
