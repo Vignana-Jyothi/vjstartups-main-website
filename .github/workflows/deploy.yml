@@ -131,7 +131,8 @@ jobs:
           set +e
           docker compose exec -T backend node scripts/apply-sql.js \
             prisma/migrations/20260929000000_add_success_stories/migration.sql \
-            prisma/migrations/20260930000000_add_site_content/migration.sql
+            prisma/migrations/20260930000000_add_site_content/migration.sql \
+            prisma/migrations/20261022000000_remove_digital_flying_wings/migration.sql
           rc=$?
           set -e
           if [ "$rc" -ne 0 ]; then
