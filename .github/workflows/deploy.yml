@@ -61,10 +61,15 @@ jobs:
           if [ -n "${PLANE_ADMIN_URL}" ]; then
             echo "PLANE_ADMIN_URL=${PLANE_ADMIN_URL}" >> backend/.env
           fi
+          # The ecosystem site's link in the nav; hidden when unset.
+          if [ -n "${ECOSYSTEM_URL}" ]; then
+            echo "ECOSYSTEM_URL=${ECOSYSTEM_URL}" >> backend/.env
+          fi
         env:
           INSTITUTIONAL_EMAIL_DOMAINS: ${{ vars.INSTITUTIONAL_EMAIL_DOMAINS }}
           CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
           PLANE_ADMIN_URL: ${{ vars.PLANE_ADMIN_URL }}
+          ECOSYSTEM_URL: ${{ vars.ECOSYSTEM_URL }}
 
       - name: Set the database connection for docker compose
         env:

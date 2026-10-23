@@ -23,8 +23,9 @@ Add to **`vj-production`**:
 | secret | `CLOUDINARY_API_KEY` | From the Cloudinary dashboard | Uploads fail. |
 | secret | `CLOUDINARY_API_SECRET` | From the Cloudinary dashboard | Uploads fail. |
 | variable | `PLANE_ADMIN_URL` | `https://vjos.vjstartup.com/god-mode/` | No "Admin panel" link for admins. |
+| variable | `ECOSYSTEM_URL` | `https://dev-vjse.vjstartup.com/` (the ecosystem's latest version lives there for now) | No "Ecosystem" link in the nav. |
 
-Add `PLANE_API_URL` (variable) to **`vj-development`** as well. Its other settings are already there or come from the repository secrets.
+Add `PLANE_API_URL` and `ECOSYSTEM_URL` (variables) to **`vj-development`** as well, with the same values. Its other settings are already there or come from the repository secrets.
 
 Already fine:
 - `GOOGLE_CLIENT_ID` and `PLANE_INTERNAL_TOKEN`: repository secrets.
@@ -44,6 +45,7 @@ Already fine:
 | `CLOUDINARY_API_SECRET` | secret | **required** for uploads | |
 | `ADMIN_EMAILS` | secret | recommended | Comma-separated emails that become admins when they sign in (`a@x.com,b@y.com`, no brackets or spaces). |
 | `PLANE_ADMIN_URL` | variable | optional | VJOS's admin page (e.g. `https://vjos.vjstartup.com/god-mode/`), linked in the nav for admins. If unset, there is no link. |
+| `ECOSYSTEM_URL` | variable | optional | The VJ Startups ecosystem site (today `https://dev-vjse.vjstartup.com/` in every environment, since that is where its latest version runs), linked in the nav and footer for everyone and opened in a new tab. If unset, there is no link. |
 | `CORS_ORIGINS` | variable | optional | Comma-separated browser origins allowed to call the API. If set, it replaces the built-in list (`https://www.vjstartup.com`, `https://vjstartup.com`, `https://hub.vjstartup.com`, `https://dev-vj.vjstartup.com`). |
 | `INSTITUTIONAL_EMAIL_DOMAINS` | variable | optional | The college email domains. Default `vnrvjiet.in`. |
 

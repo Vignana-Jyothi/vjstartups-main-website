@@ -87,6 +87,8 @@ function publicConfig(env = process.env) {
     googleClientId: String(env.GOOGLE_CLIENT_ID || '').trim() || null,
     // VJOS's admin page, linked from the site's nav for admins. No link when unset.
     planeAdminUrl: String(env.PLANE_ADMIN_URL || '').trim() || null,
+    // The VJ Startups ecosystem site, linked from the site's nav for everyone. No link when unset.
+    ecosystemUrl: String(env.ECOSYSTEM_URL || '').trim() || null,
   };
 }
 

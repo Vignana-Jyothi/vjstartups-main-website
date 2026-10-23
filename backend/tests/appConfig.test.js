@@ -72,9 +72,9 @@ test('missing settings are reported by name, blank counts as missing', () => {
   assert.deepEqual(missingSettings({ ...all, PLANE_API_URL: '  ' }).map(([name]) => name), ['PLANE_API_URL']);
 });
 
-test('the public config holds only the Google client id and the admin link', () => {
+test('the public config holds only the Google client id, the admin link and the ecosystem link', () => {
   const { publicConfig } = require('../config/appConfig');
-  const env = { GOOGLE_CLIENT_ID: 'id.apps', PLANE_ADMIN_URL: 'https://vjos.example.test/god-mode/', PLANE_INTERNAL_TOKEN: 'secret', CLOUDINARY_API_SECRET: 'secret' };
-  assert.deepEqual(publicConfig(env), { googleClientId: 'id.apps', planeAdminUrl: 'https://vjos.example.test/god-mode/' });
-  assert.deepEqual(publicConfig({}), { googleClientId: null, planeAdminUrl: null });
+  const env = { GOOGLE_CLIENT_ID: 'id.apps', PLANE_ADMIN_URL: 'https://vjos.example.test/god-mode/', ECOSYSTEM_URL: 'https://eco.example.test/', PLANE_INTERNAL_TOKEN: 'secret', CLOUDINARY_API_SECRET: 'secret' };
+  assert.deepEqual(publicConfig(env), { googleClientId: 'id.apps', planeAdminUrl: 'https://vjos.example.test/god-mode/', ecosystemUrl: 'https://eco.example.test/' });
+  assert.deepEqual(publicConfig({}), { googleClientId: null, planeAdminUrl: null, ecosystemUrl: null });
 });
