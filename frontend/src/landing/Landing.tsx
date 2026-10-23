@@ -149,8 +149,14 @@ function SmoothScroll() {
 
 const INTRO_KEY="vj-intro-seen";
 
-function Intro() {
-  const [skip]=useState(()=>{if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return true;try{return sessionStorage.getItem(INTRO_KEY)==="1";}catch{return false;}});
+// Whether the intro plays on this load: once per session, never with reduced motion.
+function introWillPlay(){
+  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return false;
+  try{return sessionStorage.getItem(INTRO_KEY)!=="1";}catch{return true;}
+}
+
+function Intro({onFinish}:{onFinish?:()=>void}) {
+  const [skip]=useState(()=>!introWillPlay());
   const [done,setDone]=useState(false);
   const [p,setP]=useState(0);
 
@@ -168,7 +174,7 @@ function Intro() {
       if(value<1){
         raf=requestAnimationFrame(loop);
       }else{
-        window.setTimeout(()=>setDone(true),220);
+        window.setTimeout(()=>{setDone(true);onFinish?.();},220);
       }
     };
 
@@ -265,7 +271,9 @@ function mixHex(a:string,b:string,t:number){
 const ease=(t:number)=>t*t*(3-2*t);
 const band=(p:number,a:number,b:number)=>ease(Math.min(Math.max((p-a)/(b-a),0),1));
 
-type Announcement={title:string;content:string};
+type Announcement={id:string;title:string;content:string;createdAt?:string};
+
+const NEWS_CLOSED_KEY="vj-news-closed";
 
 function useLatestAnnouncement(){
   const [news,setNews]=useState<Announcement|null>(null);
@@ -280,9 +288,52 @@ function useLatestAnnouncement(){
   return news;
 }
 
-function Hero() {
+// The newest announcement opens as a card as soon as the page is up (as the intro clears, when it
+// plays), so a visitor sees it without looking for it. Closing it is remembered for that
+// announcement only, so the next one opens again; the NEWS line in the hero brings it back.
+function useAnnouncementCard(news:Announcement|null,introPlaying:boolean){
+  const [open,setOpen]=useState(false);
+  useEffect(()=>{
+    if(!news||introPlaying)return;
+    let closed:string|null=null;
+    try{closed=localStorage.getItem(NEWS_CLOSED_KEY);}catch{/* storage blocked: it just opens every visit */}
+    if(closed===news.id)return;
+    const t=window.setTimeout(()=>setOpen(true),900);
+    return()=>window.clearTimeout(t);
+  },[news,introPlaying]);
+  const close=()=>{
+    setOpen(false);
+    if(news)try{localStorage.setItem(NEWS_CLOSED_KEY,news.id);}catch{/* storage blocked */}
+  };
+  return {open,show:()=>setOpen(true),close};
+}
+
+function AnnouncementCard({news,open,onClose}:{news:Announcement;open:boolean;onClose:()=>void}){
+  const [expanded,setExpanded]=useState(false);
+  useEffect(()=>{
+    if(!open)return;
+    const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")onClose();};
+    window.addEventListener("keydown",onKey);
+    return()=>window.removeEventListener("keydown",onKey);
+  },[open,onClose]);
+  const long=news.content.length>220;
+  const date=news.createdAt?new Date(news.createdAt):null;
+  return (
+    <aside className={`news-card${open?" is-open":""}`} aria-label="Announcement" aria-hidden={!open} data-lenis-prevent>
+      <div className="news-card-top">
+        <b>NEWS</b>
+        {date&&!Number.isNaN(date.getTime())&&<time dateTime={news.createdAt}>{date.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</time>}
+        <button type="button" className="news-card-close" onClick={onClose} aria-label="Close announcement" tabIndex={open?0:-1}>×</button>
+      </div>
+      <h2>{news.title}</h2>
+      <p className={long&&!expanded?"is-clamped":undefined}>{news.content}</p>
+      {long&&<button type="button" className="news-card-more" onClick={()=>setExpanded(x=>!x)} tabIndex={open?0:-1}>{expanded?"Show less":"Read more"}</button>}
+    </aside>
+  );
+}
+
+function Hero({news,onShowNews}:{news:Announcement|null;onShowNews:()=>void}) {
   const { user }=useUser();
-  const news=useLatestAnnouncement();
   const stats=useSiteStats();
   const {ventures}=useSiteContent();
   // Counted from the database (never typed in); zero or unknown figures are left out.
@@ -390,7 +441,7 @@ function Hero() {
       <div className="hero-v12-top">
         <span>VJ STARTUPS / HYDERABAD</span>
         {news
-          ? <span className="hero-news" title={`${news.title} — ${news.content}`}><b>NEWS</b>{news.title}</span>
+          ? <button type="button" className="hero-news" title={`${news.title} — ${news.content}`} onClick={onShowNews}><b>NEWS</b>{news.title}</button>
           : <span>REAL PROBLEMS / REAL BUILDERS / REAL VENTURES</span>}
       </div>
 
@@ -1186,6 +1237,10 @@ function PageField(){
 
 export default function Landing(){
   const { user }=useUser();
+  const news=useLatestAnnouncement();
+  // Read before the intro marks itself as seen, so this knows whether it is about to play.
+  const [introPlaying,setIntroPlaying]=useState(introWillPlay);
+  const newsCard=useAnnouncementCard(news,introPlaying);
   const progressRef=useRef<HTMLSpanElement>(null);
   useEffect(()=>{
     // A photo that fails to load (the stock host can be blocked or reset on some networks) is
@@ -1212,7 +1267,7 @@ export default function Landing(){
     schedule();
     return()=>{stop();window.removeEventListener("scroll",schedule);cancelAnimationFrame(raf)};
   },[]);
-  return <div className="vj-landing"><Intro/><Cursor/><SmoothScroll/><PageField/><ActRail/><div className="global-progress"><span ref={progressRef}/></div><a href="#main" className="skip-link">Skip to content</a><SiteNav overlay brandHref="#top"/><main id="main" tabIndex={-1}><Hero/><StartHere/><section className="statement dark" data-tone="ink"><Reveal><span className="chapter-label">00 / THE PREMISE</span><h2>DON&apos;T START<br/><span>WITH THE IDEA.</span></h2><p>Start with the thing that keeps breaking.</p></Reveal></section><Morph/><Starting/><Journey/><Sphere/><Hubs/><WorkField/><OneStudent/><Ventures/><Network/><Community/><Signals/><FAQ/><section className="contact-v13 dark" data-tone="pink" id="contact">
+  return <div className="vj-landing"><Intro onFinish={()=>setIntroPlaying(false)}/><Cursor/><SmoothScroll/><PageField/><ActRail/><div className="global-progress"><span ref={progressRef}/></div><a href="#main" className="skip-link">Skip to content</a><SiteNav overlay brandHref="#top"/>{news&&<AnnouncementCard news={news} open={newsCard.open} onClose={newsCard.close}/>}<main id="main" tabIndex={-1}><Hero news={news} onShowNews={newsCard.show}/><StartHere/><section className="statement dark" data-tone="ink"><Reveal><span className="chapter-label">00 / THE PREMISE</span><h2>DON&apos;T START<br/><span>WITH THE IDEA.</span></h2><p>Start with the thing that keeps breaking.</p></Reveal></section><Morph/><Starting/><Journey/><Sphere/><Hubs/><WorkField/><OneStudent/><Ventures/><Network/><Community/><Signals/><FAQ/><section className="contact-v13 dark" data-tone="pink" id="contact">
   <div className="contact-v13-back" aria-hidden="true">
     <span>QUESTION</span><span>BUILD</span><span>PROVE</span><span>IMPACT</span>
   </div>
