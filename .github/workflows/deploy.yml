@@ -68,8 +68,10 @@ jobs:
         env:
           INSTITUTIONAL_EMAIL_DOMAINS: ${{ vars.INSTITUTIONAL_EMAIL_DOMAINS }}
           CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
-          PLANE_ADMIN_URL: ${{ vars.PLANE_ADMIN_URL }}
-          ECOSYSTEM_URL: ${{ vars.ECOSYSTEM_URL }}
+          # These two are public links, not secrets, but either place works: a secret of the same
+          # name is used first (its value shows as *** in the log), else the variable.
+          PLANE_ADMIN_URL: ${{ secrets.PLANE_ADMIN_URL || vars.PLANE_ADMIN_URL }}
+          ECOSYSTEM_URL: ${{ secrets.ECOSYSTEM_URL || vars.ECOSYSTEM_URL }}
 
       - name: Set the database connection for docker compose
         env:
