@@ -48,7 +48,10 @@
 .auth-statement p{max-width:440px;margin:32px 0 0;color:hsl(var(--muted-foreground));font-size:14px;line-height:1.55}
 .auth-panel{display:grid;gap:22px;justify-items:start;padding:36px;border:1px solid rgba(247,245,239,.08);border-radius:28px;background:hsl(var(--card))}
 .auth-lede{margin:0;color:var(--white);font-size:22px;font-weight:800;line-height:1.05;letter-spacing:-.045em}
-.auth-google{min-height:44px}
+/* The page declares color-scheme: dark but Google's sign-in button is a light iframe; when the two
+   differ the browser paints an opaque white box behind the iframe. Declaring this container light
+   makes them match, so the button's own transparent background shows the panel through. */
+.auth-google{min-height:44px;color-scheme:light}
 .auth-legal{margin:0;color:hsl(var(--muted-foreground));font:12px var(--mono);letter-spacing:.08em;line-height:1.7;text-transform:uppercase}
 .auth-legal a{color:var(--lime);text-decoration:none}
 @media(max-width:900px){.auth{grid-template-columns:1fr;align-items:start;gap:40px;padding:calc(48px + var(--sc-nav-h)) 18px 80px}}
